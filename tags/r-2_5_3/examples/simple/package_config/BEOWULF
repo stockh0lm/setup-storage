@@ -1,0 +1,26 @@
+# packages for Beowulf clients
+
+PACKAGES install
+fping jmon
+rsh-client rsh-server rstat-client rstatd rusers rusersd
+autofs
+
+dsh update-cluster-hosts update-cluster
+etherwake
+
+PACKAGES taskinst
+c-dev
+
+PACKAGES install
+lam-runtime lam3 lam3-dev libpvm3 pvm-dev mpich
+scalapack-mpich-dev
+
+# you should replace the atlas2 packages by other versions that are
+# better optimised for your type of processor
+
+blacs1-pvm blacs1-mpich
+blas atlas2-base
+
+scalapack-mpich-dev scalapack-lam-dev scalapack-pvm-dev blas-dev 
+atlas2-base-dev blacs-pvm-dev blacs-mpich-dev 
+
