@@ -1,0 +1,18 @@
+PACKAGES install
+
+anacron
+
+# when using acpi
+wmbattery wmacpi
+
+# when using apm
+#xbatt apmd
+
+# WLAN utilities
+wireless-tools
+wavemon wmwave
+
+ppp pppconfig
+
+# printing
+magicfilter
