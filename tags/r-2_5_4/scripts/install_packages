@@ -1,0 +1,255 @@
+#!/usr/bin/perl
+
+# $Id$
+#*********************************************************************
+#
+# install_packages -- read package config and install packages via apt-get
+#
+# This script is part of FAI (Fully Automatic Installation)
+# (c) 2000-2003, Thomas Lange, lange@informatik.uni-koeln.de
+#
+#*********************************************************************
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; see the file COPYING. If not, write to the
+# Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
+# MA 02111-1307, USA.
+#*********************************************************************
+
+my $version = "Version 2.3.1, 29-dec-2003";
+
+use strict;
+use Getopt::Std;
+# global variables
+our ($opt_l,$opt_v,$opt_h,$opt_t,$opt_m);
+my @commands;
+my %command;
+my $test;
+my $verbose;
+my $FAI_ROOT;
+my @classes;
+my $classpath;
+my $rootcmd;
+my @preloadlist;
+my @preloadrmlist;
+my %list;
+my %classisdef;
+my $maxpl;  # maximum length of package list
+
+# PRELOAD feature from Thomas Gebhardt  <gebhardt@hrz.uni-marburg.de>
+
+$| = 1;
+# order of commands to execute
+@commands = qw/hold taskinst clean install clean remove clean dselect-upgrade/;
+%command = (
+	    install => 'apt-get -y --force-yes --fix-missing install',
+	    remove  => 'apt-get -y --purge remove',
+  "dselect-upgrade" => 'apt-get -y dselect-upgrade',
+         "taskinst" => 'tasksel -n install',
+             "hold" => 'dpkg --set-selections',
+            "clean" => 'apt-get clean',
+);
+
+# currently no test, always execute
+$test = 0;
+getopts('thvlm:');
+
+$opt_h && usage();
+$opt_t and $test = 1;
+$verbose=$ENV{verbose} || $opt_v;
+$maxpl=$ENV{MAXPACKAGES} || $opt_m ;
+$maxpl && print "Maxmimum number of packages installed at a time set to $maxpl\n";
+$maxpl or $maxpl = 4711 ; # set default value; a magic number in cologne
+
+$FAI_ROOT = $ENV{FAI_ROOT};
+$classpath = "$ENV{FAI}/package_config";
+$rootcmd = ($FAI_ROOT eq "/" ) ? '' : "chroot $FAI_ROOT";
+@classes = grep { !/^#|^\s*$/ } split(/[\s\n]+/,$ENV{classes});
+foreach (@classes) { $classisdef{$_}=1;}
+
+# read all package config files
+foreach (@classes) {
+  my $filename = "$classpath/$_";
+  &readconfig($filename) if -f $filename;
+}
+
+# get files which must exist before installing packages
+foreach my $entry (@preloadlist,@preloadrmlist) {
+  my ($url, $directory) = @$entry;
+  if ($url =~ m!^file:/(.+)!) {
+    my $file = $1;
+    execute("cp $FAI_ROOT/$file $FAI_ROOT/$directory");
+  } else {
+    execute("wget -nv -P$FAI_ROOT/$directory $url");
+  }
+}
+
+# call apt-get or tasksel for each type of command whith the list of packages
+foreach my $type (@commands) {
+  if ($type eq "clean") {
+    execute("$rootcmd apt-get clean");
+    next;
+  }
+
+  # skip if empty list
+  next unless defined $list{$type};
+
+  if ($type eq "dselect-upgrade") {
+    dselectupgrade($type);
+    next;
+  }
+
+  my $packlist = join(' ',@{$list{$type}});
+
+  if ($type eq "hold") {
+    my $hold = join " hold\n", @{$list{hold}};
+    $hold .= " hold\n";
+    execute("echo \"$hold\" | $rootcmd $command{hold}");
+    next;
+  }
+
+  if ($type eq "install" || $opt_l) {
+    # check for packages which don't exist
+    # do not try to check packages that end in + or -
+    # it's not easy to determine the real package name
+    # example: g++; is the package called g+ and should be installed, or just g++?
+    $packlist = join(' ',grep {! /[+-]$/} @{$list{$type}});
+    my $packlistnover=$packlist;
+    $packlistnover =~ s/=\w+//g;
+    my $misspelt = qx{$rootcmd apt-cache show $packlistnover 2>&1 1>/dev/null};
+    $misspelt =~ s/W: Couldn't stat source .+?\n//g;
+    $misspelt =~ s/W: Unable to locate package //g;
+    $misspelt =~ s/\n/ /g;
+    warn "WARNING: These unknown packages are removed from the installation list: $misspelt\n" if $misspelt;
+    # remove misspelt package names from packlist
+    my %misspelt = map { $_ => 1 } split /\s+/,$misspelt;
+    my $newlist = "";
+    grep { $misspelt{$_} or $newlist .= "$_ "} @{$list{install}};
+    $packlist = $newlist;
+    if ($opt_l) {
+      # only print the package list
+      print "$packlist\n";
+      exit 0;
+    }
+    # pass only maxpl packages to apt-get
+    $_ = $packlist;
+    my @spl = split;
+    while (@spl) {
+      my $shortlist = join(' ', splice @spl,0,$maxpl);
+      # print "SL $shortlist\n";
+      execute("$rootcmd $command{install} $shortlist") if $shortlist;
+      execute("$rootcmd apt-get clean");
+    }
+    next;
+  }
+  execute("$rootcmd $command{$type} $packlist") if $packlist;
+}
+
+# remove prelaoded files
+foreach my $entry (@preloadrmlist) {
+  my ($url, $directory) = @$entry;
+  $url =~ m#/([^/]+$)#;
+  my $file =  "$directory/$1";
+  print "rm $file\n" if $verbose;
+  unlink $file || warn "Can't remove $file\n";
+}
+
+# in case of unconfigured packages because of apt errors
+# retry configuration
+execute("$rootcmd dpkg --configure --pending");
+# check if all went right
+execute("$rootcmd dpkg -C");
+# clean apt cache
+execute("$rootcmd apt-get clean");
+# - - - - - - - - - - - - - - - - - - - - - - - - - - -
+sub readconfig {
+
+  my $filename = shift;
+  my ($package,$type,$cllist,@oclasses,$doit);
+
+  open (FILE,"$filename") || warn "ERROR $0: Can't read config file: $filename\n";
+  warn "$0: read config file $filename\n" if $verbose;
+
+  while (<FILE>) {
+    next if /^#/;    # skip comments
+    s/#.*$//;        # delete comments
+    next if /^\s*$/; # skip empty lines
+    chomp;
+    /^PRELOAD\s+(\S+)\s+(\S+)/   and push(@preloadlist,   [$1,$2]),next;
+    /^PRELOADRM\s+(\S+)\s+(\S+)/ and push(@preloadrmlist, [$1,$2]),next;
+
+    if (/^PACKAGES\s+(\S+)\s*/) {
+      ($type,$cllist) = ($1,$');
+      # by default no classes are listed after this command so doit
+      $doit = 1;
+      if ($cllist) {
+	# no classes specified after PACKAGES command
+      # so add all packages listed
+	# use packages on for a list of classes
+	$doit = 0; # assume no class is defined
+	@oclasses = split(/\s+/,$cllist);
+	# if a listed class is defined, add the packaes, otherwise skip these packages
+	foreach (@oclasses) { exists $classisdef{$_} and $doit = 1;}
+      }
+      next;
+    }
+
+    warn "PACKAGES .. line missing in $filename\n",next unless $type;
+    push @{$list{$type}}, split if $doit;
+  }
+}
+# - - - - - - - - - - - - - - - - - - - - - - - - - - -
+sub execute {
+
+  # execute a command or only print it
+  my $command = shift;
+  my $error;
+
+  $test and $verbose = 1;
+  $verbose and print "$0: is executing $command\n";
+  $test and return;
+
+  $error = system "$command";
+  warn "ERROR: $error $?\n" if $error;
+}
+# - - - - - - - - - - - - - - - - - - - - - - - - - - -
+sub dselectupgrade {
+
+  my $type = shift;
+  my ($package,$action,$list);
+  my $tempfile = "$FAI_ROOT/tmp/dpkg-selections.tmp"; # TODO: use better uniq filename
+  while (@{$list{$type}}) {
+    $package = shift @{$list{$type}};
+    $action  = shift @{$list{$type}};
+    $list .= "$package $action\n";
+  }
+
+  open TMP,"> $tempfile" || die " Can't write to $tempfile";
+  print TMP $list;
+  close TMP;
+
+  execute("$rootcmd dpkg --set-selections < $tempfile");
+  execute("$rootcmd $command{$type}");
+  unlink $tempfile;
+}
+# - - - - - - - - - - - - - - - - - - - - - - - - - - -
+sub usage {
+
+  print << "EOF";
+install_packages $version
+
+usage and help currently not implemented.
+Sorry :-(
+EOF
+  exit 0;
+}
+# - - - - - - - - - - - - - - - - - - - - - - - - - - -
