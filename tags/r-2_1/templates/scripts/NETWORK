@@ -1,0 +1,42 @@
+#! /usr/bin/cfengine
+##############################################################
+#
+# cf.network - for informatik.uni-koeln.de
+#
+#################################################################
+
+control:
+   OutputPrefix = ("${cf_prefix}")
+   actionsequence  = ( editfiles )
+
+editfiles:
+   any::
+	# root login also allowed
+#	{ ${target}/etc/pam.d/login
+#	  HashCommentLinesContaining "pam_securetty.so"
+#	}
+
+	{ ${target}/etc/inetd.conf
+	  HashCommentLinesContaining "in.fingerd"
+	  HashCommentLinesContaining "in.talkd"
+	  HashCommentLinesContaining "in.ntalkd"
+	  HashCommentLinesContaining "in.rexecd"
+	  HashCommentLinesContaining "discard"
+	  HashCommentLinesContaining "daytime"
+	  HashCommentLinesContaining "identd"
+	  SetCommentStart	 "#"
+	  SetCommentEnd		 ""
+	}
+
+   NET_9::
+	# no tcpd for several services,
+	{ ${target}/etc/inetd.conf
+	  ReplaceAll "/usr/sbin/tcpd.+/usr/sbin/in.rshd"
+		With "/usr/sbin/in.rshd${tab}in.rshd"
+	  ReplaceAll "/usr/sbin/tcpd.+/usr/sbin/in.rlogind"
+		With "/usr/sbin/in.rlogind${tab}in.rlogind"
+	  ReplaceAll "/usr/sbin/tcpd.+/usr/sbin/rpc.rstatd" 
+		With "/usr/sbin/rpc.rstatd${tab}rpc.rstatd"
+	  ReplaceAll "/usr/sbin/tcpd.+/usr/sbin/rpc.rusersd" 
+		With "/usr/sbin/rpc.rusersd${tab}rpc.rusersd"
+	}
