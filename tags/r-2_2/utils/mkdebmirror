@@ -1,0 +1,35 @@
+#! /bin/sh
+
+# $Id$
+# Thomas Lange, lange@informatik.uni-koeln.de, (c) 2001
+
+# create partitial debian mirror using debmirror from Joey and rsync
+# http://cvs.kitenet.net/joey-cvs/bin/debmirror
+
+rsync_disks() {
+
+    # get the boot disks
+    rsync --delete -av $rsynchost::debian/dists/$1/main/disks-$arch $destdir/dists/$1/main/
+}
+
+rsynchost=ftp2.de.debian.org
+host=ftp2.de.debian.org
+destdir=/files/scratch
+
+arch=i386
+#debug="--debug"
+debug="$*"
+defopt="$debug --getcontents --arch=$arch --host=$host --nosource --dist=potato,sid,woody"
+
+echo "------------------ create mirror for debian ------------------"
+debmirror $destdir/debian $defopt --ignore="disks-$arch/" --adddir="dists/potato-proposed-updates"
+
+echo "------------------ create mirror for debian-non-US ------------------"
+debmirror $destdir/debian-non-US $defopt -r /debian-non-US -s non-US/main,non-US/contrib,non-US/non-free
+
+echo "------------------ create mirror for debian-security ------------------"
+# even one should not mirror the security site, but I will do it.
+debmirror $destdir/debian-security $debug --getcontents --nosource --arch=$arch --host=security.debian.org -r debian-security -d potato/updates --ignore=Release --ignore=Packages.gz --ignore=Contents-$arch.gz
+
+rsync_disks potato
+rsync_disks woody

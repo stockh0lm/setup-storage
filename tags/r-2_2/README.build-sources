@@ -1,0 +1,15 @@
+show differences to previous release
+
+cvs diff -r r-2_1
+
+
+create new version: dch -i
+
+do not forget to change file VERSION
+
+changelog: C-c C-f (change email)
+cvs tag r-2_0_2
+cvs co -P fai
+mv fai fai-2.0.2
+make veryclean
+fakeroot dpkg-buildpackage

@@ -1,0 +1,248 @@
+#! /usr/bin/perl
+
+# $Id$
+#*********************************************************************
+#
+# fcopy -- copy files using FAI classes and preserve directory structure
+#
+# This script is part of FAI (Fully Automatic Installation)
+# Copyright (C) 2000-2001 Thomas Lange, lange@informatik.uni-koeln.de
+# Universitaet zu Koeln
+#
+#*********************************************************************
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+# 
+# A copy of the GNU General Public License is available as
+# '/usr/share/common-licences/GPL' in the Debian GNU/Linux distribution
+# or on the World Wide Web at http://www.gnu.org/copyleft/gpl.html.  You
+# can also obtain it by writing to the Free Software Foundation, Inc.,
+# 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+#*********************************************************************
+
+my $version = "Version 1.7, 12-sep-2001";
+
+use File::Copy;
+use File::Compare;
+use File::Find;
+use File::Path;
+use File::Basename;
+use Getopt::Std;
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+sub copy_one {
+
+  # copy file $prefix/$source/$class to $target/$source
+  my ($prefix,$source,$target) = @_;
+  my ($class,$sourcefile,$destfile);
+  my $ps = "$prefix/$source";
+  my $tpath = "$target/" . dirname $source;
+
+  warn "copy_one: source: $source: ps: $ps tpath: $tpath\n" if $debug;
+
+  # $prefix/$source must be a directory
+  unless (-d $ps) { ewarn("$ps is not a directory. Not copied.");return }
+
+  # use the last class for which a file exists
+  foreach (@classes) { $class = $_,last if -f "$ps/$_"; }
+
+  unless (defined $class) {
+    ewarn("no matching file for any class for $source defined.");
+    # do not copy
+    $opt_d and -f $destfile and move($destfile,"$destfile.pre_fcopy");
+    return;
+  }
+  warn "using class: $class\n" if $debug;
+
+  $sourcefile = "$ps/$class";
+  $destfile = "$target/$source";
+  # do nothing if source and destination files are equal
+  compare($sourcefile,$destfile) || return;
+
+  # if destination is a symlink and -l is given, complain about it
+  if ($opt_l && -l $destfile) {
+    ewarn("Destination $destfile is a symlink");
+    return;
+  } 
+
+  # create subdirectories, if they do not exist
+  mkpath($tpath,$debug,0755) unless -d $tpath;
+
+  # save existing file, add suffix .pre_fcopy
+  # what should I, if $destfile is a symlink ?
+  move($destfile,"$destfile.pre_fcopy") if -f $destfile;
+  if (copy($sourcefile,$destfile)) {
+    print "fcopy: copied $sourcefile to $destfile\n" ;
+    set_mode($ps,$destfile,$class);
+  } else {
+    ewarn("copy $sourcefile to $destfile failed. $!") ;
+  } 
+}
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+sub name2num {
+
+  # convert names to numeric uid, gid
+  my ($user,$group) = @_;
+  my $uid = ($user  =~ /^\d+$/) ? $user  : getpwnam $user;
+  my $gid = ($group =~ /^\d+$/) ? $group : getgrnam $group;
+  warn "name2id $user = $uid ; $group = $gid\n" if $debug;
+  return ($uid,$gid);
+}
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+sub set_mode {
+
+  # set target file's owner, group, mode and time
+  # use owner,group,mode from -m or from the file file-modes or
+  # use the values from the source file
+  my ($sourcefile,$destfile,$class) = @_;
+  my ($uid,$gid,$owner,$group,$mode);
+  # get mtime,uid,gid,mode from source file
+  my ($stime,@defmodes) = (stat("$sourcefile/$class"))[9,4,5,2];
+
+  if ($modeset) { # use -m values
+    ($owner,$group,$mode) = @opt_modes;
+  } elsif (-f "$sourcefile/file-modes"){
+    ($owner,$group,$mode) = read_file_mode("$sourcefile/file-modes",$class);
+  } else { # use values from source file
+    ($owner,$group,$mode) = @defmodes;
+  }
+
+  ($uid,$gid) = name2num($owner,$group);
+  warn "chown/chmod u:$uid g:$gid m:$mode $destfile\n" if $debug; 
+  chown ($uid,$gid,     $destfile) || ewarn("chown $owner $group $destfile failed. $!");
+  chmod ($mode,         $destfile) || ewarn("chmod $mode $destfile failed. $!");
+  utime ($stime,$stime, $destfile) || ewarn("utime for $destfile failed. $!");
+}
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+sub check_mopt {
+
+  # save and check -m options
+  $modeset = 1;
+  my $n = @opt_modes = split(/,/,$opt_m);
+  ($n != 3) &&
+    die "fcopy: wrong number of options for -m. Exact 3 comma separated items needed.\n";
+   unless ($opt_modes[2] =~/^[0-7]+$/) {
+     die "fcopy: file mode should be an octal number. Value is: $opt_modes[2]\n";
+   }
+  $opt_modes[2] = oct($opt_modes[2]);
+}
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+sub read_file_mode {
+
+  my ($modefile,$class) = @_;
+  my ($owner,$group,$mode,$fclass,@defaults);
+
+  warn "reading $modefile" if $verbose;
+  open (MODEFILE,"<$modefile") || die "fcopy: can't open $modefile\n";
+  while (<MODEFILE>) {
+    ($owner,$group,$mode,$fclass) = split;
+    $mode = oct($mode);
+    # class found
+    return ($owner,$group,$mode) if ($fclass eq $class);
+    # when no class is specified use data for all classes
+    $fclass or @defaults = ($owner,$group,$mode);
+  }
+  close MODEFILE;
+  return @defaults if @defaults;
+  ewarn("no modes found for $class in $modefile");
+}
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+sub read_classes {
+
+  # read class names from a file
+  my $file = shift;
+  my @classes;
+
+  open(CLASS,$file) || die "fcopy: can't open class file $file. $!\n";
+  while (<CLASS>) {
+    next if /^#/;
+    push @classes, split;
+  }
+  close CLASS;
+  return @classes;
+}
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+sub ewarn {
+
+  # print warnings and set error to 1
+  $error = 1;
+  warn "fcopy: @_\n";
+}
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+sub read_files {
+
+  # read list of files
+  # lines starting with # are comments
+  my $file = shift;
+  my @list;
+
+  open(LIST,"<$file") || die "fcopy: Can't open file $file\n";
+  while (<LIST>) {
+    next if /^#/;
+    chomp;
+    push @list, $_;
+  }
+  return @list;
+}
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+sub usage {
+
+  print << "EOF";
+fcopy, copy files using classes. $version
+
+   Copyright (C) 2001 by Thomas Lange
+
+Usage: fcopy [OPTION] ... SOURCE ...
+
+   -c class[,class]     Define classes.
+   -C file              Read classes from file.
+   -d                   Remove target file if no class applies.
+   -D                   Create debug output.
+   -F file              Read list of sources from file.
+   -h                   Show summary of options.
+   -l                   Do not copy if destination is a symbolic link.
+   -m user,group,mode   Set user, group and mode for copied files.
+   -r                   Copy recursivly.
+   -s source_dir        Look for source files relative to source_dir.
+   -t target_dir        Copy files relativ to target_dir.
+   -v                   Create verbose output.
+
+Report bugs to <lange\@informatik.uni-koeln.de>.
+EOF
+  exit 0;
+}
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# main program
+
+$|=1;
+$error = 0;
+getopts('s:t:rm:vdDc:C:hF:l');
+$opt_h && usage;
+$opt_m && check_mopt();
+$verbose = $opt_v || $ENV{verbose} || 0;
+$debug   = $opt_D || $ENV{debug}   || 0;
+$source  = $opt_s || $ENV{FAI_FILES};
+$target  = $opt_t || $ENV{FAI_ROOT};
+# last class has highest priority
+@classes = reverse split /\s+/,$ENV{classes};
+$opt_c and @classes = split /,/,$opt_c;
+$opt_C and @classes = read_classes($opt_C);
+warn join ' ','Classes:',@classes,"\n" if $debug;
+$opt_F and @ARGV = read_files($opt_F);
+die "fcopy: source undefined\n" unless $source;
+die "fcopy: target undefined\n" unless $target;
+
+if ($opt_r) {
+  my $pathes = join ' ',@ARGV;
+# TODO: use File::Find
+  @ARGV = split /\n/, `cd  $source ; find $pathes -links 2`;
+}
+
+foreach (@ARGV) { copy_one($source,$_,$target); }
+exit $error;
