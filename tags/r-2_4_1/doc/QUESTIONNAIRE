@@ -1,0 +1,27 @@
+QUESTIONAIRE 
+------------
+july, 11, 2000
+
+
+I'm very interessed in your expiriences with fai, bug reports,..
+Please send this questionaire to
+
+fai@informatik.uni-koeln.de
+
+Thomas Lange
+----------------------------------------------------------------
+Which version of fai you are using?
+
+How do you boot your host?
+            from floppy: 
+       via network card:
+   type of network card:
+
+Do you use bootp or dhcp?
+
+Does the default kernel recognize all your hardware?
+     Which drivers are missing:
+
+How many hosts have you installed using fai?
+
+Additional comments:
