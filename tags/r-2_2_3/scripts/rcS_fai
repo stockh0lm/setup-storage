@@ -1,0 +1,138 @@
+#!/bin/bash
+# $Id$
+#*********************************************************************
+#
+# rcS_fai -- main installation script executed after booting
+#
+# This script is part of FAI (Fully Automatic Installation)
+# (c) 1999-2001 by Thomas Lange, lange@informatik.uni-koeln.de
+# Universitaet zu Koeln
+#
+#*********************************************************************
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License for more details.
+# 
+# A copy of the GNU General Public License is available as
+# `/usr/share/common-licences/GPL' in the Debian GNU/Linux distribution
+# or on the World Wide Web at http://www.gnu.org/copyleft/gpl.html. You
+# can also obtain it by writing to the Free Software Foundation, Inc.,
+# 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+#*********************************************************************
+
+#set -xv # for full debugging
+
+# some variables
+timeout=30 # bootpc timeout
+FAI_VERSION=FAIVERSIONSTRING
+classes="DEFAULT $HOSTNAME LAST"  # default before defining classes
+rcslog=/tmp/rcS.log
+stamp=/tmp/FAI_INSTALLATION_IN_PROGRESS
+romountopt="-o ro,rsize=8192"
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+fai_init() {
+
+    # everything that must be done, before the ramdisk is available
+    set -a # now export all variables
+    . /usr/share/fai/subroutines
+    . /etc/fai.conf
+    DEBIAN_FRONTEND=Noninteractive
+    # location of master files for cfengine
+    FAI_FILES=/fai/files
+    # local disks are mounted on this directory
+    FAI_ROOT=/tmp/target
+    ROOTCMD="chroot $FAI_ROOT"
+    # no chroot needed
+    [ "FAI_ROOT" = '/' ] && ROOTCMD=
+    diskvar=/tmp/disk_var.sh
+    moduleslog=/tmp/modules.log
+
+    # for cfengine
+    chroot=/usr/sbin/chroot
+    cf_prefix="cfengine:"
+    files=$FAI_FILES
+    target=$FAI_ROOT
+
+    umask 022
+    PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/sbin:/usr/local/bin:
+    ifup lo
+    [ -x /sbin/portmap ] && /sbin/portmap
+    mount -n -t proc proc /proc
+    mount -n -t devpts devpts /dev/pts
+    mount -n -o remount,rw,rsize=8192 /dev/root /
+    cat /proc/kmsg >/dev/tty4 &
+    create_ramdisk
+    trap 'echo "Now rebooting";faireboot' INT QUIT
+
+    {
+    cat <<-EOF
+
+    -----------------------------------------------------
+      $FAI_VERSION
+      Fully Automatic Installation for Debian GNU/Linux
+
+      Copyright (c) 1999-2001, Thomas Lange
+              lange@informatik.uni-koeln.de
+    -----------------------------------------------------
+
+EOF
+
+    save_dmesg
+    } > >( tee -a $rcslog )  2>&1
+}
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+task_install() {
+
+    > $stamp
+
+    save_dmesg
+    load_keymap_consolechars
+
+    task partition
+    task mountdisks
+    task extrbase
+    task mirror
+    task updatebase
+    task instsoft
+    task configure
+    task finish
+    date
+    echo -e "FAI finished.\a"
+    task chboot
+
+    rm -f $stamp
+    # save again, because new messages could be created
+    save_dmesg
+    task savelog
+
+    if [ -f $stamp ]; then
+	echo "Error while executing commands in subshell."
+	echo "$stamp was not removed."
+	die "Please look at the log files in /tmp for errors."
+    fi
+    wait_for_jobs
+    task faiend
+}
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Main routine
+
+# callarg=$1
+fai_init
+{
+task confdir
+task setup
+task defclass
+task defvar
+} > >( tee -a $rcslog )  2>&1
+
+# if you want to recall rcS_fai
+# [ -n $callarg ] && FAI_ACTION=$callarg
+
+(task action > >( tee -a $rcslog ) 2>&1)

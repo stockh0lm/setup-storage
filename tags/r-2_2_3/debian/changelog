@@ -1,0 +1,301 @@
+fai (2.2.3) unstable; urgency=low
+
+  * added ATOMCLIENT in disk_config
+  * setup_harddisks detects harddisk even if no valid partition table is
+    available
+  * added dosfstools to nfsroot
+  * added .rhosts for ATOMCLIENTS
+  * added detect, discover and lsdev to sysinfo
+  * make-fai-nfsroot: now ash compatible (closes: #117431)
+    clean apt cache before creating base.tgz, make
+    liloconf silent, verbose output can be redirected to a file
+    call mknbi only for kernels using BOOTP, added sysutils package
+  * scripts/DEFAULT: chmod 1777 the defined scratch partition
+  * wake on LAN section added to fai guide
+  * reiserfs patch added to setup_harddisks
+  * nfs-user-server support for woody
+  * DEFAULT: scratch directories are writeable for all users
+  * utils moved from doc directory to /usr/share/fai
+  * install_packages: check all package names, remove unknown packages
+    from install list; PRELOAD support for url of type file:
+  * dpkg-divert is quiet unles verbose is set
+  * make diversion for broken liloconfig (closes: #113906)
+  * added class NOGETTY
+  * install_packages: add code for command PACKAGES hold
+  
+ -- Thomas Lange <lange@debian.org>  Thu,  8 Nov 2001 17:01:02 +0100
+
+fai (2.2.2) unstable; urgency=low
+
+  * bug fix in get_dhcp_info()
+  * added jmon to BEOWULF
+  
+ -- Thomas Lange <lange@debian.org>  Wed, 10 Oct 2001 10:52:35 +0200
+
+fai (2.2.1) unstable; urgency=low
+
+  * bugs in mkdebmirror fixed
+  * replace compat from nsswitch.conf templates (closes: #113902)
+  * FAI_FLAGS can contain comma or space separatedd list of flags
+  * echo device before BOOTP request
+  * all_hosts uses netgroup allhosts
+  
+ -- Thomas Lange <lange@debian.org>  Fri,  5 Oct 2001 17:19:14 +0200
+
+fai (2.2) unstable; urgency=low
+
+  * fix lilo bug in make-fai-bootfloppy
+  * user can define their own action using FAI_ACTION and
+    creating a command /fai/hooks/$FAI_ACTION
+  * rcS_fai rearranged; move a lot of subroutines into subroutines
+  * hooks can force rcS_fai to skip the default task
+  * timeout for bootpc can be set in rcS_fai
+  * new subroutine ether_info sets variable $ethers
+  * unused subroutine myyes removed
+  * prepare-apt.log renamed to updatebase.log
+  * task_sysinfo only probes available disks
+  * install_packages: support for new task packages using tasksel
+  * get_bootp_info() and get_dhcp_info() uses multiple network interfaces
+    via variable $netdevices
+  * layout of local Debian mirror for non-US changed
+  * mkdebmirror: non-US has new location, minor bugs removed
+  * rmdivert moves distrib.dpkg-new files
+  * new chapter about installing a Beowulf cluster
+  * bug in list_disks() fixed
+  * diskless class is automaticly defined, improved diskless hook
+  * package nfs-common added to nfsroot for lockd, statd
+  * support for additional variable definitions and classes
+  * new utilities: all_hosts, rshall and softupdate
+  * new examples for Beowulf cluster: atoms, ATOMCLIENT, BEOWULF
+  * defvar and devclass are now called before task_action
+  * bug fix: fcopy down not convert from octal when using file-modes
+  * all file in /files/root/ use file-modes
+  * tlink can show symlink of a host or all file in /boot/fai
+  * new class NOSECURETTY, NOTCPD
+  
+ -- Thomas Lange <lange@debian.org>  Fri, 14 Sep 2001 14:35:49 +0200
+
+fai (2.1) unstable; urgency=low
+
+  * user visible changes are now reported in NEWS file
+  * setup_harddisk: do not check if root partition is in first 8GB, do not
+    check if it's a primary partition
+  * make-fai-nfsroot: uses debbootstrap if FAI_DEBOOTSTRAP is
+    defined (closes: #100914)
+    use /etc/apt/sources.list is FAI_SOURCES_LIST is undefined
+  * call some commands with prefix LC_ALL=C, so diffrent locale does
+    not change the output
+  * ftar: do not call tar with option I, j or z, use pipe instead
+  * rcS_fai: added hook support, use all ntpserver for ntpdate, always
+    extract base.tgz, no version number in base.tgz; read_config() removed;
+    move some task from fai_init to fai_setup to get their output;
+    create etc/hosts with fqdn in target directory; $revclasses contains
+    classes in reversed order
+  * new flag createtv; controls if ctrl-c will reboot or give a shell and
+    if two additional terminals will be available
+  * debhelper compatability level now 2
+  * woody support: using debootstrap, different package lists
+  * added class DISKLESS
+  * subroutine disk_info rewritten, ignores cdrom
+  * fai-setup: do not generate ssh key if already existing
+  * cat <<EOF calls corrected
+  * mkdebmirror now mirrors also testing and unstable by default
+  * grub support in scripts/BOOT and scripts/FAI_BOOTPART
+  * new utility chkdebnames check debian package names
+  * new script device2grub convert normal device names to grub device names
+    
+ -- Thomas Lange <lange@debian.org>  Fri, 20 Jul 2001 11:55:29 +0200
+
+fai (2.0.2) unstable; urgency=low
+
+  * typo in ftp Debian mirror fixed
+  * corrected wrong cvs tag, some more little changes
+
+ -- Thomas Lange <lange@debian.org>  Thu, 28 Jun 2001 14:11:23 +0200
+
+fai (2.0.1) unstable; urgency=low
+
+  * Default Debian mirror access now via ftp. This can take much time to
+    download the required packages. (closes: #101596)
+  * Check if LOGUSER is defined, (closes: #101620)
+  * wget now recommends, (closes: #101594)
+  * Use ntpdate if a ntp server is defined (tag nt in bootptab),
+    (closes:  #101899) 
+  * DEFAULT script writes fqdn and short hostname into etc/hosts,
+    (closes: #101820)
+  * Bug fix. Check if immgen executable is available.
+  
+ -- Thomas Lange <lange@debian.org>  Thu, 28 Jun 2001 13:33:33 +0200
+
+fai (2.0) unstable; urgency=low
+
+  * first upload to Debian archive
+  * kernel-2.2.19 support
+  * order of classes now (with increasing priority):
+    DEFAULT, <other classes>, $HOSTNAME, LAST
+  * architecture is now also a class (see S01alias.sh)
+  * class/*.source renamed to class/*.var, because they define variables
+  * new description of all classes
+  * $moduleslist is the list of modules that will be loaded by the new system
+  * names of examples changed to make them more comprehensible
+  * FAI_PACKAGEDIR now FAI_DEBMIRROR
+  * new fcopy script for copying files with classes
+  * new ftar script for extracting tar files with classes
+  * manual pages for fcopy, ftar
+  * converted many cfengine scripts to shell scripts
+  * several classes and scripts removed and rearranged
+  * S90partitions.pl replaces the old shell version
+  * add FAI_BOOTPART class and scripts
+  * klogd, syslogd running during installation
+  * make-fai-bootfloppy can take additional parameters for the kernel and
+    supports multiple network interface cards
+  * kernel append parameters define variables in rcS_fai
+  * added subroutines ifclass, rwmount
+  * new command bootsector can enable, disable or list magic number of
+    boot sector
+  * make many variables local
+  * better debugging of shell scripts
+  * remote login has all subroutines available
+  * faireboot -s saves log files to install server
+  * sfdisk call removed from subroutines and Fai.pm, since it's not
+    portable; unfortunately setup_hardisk still using it
+  * new mount2dir command; this task is removed from setup_hardisk
+  * files in package_config can use dpkg --get-selections format
+  * redundant packages in package_config/COMPILE removed
+  * PRELOADRM feature for package_config
+  * comments in files in package_config/ are now everything after a #, not
+    only at the beginning of a line
+  * lvm not in nfsroot by default, grub now included
+  * access from install clients to server can be done via rsh/rcp or
+    ssh/scp (see fai.conf)
+  * modprobe displays less errors
+  * templates now stored in /usr/share/fai
+  * all release timestamp in this changelog until version 1.4.2 are
+    wrong; they indicate the time when I started hacking the next version;
+    these are the correct release dates: 
+    Jun 20  2000 fai_1.1beta2.tar.gz
+    Jul 11  2000 fai_1.2.0beta1.tar.gz
+    Oct 26  2000 fai_1.3.0test1.tar.gz
+    Nov  6  2000 fai_1.3.0test2.tar.gz
+    Nov 23  2000 fai_1.4.0.tar.gz
+    Dec  7  2000 fai_1.4.1.tar.gz
+    Dec 12  2000 fai_1.4.2.tar.gz
+
+ -- Thomas Lange <lange@debian.org>  Tue, 15 May 2001 14:28:31 +0200
+
+fai (1.4.2) unstable; urgency=low
+
+  * add wget to suggests list
+  * xviddetect called for FAI_ACTION=sysinfo
+  * fai.conf: added missing / in ftp definition of FAI_SOURCES_LIST
+  * added parted to nfsroot and package_config/MINI_SOFT
+  * FAI_KEYMAP files can also be located in /fai/files
+  * added subroutine load_keymap_consolechar (was included in rcS_fai)
+    keymap now called correctly
+  * the little FAI banner is now printed on startup
+  * variable hdparm tunes your hard disks and creates rcS.d script
+  
+ -- Thomas Lange <lange@debian.org>  Mon, 11 Dec 2000 16:36:31 +0100
+
+fai (1.4.1) unstable; urgency=low
+
+  * swap order of class ALL and hostname
+  * CLASS ALL renamed to DEFAULT
+  * templates/class/S*.source files renamed
+  * scripts in class/ reorganized. First *.{sh,pl) are executed, then
+    $class.source are sourced for all defined classes
+  * install kernels removed, now included in package fai-kernels
+  * hdparm available in nfsroot, sysinfo prints hparm -i
+  * classs/ATA33.source can tune harddisk during installation
+  * class DEBIAN_DEVEL commented out, because this software package list
+    mostly segfaults dpkg
+  * base?_?.tgz now included in nfsroot; BASETGZ not needed any more
+  * bug fixed: setup_harddisk don't mount preserved partitions if mount
+    point is not in root directory
+  * bug fixed: no dns support during chroot in make-fai-nfsroot
+    
+ -- Thomas Lange <lange@debian.org>  Wed, 29 Nov 2000 11:34:41 +0100
+
+fai (1.4.0) unstable; urgency=low
+
+  * faireboot is faster and more reliable
+  * package depends on nfs-server
+  * keymap created by shell script ALL (uses $FAI_KEYMAP)
+  * mk3comimage removed (uses non free software), now netboot is used
+  * first version of the FAI Guide included
+  * use dpkg-divert to fake some programs (solves many problems)
+  * yes pipes <CR> to apt-get during installation
+  * all definitions from global.conf are moved to fai.conf
+  * make-fai-nfs now uses chroot when calling apt-get
+    so nfsroot must not use the same Debian distribution as the server
+  * $MNTPOINT is mount point for Debian mirror
+  * postinst tasks are moved to fai-setup script
+  * $UTC, $FAI_CONFIGDIR added to fai.conf
+  * bug fixed: loopback device was not set up
+  
+ -- Thomas Lange <lange@debian.org>  Mon,  6 Nov 2000 12:20:00 +0100
+
+fai (1.3.0test2) unstable; urgency=low
+
+  * loopback device is set up during installation
+  * create resolv.conf via script RESOLV instead of using cfengine
+  * printers are defined in class/ not in cfengine script
+  * mount nfs directories using rsize=8192
+  * bug fixed: make-fai-nfsroot removes /boot/*-$KERNELVERSION
+
+ -- Thomas Lange <lange@informatik.uni-koeln.de>  Fri,  3 Nov 2000 10:26:03 +0100
+
+fai (1.3.0test1) unstable; urgency=low
+
+  * kernel in nfsroot is now build with kernel-package (make-kpkg)
+  * installkernel now supports loadable modules
+  * class/S05modules.sh can load modules (example global.mod)
+  * add script make-fai-bootfloppy
+  * client's timezone during installation is now the same as on server
+  * FAI_ACTION sysinfo now mounts all local disk and searches for fstab
+  * add support for expect scripts
+  * add nfs-kernel-server support
+  * do not create account fai if it already exists (e.g when using NIS)
+  * new format for keymap and consolefont definition
+  
+ -- Thomas Lange <lange@informatik.uni-koeln.de>  Mon,  9 Oct 2000 18:08:02 +0200
+
+fai (1.2.0beta1) unstable; urgency=low
+
+  * two virtual terminals available (press alt-F2 or alt-F3)
+
+  * make-fai-nfsroot removes pcmcia-cs
+    installs additionals packages: lvm raidtool2 ext2resize sshd dhcp-lient
+    flag verbose controls output level
+    nfsroot is created without any interaction
+    base2_2.tgz is fetched via wget, if it's not found in /tmp
+
+  * new start-stop-daemon script instead of symlink to fake it
+  
+  * configuration for kernel 2.2.17
+  
+  * start sshd during installation for remote access;
+    add "sshd" to FAI_FLAGS to enable this
+    remote reboot possible via: ssh -l root hostname faireboot
+  
+  * additional dhcp support available (bootp is still the default)
+    
+  * cvs repository available
+    
+ -- Thomas Lange <lange@informatik.uni-koeln.de>  Fri, 30 Jun 2000 13:41:13 +0200
+
+fai (1.1beta2) unstable; urgency=low
+
+  * PRELOAD feature, faireboot added
+
+ -- Thomas Lange <lange@informatik.uni-koeln.de>  Tue, 20 Jun 2000 16:29:14 +0200
+
+fai (1.1beta1) unstable; urgency=low
+
+  * Initial Release.
+
+ -- Thomas Lange <lange@informatik.uni-koeln.de>  Wed,  7 Jun 2000 11:16:23 +0200
+
+Local variables:
+mode: debian-changelog
+End:
