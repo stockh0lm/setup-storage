@@ -1,0 +1,28 @@
+TODO list for FAI, may 2, 2001
+--------------------------------
+  
+0. To be on holiday
+1. Support other Linux distributions (Red Hat, Suse,...). This should
+   be the work for other people.
+2. Booting a kernel with pcmcia support for automatic installation of
+   notebooks and laptops; if the kernel supports this, no problem for me
+3. readable log files may contain encrypted passwords
+4. redesign of setup_harddisk tool
+   use mkfs instead of mke2fs
+   support for other filesystem types and raid
+   preserve partition layout, preserve data
+   always clean /, /var and /usr
+5. complete tutorial, manual, user's guide,..
+6. debconf support
+
+These are the most important tasks I will do next time: "Release FAI 2.0" 0 5 4
+
+-------
+Wishes:
+-------
+
+- apt-get remove should really purge
+- T175 additional mount (eg. for /usr/local)
+- stop fai installation ( killall -STOP ....) script
+  faisstop (kill apt-get, yes, ...)
+- diskless support

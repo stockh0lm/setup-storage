@@ -1,0 +1,6 @@
+PACKAGES install
+kernel-source-`echo $KERNELVERSION`
+kernel-doc-`echo $KERNELVERSION`
+kernel-package
+libncurses5-dev
+pcmcia-source
