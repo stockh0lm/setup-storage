@@ -1,0 +1,33 @@
+# default values for installation. You can override them in your *.var files
+
+FAI_CONSOLEFONT=
+FAI_KEYMAP=us-latin1
+
+# Set UTC=yes if your system clock is set to UTC (GMT), and UTC=no if not.
+UTC=yes
+time_zone=Europe/Berlin
+
+# root password for the new installed linux system; pw is "fai"
+rootpw="56hNVqht51tzc"
+
+# packages in /fai/files/packages/ that are installed to the new system 
+# used in scripts/DEFAULT/S01. This directory should be a simple repository.
+# you can also include your specific kernel-image package
+kernelversion=_KERNELVERSION_ # for the packages  kernel-doc and kernel-source
+addpackages="kernel-image-_KERNELVERSION_-2-386"
+
+# lilo parameter for the new installed kernel
+#liloappend=
+# modules that will be loaded by the new system, not during installation
+# these modules will be written to /etc/modules
+moduleslist="3c59x usbkbd usb-uhci keybdev mousedev hid"
+
+# link in /boot/fai to an image that boots from local disk, if BOOTP
+# is used
+#TFTPLINK=ant_local_disk
+
+# see DATALESS.var
+hserver=
+bserver=
+# list of printers, used by scripts/NETWORK/S40
+printers=
