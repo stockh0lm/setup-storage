@@ -1,0 +1,5 @@
+# permission for a list of hosts
+faiclients	faiserver faiclient01 kueppers
+
+# this definition grants permission for every host
+# faiclients (,,)

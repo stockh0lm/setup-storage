@@ -1,0 +1,439 @@
+#!/bin/bash
+# $Id$
+#*********************************************************************
+#
+# rcS_fai -- main FAI installation script executed after booting
+#
+# This script is part of FAI (Fully Automatic Installation)
+# (c) 1999, 2000 by Thomas Lange, lange@informatik.uni-koeln.de
+# Universitaet zu Koeln
+#
+#*********************************************************************
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+# 
+# A copy of the GNU General Public License is available as
+# `/usr/share/common-licences/GPL' in the Debian GNU/Linux distribution
+# or on the World Wide Web at http://www.gnu.org/copyleft/gpl.html.  You
+# can also obtain it by writing to the Free Software Foundation, Inc.,
+# 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+#*********************************************************************
+
+#set -xv # for full debugging
+
+# local variables
+FAI_VERSION=FAIVERSIONSTRING
+rcslog=/tmp/rcS.log
+bootlog=/tmp/bootpc.log
+dhcplog=/tmp/dhcp.log
+stamp=/tmp/FAI_INSTALLATION_IN_PROGRESS
+globalconf=/fai/fai_config/global.conf
+logdir=/var/log/fai
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+install_base() {
+
+    # mount debian directory; get baseX_Y.tgz and unpack it
+    if [ "$FAI_PACKAGEDIR" ]; then
+	mkdir -p $FAI_ROOT/$MNTPOINT
+	mount -o ro,rsize=8192 $FAI_PACKAGEDIR $FAI_ROOT/$MNTPOINT ||
+	    die "Can't mount $FAI_PACKAGEDIR"
+    fi
+    extract_base /var/tmp/base?_?.tgz
+}
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+read_config() {
+
+    # read global config for FAI
+    if [ -r $globalconf ]; then
+	[ "$verbose" ] && echo "Reading $globalconf"
+	. $globalconf
+    fi
+
+    hostconf=/fai/fai_config/$HOSTNAME
+    if [ -r $hostconf ]; then
+	[ "$verbose" ] && echo "Reading $hostconf"
+	. $hostconf
+    fi
+}
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+define_variables() {
+
+    # after all classes are defined, define variables
+    # source files, which can set variables
+    cd /fai/class
+    for class in $classes ; do
+	if [ -f $class.source ]; then
+	    [ "$verbose" ] && echo "Executing $class.source"
+	    [ "$debug" ] && set -v
+	    . $class.source </dev/null
+	    [ "$debug" ] && set +v
+	fi
+    done
+}
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+define_classes() {
+
+    cd /fai/class
+    echo "Now defining classes"
+
+    # alphabetical sort is important
+    for f in `ls S[0-9]*.{sh,pl}` ; do
+	if [ -x $f -a -f $f ]; then
+	[ "$verbose" ] && echo "Executing $f"
+
+	case $f in
+	    *.pl) newclasses=`perl $f </dev/null` ;;
+	    *.sh) newclasses=`sh $f </dev/null | grep -v '^#'` ;;
+	esac
+	[ "$debug" ] && echo "newclasses= $newclasses"
+	classes="$classes $newclasses"
+	fi
+    done
+
+    for class in $classes ; do
+	echo $class >> /tmp/FAI_CLASSES
+    done
+
+    # define classes as: a.b.c.d for cfengine -D
+    # this doesn't work without echo
+    cfclass=`echo $classes`
+    cfclass=${cfclass// /.}
+    [ "$debug" ] && echo "cfclass: $cfclass"
+}
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+fai_init() {
+
+    set -a # now export all variables
+
+    # /etc/rcS_fai.conf is not /etc/fai.conf on the server
+    . /etc/rcS_fai.conf
+    . /usr/share/fai/subroutines
+    # ulimit -c 90000
+    FAI_ARCH=`dpkg --print-installation-architecture`
+    # location of master files for cfengine
+    FAI_FILES=/fai/files
+    # local disks are mounted on this directory
+    FAI_ROOT=/tmp/target
+    diskvar=/tmp/disk_var.sh
+    moduleslog=/tmp/modules.log
+
+    # for cfengine
+    chroot=/usr/sbin/chroot
+    cf_prefix="cfengine:"
+    files=$FAI_FILES
+    target=$FAI_ROOT
+
+    umask 022
+    PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/sbin:/usr/local/bin:
+    DEBIAN_FRONTEND=Noninteractive
+    ifup lo
+    mount -n -t proc proc /proc
+    mount -n -t devpts devpts /dev/pts
+    mount -n -o remount,rw,rsize=8192 /dev/root /
+    cat /proc/kmsg >/dev/tty4 &
+    create_ramdisk
+    trap 'echo "You can reboot with faireboot";bash' INT QUIT
+    save_dmesg
+
+    dmesg | grep -q "Sending DHCP requests" && get_dhcp_info
+    dmesg | grep -q "Sending BOOTP requests" && get_bootp_info
+
+    # this reads nfsroot/fai/fai_config/
+    # only usefull, if you don't use bootpc or dhcp
+    read_config
+
+    # create a resolv.conf
+    if [ "$DNSSRVS" ]; then
+	[ "$DOMAIN" ] && echo "domain $DOMAIN" >/tmp/etc/resolv.conf
+	for dnshost in $DNSSRVS ; do
+	    echo "nameserver $dnshost" >>/tmp/etc/resolv.conf
+	done
+    fi
+}
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+fai_setup() {
+
+    echo <<-EOF
+
+    ------------------------------------------------------
+    $FAI_VERSION
+    Fully Automatic Installation for Debian GNU/Linux
+    ------------------------------------------------------
+    Press ctrl-c to interrupt FAI and to get a shell
+
+EOF
+    [ "$TIMESRVS_1" ] && rdate $TIMESRVS_1
+    echo -n "Kernel parameters:"; cat /proc/cmdline
+    # TODO: eval kernel parameters
+
+    [ "$FAI_LOCATION" ] || die "$FAI_LOCATION not defined."
+    mount -o ro,rsize=8192 $FAI_LOCATION /fai &&
+	    echo "/fai mounted from $FAI_LOCATION"
+
+    read_config # read config from mounted $FAI_LOCATION
+
+    DNSDOMAIN=$DOMAIN     # cfengine 1.5.3 can't use $DOMAIN
+    ststd=$FAI_ROOT/sbin/start-stop-daemon
+
+    for flag in $FAI_FLAGS; do
+	[ "$verbose" ] && echo "FAI_FLAGS: $flag=1"
+	eval "$flag=1"
+    done
+
+    devnull=/dev/null
+    [ "$debug" ] && devnull=/dev/console
+
+#    not yet used
+#    if [ "$FAI_EXTRA_MOUNT" ]; then
+#	mount -o ro -n $FAI_EXTRA_MOUNT && echo "$FAI_EXTRA_MOUNT mounted"
+#    fi
+
+    # support for other keyboards
+    if [ "$FAI_KEYMAP" ]; then
+	for mapname in $FAI_KEYMAP; do
+	    keymapfile=`find /usr/share/keymaps/ \ 
+	      ! -type d -name $mapname.kmap.gz -o -name $mapname.inc.gz`
+	    [ "$keymapfile" ] && keymaps="$keymaps $keymapfile"
+	done
+
+	if [ "$keymaps" ]; then
+	    loadkeys $keymaps
+	else
+	    echo "FAI_KEYMAP $FAI_KEYMAP not found"
+	fi
+    fi
+
+    [ "$FAI_CONSOLEFONT" ] &&
+	consolechars -v -f /usr/share/consolefonts/$FAI_CONSOLEFONT.psf.gz
+    # create two virtual terminals
+    openvt bash; openvt bash
+    [ "$sshd" -a -x /usr/sbin/sshd ] && /usr/sbin/sshd
+}
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+fai_sysinfo() {
+
+    # show some system information and save it on the server
+    ( # execute in a subshell to get all output
+	if [ -x /usr/local/bin/fai_sysinfo ]; then
+	    /usr/local/bin/fai_sysinfo
+	else
+	    sfdisk -s
+	    sfdisk -l
+	    lspci
+	    [ -f /proc/scsi/scsi ] && cat /proc/scsi/scsi
+	    hdparm -iv /dev/hd[a-h]
+	    #si -p -o shm
+	fi
+	mount_local_disks
+	fstab_mount
+    ) > >( tee -a $rcslog )  2>&1
+    define_classes
+    define_variables
+    save_dmesg
+    save_log_remote
+    fai_boot
+}
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+make_backup() {
+
+# FAI_BACKUP_LIST contains backup options
+# proposed format: "hda1 hda3 hda12 sda2 '0 0 1 1'"
+#                  list of devices  list of backup levels
+# this subroutine is not yet tested, not yet used
+# It's only an idea how a backup could be made
+    mount_local_disks
+    for partition in $SAVE_DEVICES ; do
+	# tar cf - $FAI_ROOT/$partition | rsh -l $LOGUSER $SERVER dd if= of=$partition.tar
+	dump 0f $LOGUSER@$SERVER:backup/$HOSTNAME/$partition.dmp $FAI_ROOT/$partition
+    done
+}
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+fai_configure() {
+
+# execute scripts; cfengine, shell, perl and expect scripts are known types
+cd /fai/scripts
+
+for class in $classes ; do
+if [ -x $class -a -f $class ]; then
+    filetype=`file $class`
+    case $filetype in
+
+	*"shell script"*)
+	    echo "Executing shell: $class"
+	    echo "=====   shell: $class   =====" >> /tmp/shell.log 2>&1
+	    ./$class >> /tmp/shell.log 2>&1
+	;;
+
+	*"cfengine script"*)
+	    echo "Executing cfengine: $class"
+	    echo "=====   cfengine: $class   =====" >> /tmp/cfengine.log 2>&1
+	    ./$class --no-lock -v -f $class -D${cfclass} >> /tmp/cfengine.log 2>&1
+	;;
+
+	*"perl script"*)
+	    echo "Executing perl: $class"
+	    echo "=====   perl: $class   =====" >> /tmp/perl.log 2>&1
+	    ./$class >> /tmp/perl.log 2>&1
+	;;
+
+	*"expect script"*)
+	    echo "Executing expect: $class"
+	    echo "=====   expect: $class   =====" >> /tmp/expect.log 2>&1
+	    ./$class >> /tmp/expect.log 2>&1
+	;;
+
+
+	*) echo "File $class has unsupported type $filetype." ;;
+    esac
+fi
+done
+}
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+prepare_apt() {
+
+    # ftp and http needs resolv.conf in chroot environment
+    cp /tmp/etc/resolv.conf $FAI_ROOT/etc
+    cp /etc/apt/* $FAI_ROOT/etc/apt/
+    # some packages must access /proc even in chroot environment
+    chroot $FAI_ROOT mount /proc /proc -t proc
+
+    chroot $FAI_ROOT apt-get update
+    chroot $FAI_ROOT apt-get check
+    [ $? -ne 0 ] && chroot $FAI_ROOT apt-get -f -y install </dev/null 
+    chroot $FAI_ROOT dpkg -C
+    [ $? -ne 0 ] && nice yes ''|  chroot $FAI_ROOT dpkg --configure -a 
+    chroot $FAI_ROOT apt-get -f -y remove pcmcia-cs
+    chroot $FAI_ROOT apt-get -f -y upgrade </dev/null
+
+    # fake some programs
+    mkdivert /usr/sbin/xserver-configure
+# or mkdivert  ypbind; rm ypbind
+#    mkdivert /usr/sbin/ypbind
+    mkdivert /usr/bin/ypwhich
+    mkdivert /sbin/start-stop-daemon
+    cp /sbin/start-stop-daemon $ststd
+}
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+fai_install() {
+
+    > $stamp
+
+    define_classes > >( tee -a $rcslog )  2>&1
+    define_variables > >( tee -a $rcslog )  2>&1
+    save_dmesg
+    ( # execute in a subshell to get all output
+
+    echo "Partitioning local harddisks"
+    setup_harddisks -X > /tmp/format.log 2>&1
+#    [ ?$ -ne 0 ] && die "Error in setup_harddisk. Look at /tmp for log file"
+
+    if [ -s $diskvar ]; then
+	. $diskvar
+    else
+	cat /tmp/format.log
+	die "Error: $diskvar not found."
+    fi
+
+    install_base
+
+    echo "Installing software may take a while"
+    if [ "$debug" ]; then
+	prepare_apt | tee -a /tmp/prepare-apt.log 2>&1
+    else
+	prepare_apt  > /tmp/prepare-apt.log 2>&1
+    fi
+
+    if [ "$debug" ]; then
+	install_packages | tee -a /tmp/software.log
+    elif [ "$verbose" ]; then
+	nice yes '' | install_packages | tee -a /tmp/software.log
+    else
+	nice yes '' | install_packages >> /tmp/software.log 2>&1
+    fi
+
+    fai_configure
+
+    umount -n $FAI_ROOT/proc
+    # undo fake of programs
+    rmdivert /sbin/start-stop-daemon
+    rmdivert /usr/sbin/xserver-configure
+#    rmdivert /usr/sbin/ypbind
+    rmdivert /usr/bin/ypwhich
+
+    case "$UTC" in
+       no|"") hwopt="--localtime" ;;
+       yes)   hwopt="--utc"       ;;
+    esac
+    chroot $FAI_ROOT hwclock $hwopt --systohc
+    date
+    echo -e "FAI finished.\a"
+
+    # now change boot device (local disk or network)
+    [ "$FAI_USER" -a "$TFTPLINK" ] &&
+	rsh -l $FAI_USER ${SERVER} \
+	    "cd /boot/fai; rm -f $HOSTNAME; ln -s $TFTPLINK $HOSTNAME"
+
+    rm -f $stamp
+    # a second time, because loading modules can create new messages
+    save_dmesg
+    ) > >( tee -a $rcslog )  2>&1
+
+    save_log_local
+    save_log_remote
+
+    if [ -f $stamp ]; then
+	echo "Error while executing commands in subshell."
+	echo "$stamp was not removed."
+	die "Please look at the log files in /tmp for errors."
+    fi
+
+    wait_for_jobs
+    fai_boot
+}
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Main routine
+
+# callarg=$1
+fai_init
+fai_setup  > >( tee -a $rcslog ) 2>&1
+
+# if you want to recall rcS_fai
+# [ -n $callarg ] && FAI_ACTION=$callarg
+
+case $FAI_ACTION in
+
+    install)
+	echo Performing FAI installation. All data may be overwritten !
+	fai_install
+	;;
+    sysinfo)
+	echo Showing system information.
+	fai_sysinfo
+	;;
+    showclasses)
+	define_classes
+	define_variables
+	echo The defined classes are:
+	echo $classes
+	echo The classes are also saved in /tmp/FAI_CLASSES
+	die Now you have shell.
+	;;
+    backup)
+	echo Doing backup of multiple partitions.
+	echo Sorry but not yet tested !
+	die
+	make_backup
+	;;
+    *)
+	echo ERROR: FAI action $FAI_ACTION not defined.
+	fai_boot
+	;;
+esac
