@@ -1,0 +1,23 @@
+# default values for installation. You can override them in your *.var files
+
+FAI_CONSOLEFONT=
+FAI_KEYMAP=us-latin1
+
+# Set UTC=yes if your system clock is set to UTC (GMT), and UTC=no if not.
+UTC=yes
+time_zone=Europe/Berlin
+
+# root password for the new installed linux system; pw is "fai"
+rootpw='56hNVqht51tzc'
+
+# packages in /fai/files/packages/ that are installed to the new system 
+# used in scripts/DEFAULT/S01. This directory should be a simple repository.
+# you can also include your specific kernel-image package
+kernelversion=_KERNELVERSION_ # for the packages  kernel-doc and kernel-source
+addpackages="kernel-image-2.4.27-1-386"
+# parameters for the kernel 
+kappend=''
+
+# modules that will be loaded by the new system, not during installation
+# these modules will be written to /etc/modules
+moduleslist="e100 3c59x usbkbd usb-uhci keybdev mousedev hid"
