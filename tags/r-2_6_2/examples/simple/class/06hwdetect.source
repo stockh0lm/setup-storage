@@ -1,0 +1,54 @@
+#! /bin/sh
+
+# (c) Thomas Lange, 2002-2004, lange@informatik.uni-koeln.de
+
+echo 0 > /proc/sys/kernel/printk
+# let discover do most of the job
+/etc/init.d/discover start
+
+# load all IDE drivers
+
+# DMA does not work if we load all modules in drivers/ide, so only try pci modules
+mod=$(find /lib/modules/$(uname -r)/kernel/drivers/ide/pci -type f | sed 's/\.o$//' | sed 's/\.ko$//' | sed 's/.*\///')
+for i in $mod; do
+    modprobe $i
+done
+
+# load additional kernel modules (from old 11modules.source)
+# this order should also enable DMA for all IDE drives
+kernelmodules="rtc floppy usbkbd ide-disk ide-cd"
+case `uname -r` in
+    2.4*) kernelmodules="$kernelmodules keybdev mousedev hid ide-detect isa-pnp" ;;
+    2.6*) kernelmodules="$kernelmodules usbhid usbmouse ide-generic" ;;
+esac
+
+for mod in $kernelmodules; do
+    [ "$verbose" ] && echo loading kernel module $mod
+    modprobe -a $mod
+done
+# now we can mount the usb file system
+mount -t usbfs  usbfs /proc/bus/usb
+
+modprobe -a sd_mod sr_mod
+# are any SCSI devices attached?
+if grep -q "^Attached devices: none" /proc/scsi/scsi; then
+    :
+else
+    newclasses="SCSI $newclasses"
+    # we want also get the filename in front of each line. So do not use cat, use grep
+    [ "$verbose" ] && cat /proc/scsi/scsi
+    [ "$debug" ] && grep -H . /proc/scsi/*/*
+fi
+echo 6 > /proc/sys/kernel/printk
+
+# try to detect graphics card
+# the variable videodrv may be used to generate the XF86config file
+videodrv=`discover --data-path=xfree86/server/device/driver display`
+[ -n "$videodrv" ] && echo "videodrv=$videodrv" >> $LOGDIR/additional.var
+case "$videodrv" in
+    mga) newclasses="$newclasses MATROX"
+esac
+echo "Video card detected: $videodrv"
+
+set_disk_info  # calculate number of available disks
+save_dmesg     # save new boot messages (from loading modules)
