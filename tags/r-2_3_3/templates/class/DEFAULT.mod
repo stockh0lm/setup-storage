@@ -1,0 +1,1 @@
+modprobe parport_probe
