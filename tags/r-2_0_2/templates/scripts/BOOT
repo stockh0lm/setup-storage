@@ -1,0 +1,29 @@
+#! /bin/sh
+
+# copyright Thomas Lange 2001, lange@debian.org
+
+# this is the function: AppendIfNoSuchLine
+egrep -q "^auto" $target/etc/modules 2>/dev/null || echo "auto" >> $target/etc/modules
+
+# a list of modules, that are loaded at boot time
+echo $moduleslist >> $target/etc/modules
+
+# if class MBR is defined, write lilo into master boot record
+ifclass MBR || BOOT_DEVICE=$ROOT_PARTITION
+
+# write lilo.conf
+cat > $target/etc/lilo.conf <<EOF
+
+boot=$BOOT_DEVICE
+root=$ROOT_PARTITION
+install=/boot/boot.b
+map=/boot/map
+vga=normal
+delay=50
+#
+image=/vmlinuz
+label=linux
+$liloappend
+EOF
+
+$target/sbin/lilo -r $target

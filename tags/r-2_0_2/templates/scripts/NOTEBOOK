@@ -1,0 +1,14 @@
+#! /bin/sh
+
+# tune max-mount-counts for notebooks
+# Thomas Lange 12/2000; lange@debian.org
+
+maxcount=101
+
+partitions=`mount|grep $target |grep "type ext2"|perl -ane 'print "$F[0] "'`
+for part in $partitions; do
+    tune2fs -c $maxcount $part
+done
+
+# this account has no password !
+echo "poweroff::0:0:poweroff account:/tmp:/sbin/poweroff" >> $target/etc/passwd

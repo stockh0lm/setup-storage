@@ -1,0 +1,34 @@
+#! /bin/sh
+
+# $Id$
+# reboot FAI correctly, Thomas Lange, Uni Koeln, copyright 2000,2001
+
+. /usr/share/fai/subroutines
+while getopts s opt ; do
+        case "$opt" in
+        s) save_log_remote ;;
+        esac
+done
+FAI_ROOT=/tmp/target
+
+cd /
+killall -STOP rcS
+killall -q apt-get dpkg tar gzip yes cat
+
+[ "X" == "X$SSH_CLIENT" -a  "$TERM" != "dumb" ] && killall -q sshd
+
+[ -f $FAI_ROOT/sbin/start-stop-daemon.distrib ] && 
+    rmdivert /sbin/start-stop-daemon
+
+umount $FAI_ROOT/proc $FAI_ROOT/dev/pts
+umount -ar
+
+echo "$HOSTNAME now rebooting"
+
+if [ "X" == "X$SSH_CLIENT" -a  "$TERM" != "dumb" ]; then
+    exec reboot -dfi
+else
+    killall -CONT rcS
+    killall rcS
+    init 6 &
+fi

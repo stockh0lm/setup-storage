@@ -1,0 +1,292 @@
+# $Id$
+#*********************************************************************
+#
+# subroutines -- usefull subroutines for FAI
+#
+# This script is part of FAI (Fully Automatic Installation)
+# (c) 2000,2001 by Thomas Lange, lange@informatik.uni-koeln.de
+# Universitaet zu Koeln
+#
+#*********************************************************************
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+# 
+# A copy of the GNU General Public License is available as
+# `/usr/share/common-licences/GPL' in the Debian GNU/Linux distribution
+# or on the World Wide Web at http://www.gnu.org/copyleft/gpl.html.  You
+# can also obtain it by writing to the Free Software Foundation, Inc.,
+# 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+#*********************************************************************
+
+# source this file, then you have these function available in the shell
+# TODO: umount not yet perfect
+
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+disk_info() {
+
+    # look for ide and scsi disks; what about raid?
+    local dev=`cat /proc/partitions | egrep 'hd.$|sd.$|/disc$'`
+    # the variable holds a space separated list of devices and block sizes
+    device_size=`echo $dev | get_disk_size`
+    # a list of all local disks
+    disklist=`echo $dev | list_disks`
+}
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+get_disk_size() {
+
+    # echo the device and size
+    local major minor blocks device
+	while read major minor blocks device; do
+	    echo "$device $blocks"
+    done
+}
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+list_disks() {
+
+    # list local disks devices
+    local major minor blocks device
+	while read major minor blocks device; do
+	    echo $device
+    done
+}
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+mount_local_disks() {
+    # try to mount all partitions
+
+    fstabcount=0
+    local mountoption=ro
+    [ "$1" = "rw" ] && mountoption=$1
+
+    for disk in $disklist; do
+	partitions=`fdisk -l /dev/$disk | \
+	    egrep -v " Empty| Extended" | \
+	    perl -ne 'print "$1\n" if m#^/dev/(\S+)\s#'`
+	for partition in $partitions; do
+	    mkdir -p $FAI_ROOT/$partition
+	    mount -o $mountoption /dev/$partition $FAI_ROOT/$partition
+	    # \ && echo $partition mounted successfully
+	    if [ -f $FAI_ROOT/$partition/etc/fstab ]; then
+		echo /etc/fstab found in $partition
+		fstabpart=$partition
+		fstablist="$fstablist $partition"
+		fstabcount=$((fstabcount+1))
+	    fi
+	done
+    done
+    mount | grep $FAI_ROOT
+}
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+umount_local_disks() {
+
+    local part
+    test -d $FAI_ROOT || return
+    for part in `ls $FAI_ROOT`; do
+	umount $FAI_ROOT/$part
+    done
+    rmdir $FAI_ROOT/*
+    umount $FAI_ROOT
+}
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+rwmount() {
+
+    # remount partition read/write
+    mount -o rw,remount $1
+}
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+fstab_mount() {
+
+    if [ $fstabcount -eq 1 ]; then
+	umount_local_disks
+	mount -o ro /dev/$fstabpart $FAI_ROOT
+	mount2dir $FAI_ROOT $FAI_ROOT/etc/fstab
+	df
+    fi
+    [ $fstabcount -eq 0 ] && echo "No /etc/fstab found"
+    [ $fstabcount -ge 2 ] && echo -n "Found multiple /etc/fstab files in : $fstablist.\nUse mount2dir for mounting."
+}
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+save_log_local() {
+
+    # save log files on local disk
+    find /tmp -maxdepth 1 -size 0 | xargs -r rm
+    mkdir -p $FAI_ROOT/$logdir/$HOSTNAME/$FAI_ACTION
+    cp -p /tmp/* $FAI_ROOT/$logdir/$HOSTNAME/$FAI_ACTION 2> $devnull
+    ln -s $HOSTNAME $FAI_ROOT/$logdir/localhost
+}
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+save_log_remote() {
+
+    # save log files to $SERVER
+    [ "$LOGUSER" ] || return
+    find /tmp -maxdepth 1 -size 0 | xargs -r rm
+    logdir=$HOSTNAME/$FAI_ACTION
+    $FAI_REMOTESH -l $LOGUSER $SERVER "rm -f $logdir/* ; \
+	test -d $logdir || mkdir -p $logdir" 2> $devnull
+    $FAI_REMOTECP -p /tmp/* $LOGUSER@$SERVER:$logdir 2> $devnull
+}
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+save_dmesg() {
+
+    dmesg > /tmp/dmesg.log
+}
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+die() {
+
+    echo $*
+    exec bash
+}
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ifclass() {
+
+# test, if a certain class is defined
+    local cl
+    for cl in $classes; do
+	[ x$cl = x$1 ] && return 0
+    done
+    return 1
+}
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+fai_boot() {
+
+    echo "Press <RETURN> to reboot or ctrl-c to execute a shell"
+    [ -z $reboot ] && read
+    echo "Rebooting $HOSTNAME now"
+    cd /
+    sync
+    umount -ar
+    exec reboot -dfi
+}
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+wait_for_jobs() {
+
+    # wait for running jobs to finish (eg. update-auctex-elisp)
+    local i=0
+    while (ps r | egrep -qv "ps r|TIME COMMAND"); do
+	[ $(($i % 10)) -eq 0 ] && echo "Waiting for background jobs to finish."
+	i=$(($i+1))
+	sleep 3
+    done
+}
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+create_ramdisk() {
+
+    local ramdevice=/dev/ram0
+    mke2fs -q -m 0 $ramdevice && echo "ramdisk $ramdevice created"
+    mount -n $ramdevice /tmp
+    # now create the required subdirectories
+    mkdir /tmp/var /tmp/etc /tmp/target
+    cd    /tmp/var && mkdir tmp log lock run spool
+}
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+mkdivert() {
+
+    # make a diversion of a file
+    $ROOTCMD dpkg-divert --quiet --package fai --add --rename $1
+    cat > $FAI_ROOT/$1 <<-EOF
+	#! /bin/sh
+	# created by FAI
+	exit 0
+EOF
+    chmod a+rx $FAI_ROOT/$1
+}
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+rmdivert() {
+
+    # remove diversion
+    rm -f $FAI_ROOT/$1
+    $ROOTCMD dpkg-divert --quiet --package fai --remove --rename $1
+}
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+get_dhcp_info() {
+
+    dhclient -lf /dev/null >$dhcplog 2>/tmp/dhclient.log
+    [ -n "$verbose" -a -f $dhcplog ] && echo "Reading $dhcplog"
+    eval `cat $dhcplog`
+    killall dhclient-2.2.x
+}
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+get_bootp_info() {
+
+    # define all bootpc information as variables
+    bootpc --returniffail > $bootlog
+    [ -n "$verbose" -a -f $bootlog ] && echo "Reading $bootlog"
+    eval `cat $bootlog`
+    FAI_LOCATION=$T170
+    FAI_ACTION=$T171
+    FAI_FLAGS=$T172
+    #FAI_BACKUP_LIST=$T174 # not yet used
+}
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+load_keymap_consolechars() {
+
+    local mapname keymapfile keymaps
+    # support for other keyboards
+    if [ "$FAI_KEYMAP" ]; then
+	for mapname in $FAI_KEYMAP; do
+	    keymapfile=`find /usr/share/keymaps/ /fai/files \
+	      ! -type d -name $mapname.kmap.gz -o \
+	      -name $mapname.inc.gz -o -name $mapname`
+	    [ "$keymapfile" ] && keymaps="$keymaps $keymapfile"
+	done
+
+	if [ "$keymaps" ]; then
+	    loadkeys $keymaps
+	else
+	    echo "FAI_KEYMAP $FAI_KEYMAP not found"
+	fi
+    fi
+    [ "$FAI_CONSOLEFONT" ] &&
+	consolechars -v -f /usr/share/consolefonts/$FAI_CONSOLEFONT.psf.gz
+}
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+myyes() {
+# now unused
+    # prints maxyes times string $yes
+    local yes=$1
+    local loopcount=0
+    while  [ $loopcount -lt $maxyes ]; do
+	loopcount=$(($loopcount+1))
+	echo -ne $1
+    done
+}
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+eval_cmdline() {
+
+    # parse kernel parameters and eval variables
+    local word
+
+    for word in `cat /proc/cmdline` ; do
+	case $word in
+	    [a-zA-Z]*=*)
+		echo "Defining variable: $word"
+		eval $word
+		;;
+	esac
+    done
+}
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+mount_debian_mirror() {
+
+    # mount debian directory
+    if [ "$FAI_DEBMIRROR" ]; then
+	mkdir -p $FAI_ROOT/$MNTPOINT
+	mount $romountopt $FAI_DEBMIRROR $FAI_ROOT/$MNTPOINT ||
+	    die "Can't mount $FAI_DEBMIRROR"
+    fi
+}
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+change_boot() {
+
+    # change boot device (local disk or network)
+    [ "$LOGUSER" -a "$TFTPLINK" ] &&
+	$FAI_REMOTESH -l $LOGUSER ${SERVER} \
+	    "cd /boot/fai; rm -f $HOSTNAME; ln -s $TFTPLINK $HOSTNAME"
+}
