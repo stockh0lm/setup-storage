@@ -1,0 +1,37 @@
+# default values for installation. You can override them in your *.var files
+
+# call this command to tune your harddisks; can be a multi line definition
+# if defined, this line is executed and written to /etc/init.d/S61hdparm
+hdparm=
+# tune harddisk during installation
+[ "$hdparm " ] && eval $hdparm
+
+FAI_CONSOLEFONT=
+FAI_KEYMAP=us-latin1
+
+# Set UTC=yes if your system clock is set to UTC (GMT), and UTC=no if not.
+UTC=yes
+time_zone=Europe/Berlin
+
+# kernel, that will be installed to the local disk
+kernelimage=kernel-image-_KERNELVERSION_
+# lilo parameter for the new installed kernel
+liloappend=
+# modules that will be loaded by the new system, not during installation
+moduleslist="3c59x"
+
+# root password for the new installed linux system; pw is "fai"
+rootpw="56hNVqht51tzc"
+
+# link in /boot/fai to an image that boots from local disk
+#TFTPLINK=ant_local_disk
+
+# see DATALESS.var
+hserver=
+bserver=
+# list of printers, used by scripts/NET
+printers=
+
+# these variables are used by cfengine
+force=true
+backup=true

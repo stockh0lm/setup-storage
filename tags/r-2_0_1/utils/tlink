@@ -1,0 +1,48 @@
+#! /bin/sh
+
+# (c) 2001, Thomas Lange
+#
+# set link for tftpboot in /boot/fai to an image for a host
+# or for all hosts with prefix and a number
+
+# examples:
+# tlink installimage bigfoot
+# tlink installimage ant06
+# tlink installimage all ant
+# tlink nodeimage all ant
+
+# define the range for client numbers using prefix
+startnum=1
+endnum=16
+
+image=$1
+host=$2
+prefix=$3
+
+# - - - - - - - - - - - - - - - - - - - -
+link() {
+
+	echo $1 now booting $image
+    	rm -f $ $tftpdir/$1
+	ln -s $image $tftpdir/$1 
+}
+# - - - - - - - - - - - - - - - - - - - -
+tftpdir=/boot/fai
+
+# create list of hosts without prefix
+i=$startnum
+while [ $i -le $endnum ]; do
+    num=`printf "%.2d" $i`
+    hostnums="$hostnums $num"
+    i=$(($i+1))
+done
+
+if [ $host = "all" ];then
+    for i in $hostnums
+    do
+	link $prefix$i
+    done
+    exit
+else
+    link $host
+fi
