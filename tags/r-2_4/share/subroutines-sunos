@@ -1,0 +1,16 @@
+#! /bin/sh
+# subroutine definitions for Solaris operating system
+
+verbose=1
+
+defnop load_keymap_consolechars dpkg mount2dir task_confdir task_chboot
+
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+jobsrunning() {
+
+    # test is jobs are running
+    ps -el | egrep ' O | R ' | egrep -v 'TIME CMD|grep|ps'
+}
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
