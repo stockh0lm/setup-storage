@@ -1,0 +1,167 @@
+#! /bin/sh
+
+# $Id$
+#*********************************************************************
+#
+# make-fai-nfsroot -- create nfsroot directory and add additional packages
+#
+# This script is part of FAI (Fully Automatic Installation)
+# (c) 2000 by Thomas Lange, lange@informatik.uni-koeln.de
+# Universitaet zu Koeln
+#
+#*********************************************************************
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+# 
+# A copy of the GNU General Public License is available as
+# `/usr/share/common-licences/GPL' in the Debian GNU/Linux distribution
+# or on the World Wide Web at http://www.gnu.org/copyleft/gpl.html.  You
+# can also obtain it by writing to the Free Software Foundation, Inc.,
+# 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+#*********************************************************************
+
+# Thomas Lange, Universitaet Koeln, 7/2000
+
+# configuration of some packages will need some interactive input
+# lilo, netbase,... will not be set up correctly, but that doesn't matter
+# apt-get must been working on your server (sources.list must be OK)
+
+PATH=/bin:/sbin:/usr/bin:/usr/sbin
+
+rootpw="56hNVqht51tzc"
+url=ftp://ftp.debian.org/debian   # format for http or ftp
+#url=/mnt   # format for a mounted directory
+dversion=2_2
+dname=potato
+verbose=
+# Additional packages that are install to nfsroot
+packages="dhcp-client file rdate cfengine bootpc wget rsh-client less ssh dump ext2resize raidtools2 lvm"
+
+
+basetgz=base${dversion}.tgz
+fai=/usr/lib/fai
+root=$fai/nfsroot
+aptconf=$fai/etc/apt.conf.nfsroot
+export DEBIAN_FRONTEND=Noninteractive
+
+if [ "$verbose" ]; then
+	devnull=/dev/tty
+else
+	devnull=/dev/null
+fi
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+setup_ssh() {
+
+    mkdir -p -m 700 $root/root/.ssh
+    echo "To get remote access to the install client via ssh"
+    echo "without a password, copy your ssh identity.pub to"
+    echo "$root/root/.shh/authorized_keys"
+}
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+recreate_nfsroot() {
+
+    echo "Removing old nfsroot $root"
+    rm -rf $root/*
+    cd $root
+    get_basetgz
+    echo "Unpacking $basetgz"
+    tar zxpf /tmp/$basetgz
+    touch etc/fstab etc/raidtab # dump and raidtool2 needs these files
+    mkdir -p lib/modules/`uname -r`             # dirty trick to hoax lvm
+    touch lib/modules/`uname -r`/modules.dep    # dirty trick to hoax lvm
+    mkdir -p $root/etc/ssh ; touch $root/etc/ssh/NOSERVER
+    upgrade_nfsroot
+    perl -pi -e "s/^root::/root:${rootpw}:/" etc/passwd
+    mkdir -p $root/fai/fai_config
+    cp -p /usr/lib/fai/sbin/dhclient-script /usr/lib/fai/etc/dhclient.conf $root/etc
+    cp -p /usr/lib/fai/sbin/* $root/sbin
+    cp -p /usr/lib/fai/etc/apt.conf $root/etc/apt
+    cp -p /usr/lib/perl5/Debian/Fai.pm $root/usr/lib/perl5/Debian/
+    rm -rf etc/mtab etc/apt/sources.list var/run
+    mv $root/etc/init.d/rcS $root/etc/init.d/rcS.orig
+    ln -s /proc/mounts $root/etc/mtab
+    ln -s /tmp/var/run $root/var/run 
+    ln -s /tmp/etc/resolv.conf $root/etc/resolv.conf
+    ln -s /sbin/rcS_fai $root/etc/init.d/rcS
+
+    cat >$root/etc/rc2.d/S01fai_abort <<EOF
+    #!/bin/sh
+    echo FAI: installation aborted.
+    echo reboot with: faireboot
+    echo or after a logout
+    sh
+    cd /
+    umount -ar
+    reboot -dfi
+EOF
+    chmod a+rx $root/etc/rc2.d/S01fai_abort
+
+    touch $root/fai/BOOTP  && echo "fai now using BOOTP protocol"
+#    touch $root/fai/DHCP  && echo "fai now using DHCP protocol"
+    setup_ssh
+
+}
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+upgrade_nfsroot() {
+
+    echo "Upgrading $root"
+    apt-get -c $aptconf update  > $devnull 
+    apt-get -c $aptconf check    > $devnull 
+    chroot $root mount -n -t proc proc /proc
+    rm -rf $root/etc/pcmcia $root/etc/apm  2> $devnull 
+    apt-get -c $aptconf -y remove pcmcia-cs </dev/null 2>$devnull > $devnull 
+
+    # because start-stop-dameon must be faked do it here
+    apt-get -c $aptconf -y install dpkg </dev/null  > $devnull 
+    cp -p /usr/lib/fai/sbin/start-stop-daemon $root/sbin
+
+    apt-get -c $aptconf -y upgrade </dev/null  > $devnull 
+    echo "Adding additional packages to $root:"
+    echo "$packages"
+    apt-get -c $aptconf -y --fix-missing install $packages </dev/null  > $devnull 
+    chroot $root umount -n /proc >/dev/null
+}
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+get_basetgz() {
+
+    # TODO: parse sources.list and guess location for baseX_X.tgz
+    if [ ! -f /tmp/$basetgz ]; then
+	case $url in
+	    ftp:*|http:*)
+		echo "Getting base${dversion}.tgz from $url via wget"
+		echo "This may take some time"
+		wget -q -P/tmp $url/dists/$dname/main/disks-i386/current/base${dversion}.tgz
+	        ;;
+	    *) cp -p $url/dists/$dname/main/disks-i386/current/base${dversion}.tgz /tmp
+		;;
+	esac
+    fi
+    if [ ! -f /tmp/$basetgz ]; then
+	echo "Please copy the Debian $basetgz file into /tmp before creating nfsroot for fai."
+	exit 1
+    fi
+}
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+if [ -d $root/fai ]; then
+    echo $root/fai already exists
+    echo "Do you want to delete and recreate it ?:"
+    read answer
+    case "$answer" in
+	[yY])
+	    recreate_nfsroot
+	    ;;
+    esac
+else
+    recreate_nfsroot
+fi
+
+exit 0
