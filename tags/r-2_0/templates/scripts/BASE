@@ -1,0 +1,79 @@
+#! /usr/bin/cfengine
+
+##############################################################
+#
+# cf.base - for informatik.uni-koeln.de
+#
+#################################################################
+
+control:
+   OutputPrefix = ("${cf_prefix}")
+   actionsequence = ( editfiles )
+
+editfiles:
+   any::
+	{ ${target}/etc/default/rcS
+	  ReplaceAll "^UTC=.*" With "UTC=${UTC}"
+	}
+
+	{ ${target}/etc/init.d/sysklogd
+	  ReplaceAll "^SYSLOGD=.*" With "SYSLOGD=${dblquote}-m 240${dblquote}"
+	}
+
+# add second root account using tcsh
+# insert encrypted root password
+	{ ${target}/etc/passwd
+	  LocateLineMatching 	"^root:.*"
+	  InsertLine 		"roott::0:0:root:/root:/usr/bin/tcsh"
+	  ReplaceAll 		"^root::" With "root:${rootpw}:"
+	  ReplaceAll		"^roott::" With "roott:${rootpw}:"
+	}
+
+	{ ${target}/etc/syslog.conf
+	  ReplaceAll "daemon.*/var/log/daemon.log"
+		With "daemon.warn${tab}${tab}${tab}-/var/log/daemon.log"
+	  ReplaceAll "kern.*/var/log/kern.log"
+		With "kern.warn${tab}${tab}${tab}-/var/log/kern.log"
+	  AppendIfNoSuchLine "local6.debug${tab}${tab}${tab}/var/log/daemon.log"
+	}
+
+   HOME_CLIENT::
+	{ ${target}/etc/fstab
+	  HashCommentLinesContaining "/home"
+	  AppendIfNoSuchLine "${hserver}:/home /home nfs rw,nosuid,rsize=8192,wsize=8192 0 0"
+	}
+
+   DATALESS::
+	{ ${target}/etc/fstab
+	  HashCommentLinesContaining "/usr"
+	  AppendIfNoSuchLine "${bserver}:/usr /usr nfs ro,rsize=8192,wsize=8192 0 0"
+	}
+
+   USR_LOCAL_MOUNT::
+	{ ${target}/etc/fstab
+	  HashCommentLinesContaining "/usr/local"
+	  AppendIfNoSuchLine "${bserver}:/usr/local /usr/local nfs ro,rsize=8192,wsize=8192 0 0"
+	}
+
+   SCRATCH::
+	{ ${target}/etc/exports
+	  AutoCreate
+	  AppendIfNoSuchLine "/scratch${tab}${tab}@sundomain(rw) @faiclients(rw,no_root_squash)"
+	}
+
+   FILES_SCRATCH::
+	{ ${target}/etc/exports
+	  AutoCreate
+	  AppendIfNoSuchLine "/files/scratch${tab}${tab}@sundomain(rw) @faiclients(rw,no_root_squash)"
+	}
+
+   SERVER::
+	{ ${target}/etc/exports
+	  AppendIfNoSuchLine "/usr${tab}${tab}@faiclients(ro,no_root_squash)"
+	  AppendIfNoSuchLine "/home${tab}${tab}@faiclients(rw,no_root_squash)"
+	}
+
+	{ ${target}/etc/shells
+	  AppendIfNoSuchLine "/usr/bin/tcsh"
+	  AppendIfNoSuchLine "/usr/local/bin/tcsh"
+	}	  
