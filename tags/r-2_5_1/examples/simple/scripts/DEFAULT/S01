@@ -1,0 +1,108 @@
+#! /bin/sh
+
+# (c) Thomas Lange, 2001-2003, lange@debian.org
+
+# disable fsck on ext3 filesystems
+partitions=`mount|grep $target |grep "type ext3"|perl -ane 'print "$F[0] "'`
+for part in $partitions; do
+    echo "Disable periodic fsck on $part"
+    tune2fs -c 0 -i 0 $part
+done
+
+# install additional packags that are located in /fai/files/packages/
+if [ ! -f /fai/files/packages/Packages.gz ]; then
+    # Mm. It seems not to be a simple repository. I assume it's configured in sources.list
+    echo "Directory /fai/files/packages/ seems not to be a simple repository."
+fi
+# create dummy link, so package kernel-image-* makes new correct link
+ln -s /boot/vmlinuz-nolink $target/vmlinuz
+fcopy /etc/kernel-img.conf
+[ "$addpackages" ] &&  yes '' | $ROOTCMD apt-get install $addpackages
+
+# xmcd loops when doing an automatic installation
+ifclass AUDIO && {
+    yes 'n' | $ROOTCMD apt-get install xmcd
+    fcopy -r /etc/xmcd/
+}
+
+fcopy /etc/hostname || echo $HOSTNAME     > $target/etc/hostname
+echo $time_zone    > $target/etc/timezone
+ln -fs /usr/share/zoneinfo/${time_zone} $target/etc/localtime
+
+fcopy -M /etc/hosts /etc/motd
+
+# make /root accessable only by root
+chmod 0700 $target/root
+chown root:root $target/root
+# copy default dotfiles for root account
+fcopy -r /root
+
+# create keyboard layput table
+dumpkeys | gzip -9f >$target/etc/console/boottime.kmap.gz
+
+# create NIS/NONIS config
+fcopy -M /etc/nsswitch.conf /etc/host.conf
+fcopy -i /etc/ypserv.securenets  # only for yp server
+ifclass NONIS && rm -f $target/etc/defaultdomain
+if ifclass NIS; then
+    echo $YPDOMAIN > $target/etc/defaultdomain
+    rm -f $target/etc/yp.conf
+    for s in $YPSRVR; do
+	echo "ypserver $s" >> $target/etc/yp.conf
+    done
+fi
+
+ifclass USR_LOCAL_COPY && {
+    # you have to mount /usr/local
+    # mount -o ro $bserver:/usr/local /usr/local
+    cp -a /usr/local $target/usr
+}
+
+ifclass USR_LOCAL_RSYNC && {
+    echo "Syncing /usr/local via $LOGUSER@$bserver"
+    vopt=
+    [ "$verbose" ] && vopt=-v
+    rsync $vopt --delete -a $LOGUSER@$bserver:/usr/local/ $target/usr/local/
+}
+
+fcopy -M /etc/X11/XF86Config-4 && rm -f /etc/X11/XF86Config
+fcopy -M /etc/X11/XF86Config   && rm -f /etc/X11/XF86Config-4
+
+# put CD-ROM into fstab and exports
+# if cdromdevice is defined in *.var, use that value
+# if you have both a SCSI and an IDE CD-ROM -> Uuuuups, this will fail
+# if you have an IDE CDROM (mostly hdc) but you are using the ide-scsi driver,
+# this IDE CDROM will be sr0, nopt hdc. So the auto detect in the following lines will fail
+[ "$cdromdevice" ] || cdromdevice=`grep -H cdrom /proc/ide/hd*/media | head -n 1 | awk -F/ '{print $4}'`
+[ "$cdromdevice" ] || cdromdevice=`grep -q CD-ROM /proc/scsi/scsi && echo "sr0"`
+if [ "$cdromdevice" ]; then
+    echo "/dev/$cdromdevice  /cdrom   auto    ro,user,nohide,noauto 0 0" >>$target/etc/fstab
+    echo "/cdrom        *(ro)" >> $target/etc/exports
+fi
+# if a second cd-rom exists we assume that this is the cd-writer
+if [ `grep "Type:.*CD-ROM" /proc/scsi/scsi | wc -l` -gt 1 ]; then
+    echo "/dev/sr1  /cdrec  auto    ro,user,nohide,noauto 0 0" >>$target/etc/fstab
+    echo "/cdrec        *(ro)" >> $target/etc/exports
+    mkdir $target/cdrec
+fi
+
+# copy bootsector programm to local disk
+[ -d /usr/local/sbin ] && cp -p /usr/sbin/bootsector $target/usr/local/sbin
+
+# copy ldp.conf if printing is done via Network and NIS
+ifclass NISLPRCLIENT && {
+    $ROOTCMD update-rc.d -f lprng remove
+    fcopy /usr/local/share/LPRng/pcfilter
+    rm -f $target/etc/cron.daily/lprng
+}
+
+# install local cron jobs
+ftar /etc/cron.d
+
+fcopy -iM /etc/auto.master /etc/auto.scratch
+
+# copy for all NET_9 Linux-Clients exim.conf
+fcopy -M /etc/exim/exim.conf /etc/aliases
+
+# add a demo user account
+ifclass DEMO && $ROOTCMD adduser --disabled-login --gecos "fai demo user" demo
