@@ -1,0 +1,6 @@
+# subroutine definitions for Solaris operating system
+
+verbose=1
+
+defnop load_keymap_consolechars dpkg mount2dir task_confdir
+

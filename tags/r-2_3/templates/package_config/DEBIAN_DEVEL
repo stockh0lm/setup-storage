@@ -1,0 +1,7 @@
+PACKAGES install
+
+#task-debian-devel
+debian-test 
+debian-keyring
+gnupg 
+bug

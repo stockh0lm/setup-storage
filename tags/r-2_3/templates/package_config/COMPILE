@@ -1,0 +1,12 @@
+# COMPILE: packages for developing software
+
+PACKAGES install
+
+bin86 m4 g77 byacc cvs
+ddd
+
+autoconf automake
+
+# woody only
+PACKAGES taskinst
+c-dev
