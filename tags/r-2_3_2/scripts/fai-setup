@@ -1,0 +1,134 @@
+#! /bin/sh
+
+# $Id$
+#*********************************************************************
+#
+# fai-setup -- set up FAI
+#
+# This script is part of FAI (Fully Automatic Installation)
+# (c) 2000-2001 by Thomas Lange, lange@informatik.uni-koeln.de
+# Universitaet zu Koeln
+#
+#*********************************************************************
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+# 
+# A copy of the GNU General Public License is available as
+# `/usr/share/common-licences/GPL' in the Debian GNU/Linux distribution
+# or on the World Wide Web at http://www.gnu.org/copyleft/gpl.html.  You
+# can also obtain it by writing to the Free Software Foundation, Inc.,
+# 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+#*********************************************************************
+# Thomas Lange, Universitaet Koeln, 2000-2002
+
+PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
+
+set -e
+. /etc/fai/fai.conf
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+add_export_line() {
+
+    # add a line to /etc/exports
+
+    pattern=$1
+    shift
+    options="$@"
+
+    [ -f /etc/exports ] && grep -q "^$pattern[[:space:]]" /etc/exports && return
+    echo "$pattern $options" >> /etc/exports
+}
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+add_fai_account() {
+
+    if id $LOGUSER 2>/dev/null 1>&2 ; then
+	echo Account \$LOGUSER=$LOGUSER  already exists.
+	echo Make sure, that all install clients can
+	echo log into this account without a password.
+	return
+    fi
+
+    adduser --system --disabled-password --gecos "FAI account for log files" $LOGUSER
+    # there's a bug when the encrypted password is !, so change it to *
+    perl -pi.bak -e "s#^$LOGUSER:.:(.+):/bin/false#$LOGUSER:*:\1:/bin/bash#" /etc/passwd
+    # get the home dir of a user in a variable; do not exit when set -e is used
+    # loguserhome is unset if $LOGUSER does not exists
+    # this is not a evil hack, it's a very clever piece of code
+    loguserhome=`eval "cd ~$LOGUSER 2>/dev/null && pwd;true"`
+    touch $loguserhome/.account_created_by_fai_package
+}
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+setup_fai_account() {
+
+    loguserhome=`eval "cd ~$LOGUSER 2>/dev/null && pwd;true"`
+    sshdir=$loguserhome/.ssh
+    if [ -z "$loguserhome" ]; then
+	echo "Can't determine home directory for user $LOGUSER."
+	echo "LOGUSER= $LOGUSER    loguserhome= $loguserhome"
+	exit 8
+    fi
+
+    if [ $FAI_REMOTESH = "ssh" -o $FAI_REMOTECP = "scp" ]; then
+	# set up ssh on the server
+	mkdir -p -m 700 $loguserhome/.ssh
+	[ -f $sshdir/identity ] || ssh-keygen -N '' -f $sshdir/identity -C "$LOGUSER@$HOST"
+    	cat $sshdir/identity.pub >> $sshdir//authorized_keys
+	chmod 0700 $sshdir/authorized_keys
+	echo "$sshdir/authorized_keys created."
+    fi
+    if [ $FAI_REMOTESH = "rsh" -o $FAI_REMOTECP = "rcp" ]; then
+	# use .rhosts authentication
+	echo "+@faiclients root" > $loguserhome/.rhosts
+	chmod go-rwx $loguserhome/.rhosts
+	echo "$loguserhome/.rhosts created."
+    fi
+
+    logusergid=`id -ng $LOGUSER`
+    echo "User account $LOGUSER set up."
+}
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+if [ -n "$LOGUSER" ]; then
+    add_fai_account
+    setup_fai_account
+fi
+
+echo Creating FAI nfsroot can take a long time and will
+echo need more than 150MB disk space in $NFSROOT.
+make-fai-nfsroot
+
+if [ -n "$LOGUSER" ]; then
+    # chown only if cd was successful
+    cd $loguserhome && chown -R $LOGUSER:$logusergid .
+fi
+
+if [ -z "$FAI_CONFIGDIR" ]; then
+    echo "FAI_CONFIGDIR not set in /etc/fai/fai.conf."
+    echo "Using /usr/local/share/fai as default."
+    FAI_CONFIGDIR=/usr/local/share/fai
+fi
+mkdir -p $FAI_CONFIGDIR
+
+# potato only 
+test -f /etc/init.d/nfs-server && nfsserver=nfs-server
+
+test -f /etc/init.d/nfs-kernel-server && nfsserver=nfs-kernel-server
+test -f /etc/init.d/nfs-user-server && nfsserver=nfs-user-server
+
+add_export_line $FAI_CONFIGDIR  "@faiclients(ro)"
+add_export_line $NFSROOT  "@faiclients(ro,no_root_squash)"
+/etc/init.d/$nfsserver restart
+
+if [ ! -d $FAI_CONFIGDIR/class ];then
+	echo "You have no FAI configuration. Copy FAI template files with:"
+	echo "cp -a /usr/share/fai/templates/* $FAI_CONFIGDIR"
+	echo "Then change the configuration files to meet your local needs."
+fi
+echo "FAI setup finished."

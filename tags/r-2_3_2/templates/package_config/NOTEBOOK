@@ -1,0 +1,6 @@
+PACKAGES install
+# when using acpi
+wmbattery
+# when using apm
+#xbatt apmd
+noflushd

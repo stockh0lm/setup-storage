@@ -1,0 +1,46 @@
+# default values for installation. You can override them in your *.var files
+
+# call this command to tune your harddisks; can be a multi line definition
+# if defined, this line is executed and written to /etc/init.d/S61hdparm
+hdparm=
+# tune harddisk during installation
+[ "$hdparm " ] && eval $hdparm
+
+FAI_CONSOLEFONT=
+FAI_KEYMAP=us-latin1
+
+# Set UTC=yes if your system clock is set to UTC (GMT), and UTC=no if not.
+UTC=yes
+time_zone=Europe/Berlin
+
+# which kernel should be installted onto the install client ?
+kernelversion=_KERNELVERSION_
+# specify a custom kernel package, that is located in
+# /fai/files/packages, or otherwise the default Debian kernel-image is
+#installed  
+kernelimage=kernel-image-$kernelversion
+
+# lilo parameter for the new installed kernel
+liloappend=
+# modules that will be loaded by the new system, not during installation
+moduleslist="3c59x"
+
+# packages in /fai/files/packages/ that are installed to the new system 
+# used in scripts/DEFAULT/S01
+addpackages=""
+
+# root password for the new installed linux system; pw is "fai"
+rootpw="56hNVqht51tzc"
+
+# link in /boot/fai to an image that boots from local disk
+#TFTPLINK=ant_local_disk
+
+# see DATALESS.var
+hserver=
+bserver=
+# list of printers, used by scripts/NET
+printers=
+
+# these variables are used by cfengine
+force=true
+backup=true
