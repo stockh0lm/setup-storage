@@ -1,0 +1,729 @@
+<!DOCTYPE debiandoc PUBLIC "-//DebianDoc//DTD DebianDoc//EN" [
+  <!-- include version information so we don't have to hard code it
+       within the document -->
+  <!entity % versiondata SYSTEM "version.ent"> %versiondata;
+  <!-- common, language independant entities -->
+  <!entity % commondata  SYSTEM "common.ent" > %commondata;
+  <!-- CVS revision of this document -->
+  <!entity cvs-rev "$Id$">
+
+]>
+
+<debiandoc>
+<book>
+      <title>FAI (Fully automatic installation) Guide 
+NOT YET FINISHED !
+      <author>Thomas Lange <email>lange@informatik.uni-koeln.de</email>
+      <version>ver. &version;, &date;
+
+<abstract>
+This manual describes the fully automatic installation package for
+&dgl;. This includes the installation of the package, the planing and
+creating of the configuration and how to deal with errors.
+
+
+<copyright>
+<copyrightsummary>
+copyright &copy; 2000 Thomas Lange
+</copyrightsummary>
+	<p>
+This manual is free software; you may redistribute it and/or modify it
+under the terms of the GNU General Public License as published by the
+Free Software Foundation; either version 2, or (at your option) any
+later version.
+	<p>
+This is distributed in the hope that it will be useful, but
+<em>without any warranty</em>; without even the implied warranty of
+merchantability or fitness for a particular purpose.  See the GNU
+General Public License for more details.
+	<p>
+A copy of the GNU General Public License is available as &file-GPL; in
+the &dgl distribution or on the World Wide Web at <url id="&url-gpl;"
+	name="the GNU website">.  You can also obtain it by 
+writing to the &fsf-addr;.
+
+<toc detail="sect2">
+
+<chapt id="motivation">Motivation<p>
+There was lot of motivation for creating FAI ! TODO ...
+
+<chapt id="overview">Overview and concepts of FAI<p>
+<p>
+FAI is a non interactive system to install a &dgl operating system on
+a single computer or a whole cluster. You can take one or more virgin
+PC's, turn on the power and after a few minutes Linux is installed,
+configured and running on the whole cluster, without any interaction
+necessary. Thus it's a scalable method for installing and updating a
+cluster unattended with little effort involved. FAI uses the &dgl;
+distribution and a collection of shell- and Perl-scripts for the
+installation process. Changes to the configuration files of the
+operating system are made by cfengine, shell and perl scripts.
+
+<p>
+FAI's target group are system administrators how have to install
+Debian onto one or even hundreds of computers. Because it's a general
+purpose installation tool, it can be used for installing a beowulf
+cluster, a rendering farm or a linux laboratory or a classroom. Also
+large-scale linux networks with different hardware or different installation
+requirements are easy to establish using FAI.
+
+
+
+First, some terms used
+in this manual are described.
+
+<taglist>
+	  <tag> install server : <item> The host where the package FAI
+	  is installed. It provides several services for all install clients. </item>
+	  <tag>install client : <item> The host which will be installed using
+	  FAI and a configuration from the install server. Also called
+	  client for short.</p> </item>
+	  <tag> nfsroot : <item> A filesystem located on the install
+	  server. It's the complete filesystem for the install
+	  client, which is mounted by the client during booting.</item>
+
+	  <tag> configuration : <item> The details of how the installation
+	  of the clients should be performed. This includes information about:
+<list>
+		<item> <p>Disk layout</p> </item>
+		<item> <p>Local filesystems</p> </item>
+		<item> <p>Software packages</p>	</item>
+		<item> <p>Keyboard layout, time zone, NIS,
+		X11 configuration, remote filesystems, user accounts,
+		printers ...</p>	</item>
+</list>
+</taglist>
+
+<sect id="work">How does FAI work ?<p> 
+
+The computer which will be installed using FAI (called client) is
+booted from floppy disk or via network card. It gets an IP-address and
+boots a linux kernel which mounts all filesystems via NFS from a
+server. After the operating system is running the FAI startup script
+performs the automatic installation which doesn't need any
+interaction. First, the hard disks will be partitioned, filesystems are
+created and then software packages will be installed. Then the new
+installed operating system is configured to your local needs. Finally
+the new system will be booted from the local disk. 
+<p>
+The details of how to install the computer (the configuration) are stored in the
+configuration space on the server. Configuration files are shared
+among multiple computers if the are similar, so you need not to create a
+configuration for every new host. Hence FAI is a scalable method to
+install a big cluster with a great number of nodes.
+
+<p>
+FAI can also be used as an network rescue system. You can boot your
+computer without performing an installation. Instead it will run a
+fully functional &dgl without using the local hardisks. Then you can
+do remote login and perform backups, restore data, check filesystem,
+inspect the hardware or do any other task.
+
+<sect id="features">Features of FAI<p> 
+<list>
+	    <item> <p> </p> </item>
+
+	    <item> <p>a fully automatic installation can be perfomed</p> </item>
+	    <item> <p>boot from floppy or from network card </p> </item>
+	    <item> <p>BOOTP and DHCP protocol supported</p> </item>
+	    <item> <p>no initial ramdisk needed, 8MB RAM suffice</p> </item>
+	    <item> <p>installation kernel can use modules</p> </item>
+	    <item> <p>remote login via ssh during installation process</p> </item>
+	    <item> <p>two additional virtual terminals available
+	    during installation</p> </item>
+	    <item> <p>all similar configuration are shared among
+	    all clients</p> </item>
+	    <item> <p>log files are copied to the installation server</p> </item>
+	    <item> <p>shell, perl, expect script supported for the configuration</p> </item>
+	    <item> <p>access to Debian mirror via NFS, FTP or HTTP</p> </item>
+	    <item> <p>very quick unattended installation</p> </item>
+
+	    <item> <p>runs even on a 386 CPU</p> </item>
+	    <item> <p>easy creation of boot floppy</p> </item>
+	    <item> <p>keyboard layout selectable</p> </item>
+	    <item> <p>can be used as a rescue system</p> </item>
+	    <item> <p></p> </item>
+
+</list>
+
+<chapt id="inst">Installing FAI
+<sect id="requirements">Requirements<p> 
+
+Following items are required for an installation via FAI.
+
+<taglist>
+	  <tag>BOOTP or DHCP server <item> The clients need one of
+	  these daemons to obtain information. </item>
+	  <tag>TFTP server	  <item> The TFTP daemon is used for
+	  transfering the kernel to the clients when booting from network card.</item>
+	  <tag>Debian mirror	  <item> Fast access to a Debian
+	  mirror is needed. A local mirror of all Debian
+	  packages is recommended if you install multiple computers.</item>
+	  <tag>install kernel image <item> A kernel image that supports the
+	  network card and mounts its root filesystem via NFS. </item>
+	  <tag>Configuration space<item> A mountable directory which contains the configuration data. </item>
+	</taglist>
+<p>
+
+The TFTP daemon and a nfs server will be enabled
+automatically. Different install kernel images for BOOTP and DHCP are
+available within the package. All clients must have a network card,
+which is recognized by the kernel.
+<p>
+
+The FAI package is available as a Debian package from &faidownload;
+until it will become an official Debian package (coming soon
+;-)). 
+
+
+<sect id=aptsetup> Setting up FAI
+<p>
+
+First, get the newest version of FAI and install it using the
+<prgn>dpkg</prgn> command:
+
+<example>
+kueppers[~]# dpkg -i fai_1.4.1_i386.deb
+Selecting previously deselected package fai.
+(Reading database ... 39564 files and directories currently installed.)
+Unpacking fai (from fai_1.4.1_i386.deb) ...
+Setting up fai (1.4.1) ...
+To set up FAI edit /etc/fai.conf and call fai-setup
+</example>
+<p>
+
+Most definitions for FAI are defined in
+&fc;. Since FAI doesn't use <prgn>debconf</prgn>
+yet, edit this file and call <prgn>fai-setup</prgn>.
+These are important variables in &fc;:
+
+<taglist>
+	    <tag><var>FAI_BASETGZ</var></tag>
+	    <item>
+	      <p>For building the nfsroot, the base system is
+	      needed. It requires a <em>base</em> file (&basetgz),
+	      which is a minimal collection of all required packages
+	      for Debian. This is the location, where this big file
+	      (&basetgzsize for &basetgz) is fetched from. It is not
+	      used, when a file &basetgz is available in
+	      <file>/tmp</file>. This could take much time, a ftp
+	      server is used and you do not have a fast connection to
+	      it. You can find the current version in the directory
+	      <tt>debian/dists/stable/main/disks-i386/current/</tt> of
+	      your Debian mirror.</p>
+	    </item>
+
+	    <tag><var>FAI_SOURCES_LIST</var></tag>
+	    <item>
+	      <p>This multi line string is the definition for
+<file>sources.list</file>, which defines the location, how to access a
+the Debian mirror. For more information on the file format see <manref
+name="sources.list" section="5">.  </p> </item>
+
+	    <tag><var>FAI_PACKAGE_DIR</var></tag>
+	    <item>
+	      <p> If you have NFS access to your local Debian mirror,
+	      specify the remote filesystem. It will be mounted to
+	      <var>$MNTPOINT</var>. It's not needed if you use FTP or
+	      HTTP access.</p> </item>
+
+	    <tag><var>KERNELPACKAGE</var></tag>
+	    <item>
+	      <p> You must specify a kernel package, which includes
+	      the default kernel used during installation process. The
+	      package <package>fai-kernels</package> contains the
+	      default kernels for BOOTP and DHCP support.</item>
+	  </taglist>
+
+FAI uses <prgn>apt-get</prgn> to create the nfsroot filesystem which
+needs about &nfsrootsize of free disk space. Additional software packages for
+nfsroot are defined by the variable <var>NFSROOT_PACKAGES</var>.
+<p>
+
+You should also install the package <package>fai-kernels</package>,
+which will automaticlly install when you use <prgn>apt-get</prgn> for
+package isntallation.
+<example>
+kueppers[~]# dpkg -i ~lange/fai-kernels_1.0_i386.deb 
+Selecting previously deselected package fai-kernels.
+(Reading database ... 40562 files and directories currently installed.)
+Unpacking fai-kernels (from .../lange/fai-kernels_1.0_i386.deb) ...
+Setting up fai-kernels (1.0) ...
+</example>
+
+Before setting up FAI, you should get the program <prgn>imggen</prgn>,
+if you like to boot from 3 network card from 3Com. This executable
+converts netboot images, so they can be booted by 3Com cards. You can
+get this compiled program from the download page &faidownload;. Put
+that executable in your path (e.g. <file>/usr/local/bin</file>). After
+editing &fc call <prgn>fai-setup</prgn>.
+
+<example>
+kueppers[/home/lange]# fai-setup 
+Adding system user fai...
+Stopping Name Service Cache Daemon: nscd.
+Adding new user fai (100) with group nogroup.
+Starting Name Service Cache Daemon: nscd.
+Creating home directory /home/fai.
+Creating FAI nfsroot can take a long time
+Unpacking /tmp/base2_2.tgz
+Upgrading /usr/lib/fai/nfsroot
+Adding additional packages to /usr/lib/fai/nfsroot:
+ssh perl-5.005 dhcp-client file rdate cfengine bootpc wget rsh-client less dump ext2resize raidtools2 lvm strace expect5.31 hdparm
+grep: /etc/ssh/sshd_config: No such file or directory
+grep: /etc/ssh/sshd_config: No such file or directory
+Not starting OpenBSD Secure Shell server (/etc/ssh/NOSERVER)
+Kernel image file name  = /usr/lib/fai/nfsroot/boot/vmlinuz-2.2.17
+Output file name        = /boot/fai/installimage
+Kernel command line     = "auto rw root=/dev/nfs nfsroot=kernel nfsaddrs=kernel"
+
+
+Image Creator for MBA ROMs v1.00
+Usage: imggen [OPTION] inputfile outputfile
+  -a,   Add 3Com MBA or Lanworks BootWare support
+  -r,   Remove BootWare header from boot image file
+  -h,   Help screen
+
+In filename: /boot/fai/installimage
+Out filename: /boot/fai/installimage_3com
+Adding MBA support...
+MBA support has been succesfully added 
+You have no FAI configuration. Copy FAI template files with:
+cp -pR /usr/share/doc/fai/templates/* /usr/local/share/fai
+Then change the configuration files to meet your local needs.
+FAI setup finished.
+</example>
+
+The installation process adds lines to <file>/etc/exports</file> to
+export some directories to all hosts that belong to the netgroup
+<em>faiclients</em>. Netgroups are defined in
+<file>/etc/netgroup</file> or in the correspondening NIS map. An
+example for the netgroup file can be found
+<file>/usr/share/doc/fai/examples/etc/netgroup</file>. For more
+information read the manual pages <manref name="netgroup" section="5">
+and the NIS HOWTO. After changing the netgroups the nfs server has to
+reload its configuration.
+
+<example>
+/etc/init.d/nfs-*server reload
+</example>
+
+<p>
+After that, FAI is installed successfully on your server, but has no
+configuration for the install clients. Start with the templates from
+<tt> /usr/share/doc/fai/templates</tt> using the copy command above
+and read <ref id="config">.
+<p>
+When you make changes to &fc or want to install a new kernel to
+nfsroot, the nfsroot has be be rebuild by calling <prgn>fai-setup</prgn>.
+
+<chapt id="booting">Booting hosts <p>
+
+Now it's time to boot your install clients for the first time. You can
+use the boot floppy or configure them to boot via network card, which
+is much smarter. They will fail to boot, because no BOOTP or DHCP
+daemon is running yet or recognizes the hosts. But you can use this
+first boot attempt to easily collect all ethernet addresse of the
+network cards.
+
+<sect id="bootfloppy">Creating the boot floppy
+<p>
+If your network card can't boot itself, you have to boot via
+floppy. Use the command
+<prgn>make-fai-bootfloppy</prgn> to creates a suitable bootfloppy
+for all install clients. There's no host specific information on this
+floppy, so it's suitable for all your install clients.
+
+<sect id="bootnetwork">Set up booting via network card
+<p>
+You will find two install kernels in <file>/boot/fai</file>. Make a
+symbolic link from the hostname of your client to the appropriate
+kernel image. The file <file>installimage_3com</file> is created by
+<prgn>imggen</prgn> and suitable for booting 3Com network cards.
+
+<example> 
+# cd /boot/fai
+# ln -s installimage_3com faiserver
+</example>
+
+
+<sect id="mac">Collecting ethernet addresses
+<p>
+You have to collect all ethernet (MAC) addresse of the install clients
+and assign a hostname and IP-address to each client. So we first
+collect all MAC addresses. Now boot all your install clients. While the
+install client is booting, it sends broadcast packets to the LAN. You
+can log the MAC addresses of these hosts, if following
+command is running simultaneously on the server:
+
+<example># tcpdump -qte broadcast and port bootpc >/tmp/mac.lis</example>
+
+After the hosts has been send some broadcast packets (they will fail
+to boot because <prgn>bootpd</prgn> isn't running or does not recognise the MAC
+address yet) you abort <prgn>tcpdump</prgn> by typing <tt>ctrl-c</tt>. You get a list
+of all unique MAC addresses with these commands:
+
+<example># perl -ane 'print "\U$F[0]\n"' /tmp/mac.lis|sort|uniq</example>
+
+After that, you only have to assign these MAC addresses to hostnames and
+IP-addresses (<file>/etc/ethers</file> and <file>/etc/hosts</file> or
+corresponding NIS maps). With these information you can configure your
+<prgn>BOOTP</prgn> or <prgn>DHCP</prgn> daemon (see the section <ref id="bootptab">).
+
+I recommend to write the MAC addresses (last three bytes will suffice
+if you have network card from the same vendor) and the hostname in the
+front of each chassis.
+
+<sect id=bootptab>Configuration of BOOTP daemon
+<p>
+
+An example configuration for the BOOTP daemon is included in FAI. If
+you have no <file>/etc/bootptab</file> file you can use
+<file>/usr/share/doc/fai/examples/etc/bootptab</file> as template.
+
+<example>
+# /etc/bootptab example for FAI
+# replace FAISERVER with the name of your install server
+
+.faiglobal:\
+	:ms=1024:\
+	:hd=/boot/fai:\
+	:hn:bs=auto:\
+	:rp=/usr/lib/fai/nfsroot:
+
+# rp: $NFSROOT
+# your local values
+#
+# sa: your tftp server (install server)
+# ts: your timeserver (time enabled in inetd.conf)
+# T170 location of FAI configuration directory
+# T171 FAI_ACTION
+# T172 FAI_FLAGS, e.g. verbose, debug, reboot, sshd
+# T173 reserved for future use
+# T174 reserved for backup devices and backup options; NOT YET USED
+# sm: subnet mask
+# gw: router/gateway address
+# dn: domainname
+# ds: list of nameservers
+
+# these are optional
+# ys: NIS server
+# yd: NIS domainname
+# nt: list of NTP servers
+
+.failocal:\
+	:tc=.faiglobal:\
+	:sa=FAISERVER:\
+	:ts=FAISERVER:\
+        :T170="FAISERVER:/usr/local/share/fai":\
+	:T171="sysinfo":\
+	:sm=255.255.255.0:\
+	:gw=134.95.9.254:\
+	:dn=informatik.uni-koeln.de:\
+	:ds=134.95.9.136,134.95.100.209,134.95.100.208,134.95.140.208:\
+	:ys=rubens:yd=informatik4711.YP:\
+	:nt=time.rrz.uni-koeln.de,time2.rrz.uni-koeln.de:
+
+# now one entry for each install client
+faiserver:ha=0x00105A240012:bf=faiserver:tc=.failocal:T171="sysinfo":T172="sshd verbose debug ":
+faiclient01:ha=0x00105A000000:bf=faiclient01:tc=.failocal:T172="sshd":
+</example>
+
+Insert one line for each install client at the end of this file as
+done for <em>faiserver</em> and <em>faiclient01</em>. Replace the
+string <tt>FAISERVER</tt> with the name of your server (where you
+installed the package FAI). Then adjust the other network tags (sm,
+gw, dn, ds) to your local needs. The tags for NIS and time servers
+(yp, yd, nt) are optional. Tags with prefix <tt>T</tt> (starting from
+T170) are generic tags which are used to transfer some FAI specific
+data to the clients. <strong> It is important, that T171 is set to
+sysinfo !</strong> Later you can set it to <em>install</em>, in order
+to start the automatic installation. For more information see <manref
+name="bootptab" section="5"> and section (TODO: explain all tags).
+<p>
+
+When you have created your <file>/etc/bootptab</file> you have to
+enable the BOOTP daemon once. It's installed but Debian does not enable it
+by default. Edit <file>/etc/inetd.conf</file> and remove the comment
+(the hash) in the line containing <tt>#bootps</tt>. Then tell
+<prgn>inetd</prgn> to reload its configuration.
+
+<example># /etc/init.d/inetd reload</example>
+
+
+I recommend to use the BOOTP daemon because it automatically reloads
+the configuration file if any changes are made to it. The daemon for
+DHCP must always be manually restarted after changes to the
+configuration file are made <footnote> <p>If you can't use one of
+these, there's also the possibility to supply all information via a file
+or compile them into the kernel, but it's easier to use a daemon. See XXXX
+</p>
+</footnote>. Now it's time to boot all install clients again!
+
+<sect id="boot">Boot messages <p>
+
+These are messages, when booting from floppy.
+<example>
+LILO Loading FAI-BOOTP.
+Loading Linux....................
+Uncompressing Linux... OK, booting the Kernel.
+Linux version 2.2.17 (root@kueppers) (gcc version 2.95.2 20000220
+.
+.
+.
+</example>
+The rest of the boot message will be equal to those of booting from network card.
+
+
+When booting from network card you will see:
+<example>
+BOOTP........
+TFTP..........
+SYSLINUX 1.48 1999-09-26  Copyright (C) 1994-1999 H. Peter Anvin
+Loading Linux....................
+Uncompressing Linux... OK, booting the Kernel.
+Linux version 2.2.17 (root@kueppers) (gcc version 2.95.2 20000220
+.
+.
+.
+Sending BOOTP requests ..... OK
+IP-Config: Got BOOTP answer from 134.95.9.149
+IP-Config: Complete:
+   device=eth0, addr=134.95.9.200, mask=255.255.255.0, gw=134.95.9.254,
+  host=faiclient01, domain=informatik.uni-koeln.de, nis-domain=informatik4711.YP,
+  bootserver=134.95.9.149, rootserver=134.95.9.149, rootpath=/usr/lib/fai/nfsroot
+.
+.
+.
+------------------------------------------------------------
+FAI 1.4.1, december 04, 2000
+Fully Automatic Installation for Debian GNU/Linux
+------------------------------------------------------------
+.
+.
+.
+Press &lt;RETURN&gt; to reboot or ctrl-c to execute a shell
+</example>
+
+There will be some error message from modprobe and insmod, but that
+doesn't matter.  If you get the following error message, the kernel has
+no driver compiled in for your network card. Compile a new kernel
+which supports your network card.
+<example>
+IP-Config: No network devices available
+Partition check:
+ hda: hda1 hda2 < hda5 hda6 hda7 hda8 >
+Root-NFS: No NFS server available, giving up.
+VFS: Unable to mount root fs via NFS, trying floppy.
+VFS: Insert root floppy and press ENTER
+</example>
+
+
+<sect1 id="sysinfo">Collecting other system information<p>
+
+Now the clients have booted using the action <em>sysinfo</em>. Type
+<tt>ctrl-c</tt> to get a shell, or log from your server into the client (for
+eg. named faiclient01) using the secure shell:
+<example>> ssh -l root faiclient01
+Warning: Permanently added 'faiclient01,134.95.9.200' to the list of known hosts.
+root@faiclient01's password: 
+</example>
+
+You have now a shell and can execute various commands (dmesg, lsmod,
+df,...). Look at the log file in <file>/tmp</file>. There you can find
+much information about the boot process.
+
+All log files from <file>/tmp </file> are also written to the server in the directory <tt>~fai/faiclient01/sysinfo/</tt>.
+
+<p>
+A very nice feature is, that FAI mounts all filesystems
+it finds on the local disks read only. It also tells you on
+which partition a file <file>/etc/fstab</file> exists. When only one
+fstab is found, the partitions are mounted according to this
+information. Here's an example:
+<example>
+faiclient01:~# df
+Filesystem   1k-blocks    Used Available Use% Mounted on
+/dev/root      1249132  855648    330032  72% /
+/dev/ram0         3963      36      3927   1% /tmp
+kueppers:/usr/local/share/fai
+               1249132  855648    330032  72% /fai
+/dev/hda1        54447    9859     41777  19% /tmp/target
+/dev/hda10     1153576      20   1141992   0% /tmp/target/files/install
+/dev/hda9       711540      20    711520   0% /tmp/target/home
+/dev/hda8       303336      13    300191   0% /tmp/target/tmp
+/dev/hda7      1517948   98252   1342588   7% /tmp/target/usr
+/dev/hda6       202225    8834    182949   5% /tmp/target/var
+</example>
+
+<strong>This method can be used as an rescue environment !</strong> In
+future it will be possible to make backups or restore data to existing
+filesystems. If you need a filesystem with read-write access try:
+
+<example>faiclient01:~# mount -o remount,rw /tmp/target/home</example> 
+
+Reboot the computer using the command <prgn>faireboot</prgn>.
+
+<chapt id=instprocess>The installation process<p>
+
+FAI can perform several action when the client is booting. This action
+is defined in the variable <var>FAI_ACTION</var><footnote>
+	  <p>Theses names are used in the main installation
+script <file>rcS_fai</file>. The configuration files for DHCP and BOOTP daemons use other
+names. Example: <var>FAI_ACTION</var> is equal to <tt>T171</tt> in
+bootptab or <tt>option-171</tt> in dhcp.conf. </p>
+	</footnote>.
+
+Be very carefully if you set <var>FAI_ACTION </var> to
+<em>install</em>. This can destroy all your data on the install
+client, indeed most time it should do this ;-). It's recommended to change this only
+on a per client base in the BOOTP configuration. Do not change it in
+the section <tt>.failocal</tt> in <file>/etc/bootptab</file> which
+is a definition for all clients.
+<p>
+
+<sect id=isequence>The installation sequence<p>
+Following steps are performed during an installation after the linux kernel
+has booted.
+
+<enumlist>
+	    <item> <p>Set up FAI </p> </item>
+	    <item> <p>Define classes</p> </item>
+	    <item> <p>Partition local disks</p> </item>
+	    <item> <p>Create local filesystems</p> </item>
+	    <item> <p>Mount these filesystems</p> </item>
+	    <item> <p>Install software packages</p> </item>
+	    <item> <p>Call configuration scripts</p> </item>
+	    <item> <p>Save log files</p> </item>
+	    <item> <p>Reboot the new installed system</p> </item>
+	  </enumlist>
+
+
+<chapt id=config>The configuration<p>
+The configuration is the collection information how to partition local
+hard disks, where to mount the filesystems, which software packages to
+install, and how to make local customization to the installation. The
+configuration space is located on the server in
+<file>/usr/local/share/fai</file> and is mounted by the install
+clients to <file>/fai</file>. Following subdirectories are available:
+
+<taglist>
+	  <tag><tt>fai_config/</tt></tag> <item> <p>global parameters</p> </item>
+	  <tag><tt>class/</tt></tag> <item> <p>scripts and files to
+	  load kernel modules and define classes</p> </item>
+	  <tag><tt>disk_config/</tt></tag> <item> <p>configuration
+	  files for disk partitioning and file system creation</p> </item>
+	  <tag><tt>package_config/</tt></tag> <item> <p>software
+	  packages to be installed or removed</p> </item>
+	  <tag><tt>scripts/</tt></tag> <item> <p>script for customization</p> </item>
+	  <tag><tt>files/</tt></tag> <item> <p>files used by
+	  customization scripts</p> </item>
+</taglist>
+
+The main installation script <prgn>rcS_fai</prgn> uses these
+subdirectories in the listed order.
+
+
+
+
+<sect id=classes>Defining classes<p>
+All defined classes are listed in <file>FAI_CLASSES</file>. You can
+also set <var>FAI_ACTION</var> to <em>showclasses</em>.
+
+<sect id=diskconfig>Hard disk configuration<p>
+Please read <file>/usr/share/doc/fai/README.disk_config.gz</file>.
+
+<sect id=packageconfig>Software package configuration<p>
+Please read <file>/usr/share/doc/fai/README.package_config.gz</file>.
+
+
+<sect id=errors>Looking for errors<p>
+If the installation process stops or even it finishes, parse all log files for errors using:
+<example>
+> egrep "no such variable|bad variable|E:|ERROR" *.log
+</example>
+
+
+<!--
+
+<sect id=devclasses>Define Classes<p>
+load modules 
+<sect id=diskpart>Disk partitioning<p>
+
+<sect id=instsoft>Installing Software<p>
+<sect id=config0>Configuring to local needs<p>
+
+<chapt id=x1>Preparing your configuration<p>
+<em>Plan your installation, and FAI installs your plans.</em>
+<chapt id="details">Details<p>
+<sect id=bootpdsetup>bootp setup<p>
+<sect id=dhcpsetup>dhcp setup<p>
+
+<p>
+A CVS repository for the development version of FAI is available (the password is: fai):
+
+<example>
+> CVSROOT=":pserver:anonymous@poolserver.informatik.uni-koeln.de:/home/fai/cvs"
+> cvs login
+> cvs co -P fai
+> cvs co -P fai-kernels
+</example>
+
+<taglist>
+	    <tag>Hint for developers
+	    <item>If you do not want to use BOOTP and DHCP, you can
+	    define all variables in
+	    <file>/usr/lib/fai/nfsroot/fai/fai_config/hostname.conf AND global.conf XXX</file> because it's read before the real
+	    fai configuration directory is mounted.
+	    </item>
+	  </taglist>
+
+<chapt id="tutorial">A little tutorial
+<p>
+
+ERROR HINTS
+
+!-->
+<!-- 
+
+create boot floppy (dhcp, bootp), boot from network card, get MAC address
+set up bootp/dhcp action=sysinfo
+
+The only task, which has to be done manually for new hardware, is to
+assign the MAC address to a hostname and to an IP-address and to
+define classes for this host, or all host which match a certain name
+(look at <file>class/S01alias.sh</file>).
+
+Before installing the FAI package on your server, you should plan your
+installation. 
+
+general hints:
+
+all in one config file, or multiple small config files. Ypou can
+choose !
+
+470 MB Software in 10 minutes (10 or 100Mbit is equal when only one
+client is installing)
+faiserver != install server
+
+-->
+</book>
+</debiandoc>
+
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:2
+sgml-indent-data:nil
+sgml-parent-document:nil
+sgml-exposed-tags:nil
+sgml-declaration:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+-->
