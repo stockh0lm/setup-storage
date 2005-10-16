@@ -1,3 +1,15 @@
+fai (2.8.4.lazyboy.bugfix.320025) unstable; urgency=low
+
+  *  fixing fai-cd bug - changed string testing to stable in fai-cd script
+
+ -- Henning Sprang <henning@sprang.de>  Sat, 15 Oct 2005 21:56:38 +0200
+
+fai (2.8.4.lazyboy.fix.320024) unstable; urgency=low
+
+  * 
+
+ -- Henning Sprang <henning@sprang.de>  Sat, 15 Oct 2005 21:50:34 +0200
+
 fai (2.8.4) unstable; urgency=high
 
   * fix important bug: remove non-US entry (closes: #310392)
