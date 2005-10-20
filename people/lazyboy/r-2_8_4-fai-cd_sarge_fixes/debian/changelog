@@ -1,3 +1,22 @@
+fai (2.8.4.lazyboy.bugfix.320024.09) unstable; urgency=low
+
+  * add small fix from Michael 
+
+ -- Henning Sprang <henning@sprang.de>  Thu, 20 Oct 2005 16:37:54 +0200
+
+fai (2.8.4.lazyboy.bugfix.320024.08) unstable; urgency=low
+  * fixed fai-cd hardcoded sources.list for the install client to be generated
+    more flexible -fixes #320024 and at least party #329547.
+    Code by Michael Tautschnig
+
+ -- Henning Sprang <henning@sprang.de>  Sun, 16 Oct 2005 21:36:28 +0200
+
+fai (2.8.4.lazyboy.bugfix.320024.01) unstable; urgency=low
+
+  *  fixing fai-cd bug - changed string testing to stable in fai-cd script
+
+ -- Henning Sprang <henning@sprang.de>  Sat, 15 Oct 2005 21:50:34 +0200
+
 fai (2.8.4) unstable; urgency=high
 
   * fix important bug: remove non-US entry (closes: #310392)
