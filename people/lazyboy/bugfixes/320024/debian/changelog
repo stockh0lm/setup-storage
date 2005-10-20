@@ -1,8 +1,7 @@
-fai (2.8.4.lazyboy.bugfix.320024.07) unstable; urgency=low
-  * fixed fai-cd hardcoded sources.list for the install client to not included
-    contrib and nonfree packages because fai-mirror doesn't create such
-    repository parts - this is a fix for the bug #320024, but fixes also the
-    worst symptoms of #328547.
+fai (2.8.4.lazyboy.bugfix.320024.08) unstable; urgency=low
+  * fixed fai-cd hardcoded sources.list for the install client to be generated
+    more flexible -fixes #320024 and at least party #329547.
+    Code by Michael Tautschnig
 
  -- Henning Sprang <henning@sprang.de>  Sun, 16 Oct 2005 21:36:28 +0200
 
