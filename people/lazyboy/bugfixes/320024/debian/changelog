@@ -1,3 +1,9 @@
+fai (2.8.4.lazyboy.bugfix.320024.09) unstable; urgency=low
+
+  * add small fix from Michael 
+
+ -- Henning Sprang <henning@sprang.de>  Thu, 20 Oct 2005 16:37:54 +0200
+
 fai (2.8.4.lazyboy.bugfix.320024.08) unstable; urgency=low
   * fixed fai-cd hardcoded sources.list for the install client to be generated
     more flexible -fixes #320024 and at least party #329547.

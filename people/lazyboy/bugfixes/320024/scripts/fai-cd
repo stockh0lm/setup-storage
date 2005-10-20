@@ -215,6 +215,7 @@ EOF
       echo -n "deb file:/media/mirror `basename $i` ">>$tmp1
       find $i -name "Packages*" | grep binary | \
         sed 's/\/binary-.*$//' | uniq | sed "s#$i/##" | tr '\n' " " >>$tmp1
+      echo "">>$tmp1
     done  
 
     mount --bind $tmp1 $NFSROOT/etc/apt/sources.list
