@@ -1,0 +1,33 @@
+#!/bin/sh
+
+if [ -z $1 ]; then
+	CHROOT_DIR=sarge-chroot
+else
+	CHROOT_DIR=$1
+fi
+
+if [ -x $CHROOT_DIR ]; then
+	echo "error: chroot dir '$CHROOT_DIR' already exists - exiting"
+	exit 1
+else
+	mkdir $CHROOT_DIR
+fi
+
+debootstrap \
+	--include=vim,vim-common,libgpmg1,less \
+	sarge \
+	$CHROOT_DIR \
+	http://debmirror.hostnet.lazy/debian/
+
+#  some dirty tricks to get some nice resolv.conf and sources.list:
+
+# resolv.conf
+echo "search lazy hostnet.lazy">$CHROOT_DIR/etc/resolv.conf
+echo "nameserver 127.0.0.1">>$CHROOT_DIR/etc/resolv.conf
+echo "nameserver 192.168.0.1">>$CHROOT_DIR/etc/resolv.conf
+
+# sources.list
+echo "deb http://debmirror.hostnet.lazy/debian sarge main contrib">$CHROOT_DIR/etc/apt/sources.list
+echo "deb http://security.debian.org/debian-security sarge/updates main contrib">>$CHROOT_DIR/etc/apt/sources.list
+
+# TODO: maybe we could cleanup apr archives in chroot?

@@ -1,0 +1,28 @@
+#! /bin/sh
+if [ -z $1 ]; then
+	echo "please give sourcedir"
+	exit
+fi
+SOURCEDIR=$1
+
+if ! [ -x $SOURCEDIR/debian ]; then
+	echo "SOURCEDIR '$SOURCEDIR' does not contain debian sources."
+	echo "exiting."
+	exit 1
+fi
+
+RUNDIR=`pwd`
+
+if ! [ -x $RUNDIR/chroot ];then
+	echo "RUNDIR '$RUNDIR' does not contain a chroot dir."
+	echo "run preparedevenv first, please"
+	echo "exiting."
+	exit
+fi
+
+
+
+cd $SOURCEDIR
+
+sudo /usr/bin/pdebuild --buildresult $RUNDIR/chroot/incoming --
+

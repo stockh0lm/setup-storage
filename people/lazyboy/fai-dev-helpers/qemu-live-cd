@@ -1,0 +1,3 @@
+#! /bin/sh
+
+qemu -m 64 -boot d -cdrom $@ &

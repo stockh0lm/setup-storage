@@ -1,0 +1,16 @@
+#!/bin/sh
+
+if ! [ -x ./chroot ]; then
+	echo "not a fai development directory with a chroot. exiting"
+	exit 1
+fi
+
+# TODO: maybe ask user if all that should be deleted?!
+
+rm -r ./chroot/var/run/fai-cd/fai-cd_testsimple.iso chroot/var/run/fai-mirror/*
+rm -r ./chroot/usr/lib/fai/nfsroot/
+
+#rm -r chroot/usr/local/share/fai
+
+qemu-img create -f qcow qemu_install_client.disk 2500M
+

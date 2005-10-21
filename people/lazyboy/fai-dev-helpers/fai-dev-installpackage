@@ -1,0 +1,36 @@
+#!/bin/sh
+
+if [ -z $1 ]; then
+	echo "must give package name"
+	echo "exiting."
+	exit 1
+fi
+PACKAGE_NAME=$1
+	
+RUNDIR=`pwd`
+
+if ! [ -x $RUNDIR/chroot ];then
+	echo "RUNDIR '$RUNDIR' does not contain a chroot dir."
+	echo "run preparedevenv first, please"
+	echo "exiting."
+	exit
+fi
+
+
+# do necessary stuff in the chroot
+ROOTCMD="chroot ./chroot"
+
+$ROOTCMD dpkg -P fai
+$ROOTCMD rm -r /usr/local/share/fai/
+$ROOTCMD dpkg -i /incoming/$PACKAGE_NAME
+$ROOTCMD apt-get update
+$ROOTCMD apt-get install -f
+$ROOTCMD cp -pr /usr/share/doc/fai/examples/simple /usr/local/share/fai
+
+# TODO: better add a possibility to run a custom post-package-install script here
+$ROOTCMD vim /etc/fai/fai.conf
+$ROOTCMD vim /etc/fai/make-fai-nfsroot.conf
+$ROOTCMD vim /etc/fai/sources.list
+
+# TODO: normally not needed, or?
+#$ROOTCMD fai-setup

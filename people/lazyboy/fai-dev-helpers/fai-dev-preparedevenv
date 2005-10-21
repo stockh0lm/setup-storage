@@ -1,0 +1,57 @@
+#!/bin/sh
+
+# stop when not run as root!
+
+# TODO: fill in create-base-sarge chroot code here?
+~/bin/create-base-sarge-chroot chroot
+
+# TODO: put stuff in TEMPLATE_DIR
+# or better hardcode those here, so everything is in one place first?
+TEMPLATE_DIR=/hier/produktion/fai-devel/dev/chroot_templates/
+
+# copy/link the config files needed in chroot
+rm ./chroot/etc/apt/sources.list
+cp $TEMPLATE_DIR/sources.list ./chroot/etc/apt/sources.list
+rm ./chroot/etc/resolv.conf
+cp $TEMPLATE_DIR/resolv.conf ./chroot/etc/resolv.conf
+
+# create chroot/incoming for packages
+mkdir chroot/incoming
+chown henning chroot/incoming
+
+# create vm install image
+qemu-img create -f qcow qemu_install_client.disk  2500M
+
+# some help
+
+# TODO: could do the additional package install when some option (e.g.
+# testtype=fai-cd) is set.
+echo "
+further preparation:
+
+install needed package recommends and suggest manually 
+
+e.g.
+chroot ./chroot apt-get update
+chroot ./chroot apt-get install debootstrap fai-kernels wget syslinux \
+	debmirror mknbi apt-move mkinitrd-cd grub mkisofs
+
+prepare pbuilder: 
+in case you did not already, read about pbuilder and create a
+base chroot for pbuilder. You'll need it for the buildfai script
+
+development cycle:
+
+- edit fai code
+
+- run fai-dev-build
+
+- eventually add manual tweaks in the chroot
+
+- run fai-dev-installpackage
+
+- run fai-dev-runtest 
+
+- check results and maybe errors and start again
+"
+

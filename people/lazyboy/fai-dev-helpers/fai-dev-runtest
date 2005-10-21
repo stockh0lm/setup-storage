@@ -1,0 +1,29 @@
+#!/bin/sh
+RUNDIR=`pwd`
+
+if ! [ -x $RUNDIR/chroot ];then
+	echo "RUNDIR '$RUNDIR' does not contain a chroot dir."
+	echo "run preparedevenv, buildfai, and installpackage first, please"
+	echo "exiting."
+	exit 1
+fi
+
+
+# do necessary stuff in the chroot
+ROOTCMD="chroot ./chroot"
+
+$ROOTCMD rm -r /var/run/fai-cd/fai-cd_testsimple.iso /var/run/fai-mirror/
+$ROOTCMD mkdir /var/run/fai-mirror /var/run/fai-cd
+$ROOTCMD make-fai-nfsroot
+$ROOTCMD fai-mirror /var/run/fai-mirror/
+$ROOTCMD fai-cd -m /var/run/fai-mirror/ /var/run/fai-cd/fai-cd_testsimple.iso
+
+echo "
+# run qemu with the resulting iso and the prepared hd image for installation
+qemu -m 64 -boot d -cdrom ./chroot/var/run/fai-cd/fai-cd_testsimple.iso -hda qemu_install_client.disk -user-net -k de
+
+# check results and maybe errors and start again
+qemu -m 64 -user-net -k de -hda qemu_install_client.disk
+"
+
+

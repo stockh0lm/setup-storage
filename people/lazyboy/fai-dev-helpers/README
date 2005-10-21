@@ -1,0 +1,28 @@
+these are some helper scripts to ease FAI development and testing.
+
+for now it's mostly targeted to development of or testing with fai-cd.
+
+You'll need debooststrap, maybe a Debian mirror, pbuilder (read pbuilder docs
+for a nice introduction),and qemu, everything gets faster when using the kqemu
+accelarator kernel module.
+
+Go to the directory that you want to make a fai development environment (does not
+need to be the FAI source directory where you want to develop your code) and start
+with running fai-dev-preparedevenv as root or with sudo (needed for chroot
+creation). Most commands will need to be run as root or with sudo, because chroots
+are involved everywhere. I didn't come to think about how to make that better.
+
+ask henning@sprang.de when you have questions or suggestions.
+
+This stuff here is not well tested on other environments than mine, so it might
+completely destroy all of your system,you shouldnot use it without checking the
+full shell script code for possible troubles when you run that stuff on your
+system
+
+
+These scripts are licensed under the GNU General Public License, Version 2 or
+higher. Use them at your own risk.
+
+Copyright Henning Sprang.
+
+
