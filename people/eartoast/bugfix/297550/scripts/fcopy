@@ -342,20 +342,6 @@ EOF
   exit 0;
 }
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-sub rfilter {
-
-  # Filter for recursive copying
-  
-  # are we in a directory ? should we ignore it ?
-  my $location=$_;
-  (-d and (! grep $location eq $_,@ignoredirs )) or return 0;
-  # a directory without subdirs has two hard links
-  # don't count @ignoredirs as subdirs
-  my $subdirs=(lstat($_))[3] - 2 - grep(-d,@ignoredirs);
-  # push leaf
-  push @rlist,$File::Find::name unless $subdirs;
-}
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # main program
 
 $|=1;
@@ -396,8 +382,20 @@ die "fcopy: target undefined\n" unless $target;
 
 if ($opt_r) {
   foreach (@ARGV) { $_="$source/$_"; } # add prefix to list of directories
-  File::Find::find(\&rfilter,@ARGV);
-  foreach (@rlist) { $_=~ s#^$source/##; }   # remove prefix from all fines found
+  my %has_subdirs;
+  my %ignoredirs;
+  map $ignoredirs{$_}=1,@ignoredirs;
+  File::Find::find({
+    wanted=>sub{ $has_subdirs{$File::Find::dir} |= -d},
+    preprocess=>sub{grep ! (-d and exists($ignoredirs{$_})),@_}},
+    @ARGV);
+  foreach (keys %has_subdirs) {
+    unless ($has_subdirs{$_}) {
+      # remove prefix from all files found
+      s#^$source/##;
+      push @rlist,$_;
+    }
+  }
   warn "List of all files found by File::Find::find: @rlist" if $debug;
   @ARGV = @rlist;
 }
