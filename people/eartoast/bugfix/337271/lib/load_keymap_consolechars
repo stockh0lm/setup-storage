@@ -1,0 +1,12 @@
+#! /bin/sh
+
+# $Id$
+
+[ "$FAI_CONSOLEFONT" ] &&
+	consolechars -v -f /usr/share/consolefonts/$FAI_CONSOLEFONT.psf.gz
+
+# nothing to do if FAI_KEYMAP is undefined
+[ "$FAI_KEYMAP" ] || exit
+
+echo -n "Loading keymap(s) $FAI_KEYMAP ..."
+loadkeys -q $FAI_KEYMAP && echo "done."
