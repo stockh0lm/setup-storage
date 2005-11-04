@@ -124,10 +124,11 @@ Create verbose output.
 If a file 'preinst' exists and is executable, it is used in the following way:
 .RS
 .IP 1. 3
-a temporary copy of the file is created
+a temporary copy of the file for the used class is created
 .IP 2. 3
-preinst is called with the class being used and the full pathname to this 
-temporary copy (you can do substitutions or other modifications)
+preinst is called with the used class and the full pathname to this 
+temporary copy (you can do in-place substitutions or other modifications on this
+copy)
 .IP 3. 3
 the copy is compared to the destination and replaces it only if there are 
 any differences
