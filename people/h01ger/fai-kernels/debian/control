@@ -1,0 +1,13 @@
+Source: fai-kernels
+Section: admin
+Priority: extra
+Maintainer: Thomas Lange <lange@debian.org>
+Standards-Version: 3.5.6
+Build-Depends: kernel-tree-2.6.8-16, kernel-tree-2.4.27-10, modutils, kernel-package, debhelper, bin86, fakeroot
+
+Package: fai-kernels
+Architecture: i386
+Description: special kernels for FAI (Fully Automatic Installation)
+ This package contains the kernels which are used by the install
+ clients during the fully automatic installation. These kernels are
+ only useful for the package FAI.

@@ -1,0 +1,88 @@
+NEW in fai-kernels 1.9
+
+  - support for building fai-kernels on other archicectures added
+  - added README.non-i386 and README.security-updates
+  - build depends on kernel-tree with version and patchlevel, so
+    security fixes can be tracked easier
+
+NEW in fai-kernels 1.8.2
+
+  - use gcc 3.3.5 for compiling kernels
+  - add SATA support for 2.4 kernel
+  - add IA32_EMULATION (only usefull on x86-64)
+  - disable math emulation to make kernel fit on a floppy (for 2.6 kernel)
+  - remove tulip network drivers for 2.6 kernel
+  - enable options which are needed for fai CD
+
+NEW in fai-kernels 1.8.1
+
+  - add POSIX ACL support for 2.4 kernel
+  - add ReiserFS ACL support for 2.6 kernel
+
+NEW in fai-kernels 1.8
+
+  - use 2.4.27 and 2.6.8 kernels
+  - remove parallel IDE mdules
+  - add xfs modules
+  - add some network drivers
+
+NEW in fai-kernels 1.7.1
+
+  - add Promise IDE drivers
+  - add SATA kernel modules to 2.6 kernel
+
+NEW in fai-kernels 1.7
+
+  - use kernel 2.4.26
+  - add kernel 2.6.7
+
+NEW in fai-kernels 1.6
+
+  - use kernel 2.4.24
+  - add 3cr990 series "Typhoon" support
+  - enable highmem support
+  - disable WAN, Token Ring support, Bluetooth and some PCMCIA drivers
+  - new name for fai kernel package (revision was _fai1, now -fai is
+    appended to the package name and the revision is 1)
+
+NEW in fai-kernels 1.5.3
+
+  - minor bug fix
+
+NEW in fai-kernels 1.5.2
+
+  - kernel configuration now build with make oldconfig instead of make
+    menuconfig
+
+NEW in fai-kernels 1.5.1
+
+  - add drivers for more gigabit ethernet
+
+NEW in fai-kernels 1.5
+
+  - use kernel 2.4.20
+  - kernel 2.2.X is not included any more (its configuration is still
+    available in the source package)
+  - remove frame buffer support (and the penguin logo)
+  - SCSI and IDE drivers are only availavle as modules
+  - use new Intel NIC drivers
+  - reduce size of 2.4 kernel by using more kernel modules
+
+NEW in fai-kernels 1.4
+
+  - merge the two 2.2.20 kernels to one that support both BOOTP and DHCP
+
+NEW in fai-kernels 1.3
+
+  - added kernel 2.4.18 to fai-kernels packages that supports BOOTP
+    and DHCP protocol
+  - README explains how to build a 2.4.X kernel
+
+NEW in fai-kernels 1.2
+
+  - Use kernel 2.2.0
+
+NEW in fai-kernels 1.1.3 
+
+  - If you have a Promise IDE controller, enable it adding the kernel
+    boot parameter: ide0=dc4030
