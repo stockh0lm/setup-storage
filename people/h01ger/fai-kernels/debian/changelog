@@ -1,3 +1,13 @@
+fai-kernels (1.9.3) unstable; urgency=low
+
+  * switched to linux-tree-2.6.14 now
+  * disabled kernel 2.4 because of build problems, may be reenabled later 
+    it's still included in the depends...
+  * added support for amd64 and ppc
+  * added myself to maintainers field
+
+ -- Holger Levsen <debian@layer-acht.org>  Sat,  5 Nov 2005 15:05:50 +0200
+
 fai-kernels (1.9.1) unstable; urgency=high
 
   * recompile with new kernel sources

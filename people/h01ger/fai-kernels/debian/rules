@@ -11,21 +11,14 @@ DEB_HOST_ARCH=$(shell dpkg-architecture -qDEB_HOST_ARCH)
 
 export PATCH_THE_KERNEL=YES
 
-ifeq ($(DEB_HOST_ARCH),powerpc)
-# this (different ways for ppc+386 to create the config) is work in progress and will be de-ugly-fied soon
-createconfig24=cp kernel-config-2.4.powerpc $(kname24)/.config
-createconfig26=cp kernel-config-2.6.powerpc $(kname)/.config
-else
-# this (different ways for ppc+386 to create the config) is work in progress and will be de-ugly-fied soon
-createconfig24=cat kernel-config-2.4 fai-kernel-config-2.4 > $(kname24)/.config
-createconfig26=cat kernel-config fai-kernel-config > $(kname)/.config
-endif
+#createconfig24=cat kernel-config-2.4 fai-kernel-config-2.4 > $(kname24)/.config
+createconfig26=cp kernel-config-2.6.$(DEB_HOST_ARCH) $(kname)/.config
 
 include versions
 REVISION=1
 kname24=kernel-source-$(kversion24)
 
-kname=kernel-source-$(kversion)
+kname=linux-source-$(kversion)
 
 unpack: unpack-stamp
 unpack-stamp:
@@ -34,16 +27,17 @@ unpack-stamp:
 
 unpack24: unpack-stamp24
 unpack-stamp24:
-	bzcat /usr/src/$(kname24).tar.bz2 | tar -xf -
-	touch unpack-stamp24
+	# temp. disabled
+	#bzcat /usr/src/$(kname24).tar.bz2 | tar -xf -
+	#touch unpack-stamp24
 
 # kernel 2.6
 kernel: stamp-kernel
-stamp-kernel: unpack-stamp kernel-config fai-kernel-config
+stamp-kernel: unpack-stamp 
 	$(createconfig26)
 	cd $(kname) ; \
 	yes '' | make oldconfig ; \
-	make-kpkg clean ; \
+	cd $(kname) ; make-kpkg clean ; \
 	make-kpkg --rootcmd fakeroot --append-to-version -fai --revision $(REVISION) kernel-image 
 	touch stamp-kernel
 
@@ -57,8 +51,16 @@ stamp-24: unpack-stamp24
 	make-kpkg --rootcmd fakeroot --append-to-version -fai --revision $(REVISION) kernel-image 
 	touch stamp-24
 
-build: kernel24 kernel
-
+# build 2.4 and 2.6 on i386, and 2.6 only on powerpc and amd64
+build:	
+ifeq ($(DEB_HOST_ARCH),i386)
+# temp. disabled
+#	debian/rules kernel24 
+	debian/rules kernel
+else
+	debian/rules kernel
+endif
+	
 veryclean:
 	rm -f *stamp* *.deb
 	-rm -rf $(kname) $(kname24)
@@ -83,7 +85,10 @@ binary-arch: build install
 	dh_testdir
 	dh_testroot
 	dh_installdocs
-	cp -p $(kname24)/.config `pwd`/debian/fai-kernels/usr/share/doc/fai-kernels/config-$(kversion24)
+ifeq ($(DEB_HOST_ARCH),i386)
+	# temp. disabled
+	# cp -p $(kname24)/.config `pwd`/debian/fai-kernels/usr/share/doc/fai-kernels/config-$(kversion24)
+endif	
 	cp -p $(kname)/.config `pwd`/debian/fai-kernels/usr/share/doc/fai-kernels/config-$(kversion)
 	dh_installchangelogs 
 	dh_compress
