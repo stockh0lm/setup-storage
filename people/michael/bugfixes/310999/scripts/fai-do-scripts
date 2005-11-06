@@ -80,7 +80,7 @@ do_script() {
 	*~) echo "Skipping backup file $file" ; return ;;
     esac
     case $file in
-	S*) echo "Script, matching S* will not be executed in the future. Please use names matching [0-9][0-9]*" ;;
+	S[0-9][0-9]*) echo "Script, matching S[0-9][0-9]* will not be executed in the future. Please use names matching [0-9][0-9]*" ;;
     esac
 
     filetype=$(file $file)
