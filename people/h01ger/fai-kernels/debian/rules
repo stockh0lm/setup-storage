@@ -11,7 +11,7 @@ DEB_HOST_ARCH=$(shell dpkg-architecture -qDEB_HOST_ARCH)
 
 export PATCH_THE_KERNEL=YES
 
-#createconfig24=cat kernel-config-2.4 fai-kernel-config-2.4 > $(kname24)/.config
+createconfig24=cp kernel-config-2.4.$(DEB_HOST_ARCH) $(kname24)/.config
 createconfig26=cp kernel-config-2.6.$(DEB_HOST_ARCH) $(kname)/.config
 
 include versions
@@ -51,11 +51,11 @@ stamp-24: unpack-stamp24
 	make-kpkg --rootcmd fakeroot --append-to-version -fai --revision $(REVISION) kernel-image 
 	touch stamp-24
 
-# build 2.4 and 2.6 on i386, and 2.6 only on powerpc and amd64
+# build 2.4 and 2.6 only on i386
 build:	
 ifeq ($(DEB_HOST_ARCH),i386)
-# temp. disabled
-#	debian/rules kernel24 
+	# temp. disabled
+	#debian/rules kernel24 
 	debian/rules kernel
 else
 	debian/rules kernel
@@ -87,7 +87,7 @@ binary-arch: build install
 	dh_installdocs
 ifeq ($(DEB_HOST_ARCH),i386)
 	# temp. disabled
-	# cp -p $(kname24)/.config `pwd`/debian/fai-kernels/usr/share/doc/fai-kernels/config-$(kversion24)
+	#cp -p $(kname24)/.config `pwd`/debian/fai-kernels/usr/share/doc/fai-kernels/config-$(kversion24)
 endif	
 	cp -p $(kname)/.config `pwd`/debian/fai-kernels/usr/share/doc/fai-kernels/config-$(kversion)
 	dh_installchangelogs 
