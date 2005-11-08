@@ -1,4 +1,4 @@
-fai-kernels (1.9.3) unstable; urgency=low
+fai-kernels (1.9.2) unstable; urgency=low
 
   * switched to linux-tree-2.6.14 now
   * disabled kernel 2.4 because of build problems, may be reenabled later 
