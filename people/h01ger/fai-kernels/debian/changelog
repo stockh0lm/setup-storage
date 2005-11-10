@@ -13,8 +13,9 @@ fai-kernels (1.10) unstable; urgency=low
     a non-deprecated value
   * updated README (closes: #328230)
   * added myself to maintainers field
+  * NMU as I'm no DD yet, uploaded by the old maintainer Thomas. Thanks!
 
- -- Holger Levsen <debian@layer-acht.org>  Thu, 10 Nov 2005 15:05:50 +0200
+ -- Holger Levsen <debian@layer-acht.org>  Thu, 10 Nov 2005 18:30:50 +0200
 
 fai-kernels (1.9.1) unstable; urgency=high
 
