@@ -7,6 +7,10 @@
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
 
+# we never want CVS and subversion files in our packages
+export DH_ALWAYS_EXCLUDE=CVS:.svn
+
+
 DEB_HOST_ARCH=$(shell dpkg-architecture -qDEB_HOST_ARCH)
 
 export PATCH_THE_KERNEL=YES
