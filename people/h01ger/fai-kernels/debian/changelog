@@ -4,7 +4,14 @@ fai-kernels (1.10) unstable; urgency=low
   * disabled kernel 2.4 because of build problems, may be reenabled later 
     it's still included in the depends...
   * added support for amd64 and ppc
+  * dont merge kernel config snipplets, rather use one config file per arch
+    and kernel version (2.4/2.6)
+  * added some drivers for various network cards and scsi controllers 
+    (closes: #328232)
   * updated the FSF address in copyright
+  * made build-dependency to debhelper versioned and raised debian/compat to
+    a non-deprecated value
+  * updated README (closes: #328230)
   * added myself to maintainers field
 
  -- Holger Levsen <debian@layer-acht.org>  Thu, 10 Nov 2005 15:05:50 +0200

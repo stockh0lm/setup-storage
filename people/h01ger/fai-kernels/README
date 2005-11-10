@@ -38,8 +38,8 @@ using:
   make-kpkg --rootcmd fakeroot --append-to-version -fai --revision 2 kernel-image 
  
 This will create the file kernel-image-2.4.27-fai_2_i386.deb,
-which can be used by FAI. Copy this file to /usr/lib/fai/kernels
-and specify it in /etc/fai.conf
+which can be used by FAI. Copy this file to /usr/lib/fai/kernel
+and specify it in /etc/fai/make-fai-nfsroot.conf
 
 KERNELPACKAGE=/usr/lib/fai/kernel/kernel-image-2.4.27-fai_2_i386.deb
 
@@ -49,6 +49,14 @@ the command make-fai-nfsroot.
 Then you can build a new FAI boot floppy with
 
   # make-fai-bootfloppy -f /tmp/fai-bootfloppy -d b
+
+Note:
+
+Prior to make-kpkg kernel-image, it may be useful to do a
+  make-kpkg clean
+if a kernel as already been built in this directory, and its configuration
+has been changed with make menuconfig.
+
 
 How to save space on the boot floppy
 ------------------------------------
