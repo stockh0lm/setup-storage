@@ -1,3 +1,15 @@
+fai (2.8.4.michael.1) unstable; urgency=low
+
+  * Any changes to the debconf-database, that had been configured in one of the
+    files in the debconf/ directory, are enforce - even, if, e.g.,
+    /etc/default/<package> contains some other values. It is the packages'
+    responsibility to update this file (closes: #307266)
+  * dpkg-reconfigure is only called for packages, whose configs were modified -
+    this saves quite a lot of time (especially regenerating locales is a
+    time-consuming task) 
+
+ -- Michael Tautschnig <tautschn@model.in.tum.de>  Fri, 11 Nov 2005 17:22:38 +0100
+
 fai (2.8.4) unstable; urgency=high
 
   * fix important bug: remove non-US entry (closes: #310392)
