@@ -1,0 +1,3 @@
+#!/bin/sh
+[ -n "$videodrv" ] || videodrv=vesa
+perl -pi -e "s/%%VIDEODRV%%/$videodrv/" $2
