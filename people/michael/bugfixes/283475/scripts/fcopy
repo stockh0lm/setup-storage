@@ -178,8 +178,8 @@ sub name2num {
 
   # convert names to numeric uid, gid
   my ($user,$group) = @_;
-  my $uid = ($user  =~ /^\d+$/) ? $user  : getpwnam $user;
-  my $gid = ($group =~ /^\d+$/) ? $group : getgrnam $group;
+  my $uid = ($user  =~ /^\d+$/) ? $user  : `$ENV{ROOTCMD} perl -e '\$uid = getpwnam $user; print \$uid'`;
+  my $gid = ($group =~ /^\d+$/) ? $group : `$ENV{ROOTCMD} perl -e '\$gid = getgrnam $group; print \$gid'`;
   warn "name2id $user = $uid ; $group = $gid\n" if $debug;
   return ($uid,$gid);
 }
