@@ -118,6 +118,10 @@ fai_init() {
     [ $DO_INIT_TASKS -eq 0 ] && LOGDIR=$(mktemp -t -d fai.XXXXXX)
     ln -s $LOGDIR $rundir/current_log
 
+    if [ $DO_INIT_TASKS -eq 0 -a -x /usr/sbin/logtail ] ; then
+      logtail -f /var/log/kern.log -o $rundir/kern.log.offset > /dev/null
+    fi
+
     # several log files
     diskvar=$LOGDIR/disk_var.sh
     moduleslog=$LOGDIR/modules.log

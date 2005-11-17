@@ -70,8 +70,13 @@ rwmount() {
 }
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 save_dmesg() {
-
-    dmesg > $LOGDIR/dmesg.log
+  
+    if [ -r $rundir/kern.log.offset ] ; then
+      logtail -f /var/log/kern.log -o $rundir/kern.log.offset > $LOGDIR/dmesg.log
+      rm $rundir/kern.log.offset
+    else
+      dmesg > $LOGDIR/dmesg.log
+    fi
 }
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 wait_for_jobs() {
