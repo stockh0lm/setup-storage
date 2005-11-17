@@ -34,6 +34,17 @@ set -e
 case "$1" in
     configure)
 
+        . /usr/share/debconf/confmodule
+        # set installserver hostname to a reasonable value with debconf
+        db_get fai/installserver
+        perl -pi -e "s/^installserver=.*\$/installserver=$RET/" /etc/default/fai
+
+        # set mirrorhost in  /etc/fai.conf and  /etc/fai/sources.list as
+        # defined in debconf db
+        db_get fai/mirrorhost
+        perl -pi -e "s/^mirrorhost=.*\$/mirrorhost=$RET/" /etc/default/fai
+        #db_get fai/run-faisetup-on-install || true
+
         echo "Now edit fai.conf, make-fai-nfsroot.conf and sources.list in /etc/fai and call fai-setup."
 	echo "Especially, you'll have to replace the placeholder INSTALLSERVER in /etc/fai/fai.conf."
         ;;

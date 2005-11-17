@@ -10,3 +10,4 @@ usr/lib/fai/sbin
 usr/lib/fai/nfsroot
 usr/share/perl5/Debian
 boot/fai
+etc/default

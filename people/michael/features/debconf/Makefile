@@ -43,6 +43,7 @@ install:
 	install -m644 conf/menu.lst conf/sources.list $(DESTDIR)/etc/fai/
 	install -m644 conf/fai.conf conf/sources.list $(DESTDIR)/etc/fai/
 	install -m600 conf/make-fai-nfsroot.conf $(DESTDIR)/etc/fai/
+	install -m644 debian/default.tpl $(DESTDIR)/etc/default/fai
 	cp -a examples $(DOCDIR)
 	cp -a utils $(DOCDIR)/examples
 	cp -a templates/* $(DOCDIR)/examples/advanced
