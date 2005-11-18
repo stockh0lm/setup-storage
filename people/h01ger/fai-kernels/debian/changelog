@@ -24,9 +24,8 @@ fai-kernels (1.10) unstable; urgency=low
   * made build-dependency to debhelper versioned and raised debian/compat to
     a non-deprecated value
   * added myself to maintainers field
-  * NMU - as I'm no DD yet, uploaded by the old maintainer Thomas. Thanks!
 
- -- Holger Levsen <debian@layer-acht.org>  Fri, 18 Nov 2005 21:47:50 +0100
+ -- Holger Levsen <debian@layer-acht.org>  Fri, 18 Nov 2005 23:37:50 +0100
 
 fai-kernels (1.9.1) unstable; urgency=high
 
