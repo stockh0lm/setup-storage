@@ -31,9 +31,9 @@ unpack-stamp:
 
 unpack24: unpack-stamp24
 unpack-stamp24:
-	# temp. disabled
-	#bzcat /usr/src/$(kname24).tar.bz2 | tar -xf -
-	#touch unpack-stamp24
+	bzcat /usr/src/$(kname24).tar.bz2 | tar -xf -
+	ln -s $(kname24) linux ; patch  -p0 < 328707.patch ; rm linux 
+	touch unpack-stamp24
 
 # kernel 2.6
 kernel: stamp-kernel
@@ -58,8 +58,7 @@ stamp-24: unpack-stamp24
 # build 2.4 and 2.6 only on i386
 build:	
 ifeq ($(DEB_HOST_ARCH),i386)
-	# temp. disabled
-	#debian/rules kernel24 
+	debian/rules kernel24 
 	debian/rules kernel
 else
 	debian/rules kernel
@@ -90,8 +89,7 @@ binary-arch: build install
 	dh_testroot
 	dh_installdocs
 ifeq ($(DEB_HOST_ARCH),i386)
-	# temp. disabled
-	#cp -p $(kname24)/.config `pwd`/debian/fai-kernels/usr/share/doc/fai-kernels/config-$(kversion24)
+	cp -p $(kname24)/.config `pwd`/debian/fai-kernels/usr/share/doc/fai-kernels/config-$(kversion24)
 endif	
 	cp -p $(kname)/.config `pwd`/debian/fai-kernels/usr/share/doc/fai-kernels/config-$(kversion)
 	dh_installchangelogs 
