@@ -10,9 +10,10 @@ fai-kernels (1.10) unstable; urgency=low
     standard debian kernels with "nfsroot"-initrds for FAI. This will make
     fai-kernel unnecessary so it _then_ can be removed again.
   * updated to use linux-tree-2.6.14 instead of 2.6.8
-  * applied the patch for #328707 to 2.4.27-11 during build-time so that it
-    builds with the latest binutils. Therefore I've added the versioned 
-    dependency on 2.4.27-11
+  * apply the patch for #328707 to kernel-source-2.4.27 during build-time, so 
+    that it builds with the latest binutils. As 2.4.27-12 will hopefully soon
+    be uploaded with the patch included, the patch will only be applied, if it
+    applies cleanly without errors.
   * added support for amd64 and ppc
   * dont merge kernel config snipplets, rather use one config file per arch
     and kernel version (2.4/2.6)
@@ -25,7 +26,7 @@ fai-kernels (1.10) unstable; urgency=low
     a non-deprecated value
   * added myself to maintainers field
 
- -- Holger Levsen <debian@layer-acht.org>  Fri, 18 Nov 2005 23:37:50 +0100
+ -- Holger Levsen <debian@layer-acht.org>  Fri, 19 Nov 2005 22:42:23 +0100
 
 fai-kernels (1.9.1) unstable; urgency=high
 

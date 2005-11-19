@@ -32,7 +32,8 @@ unpack-stamp:
 unpack24: unpack-stamp24
 unpack-stamp24:
 	bzcat /usr/src/$(kname24).tar.bz2 | tar -xf -
-	ln -s $(kname24) linux ; patch  -p0 < 328707.patch ; rm linux 
+	## apply the patch for #328707, if it has not been applied to kernel-source-2.4.27 yet (which will hopefully happen in 2.4.27-12)
+	cd $(kname24) ; patch --dry-run -N -p1 < ../328707.patch && patch -p1 < ../328707.patch 
 	touch unpack-stamp24
 
 # kernel 2.6
