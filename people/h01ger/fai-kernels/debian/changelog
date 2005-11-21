@@ -16,7 +16,7 @@ fai-kernels (1.10) unstable; urgency=low
     that it builds with the latest binutils. As 2.4.27-12 will hopefully soon
     be uploaded with the patch included, the patch will only be applied, if it
     applies cleanly without errors.
- * dont merge kernel config snipplets, rather use one config file per arch
+  * dont merge kernel config snipplets, rather use one config file per arch
     and kernel version (2.4/2.6)
   * added some drivers for various network cards and scsi controllers 
     (closes: #328232)
