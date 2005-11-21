@@ -9,13 +9,14 @@ fai-kernels (1.10) unstable; urgency=low
     As this is done now, I will stick to my original plan, which is using
     standard debian kernels with "nfsroot"-initrds for FAI. This will make
     fai-kernel unnecessary so it _then_ can be removed again.
+  * added support for amd64 and ppc 
+  * updated README.non-i386 accordingly
   * updated to use linux-tree-2.6.14 instead of 2.6.8
   * apply the patch for #328707 to kernel-source-2.4.27 during build-time, so 
     that it builds with the latest binutils. As 2.4.27-12 will hopefully soon
     be uploaded with the patch included, the patch will only be applied, if it
     applies cleanly without errors.
-  * added support for amd64 and ppc
-  * dont merge kernel config snipplets, rather use one config file per arch
+ * dont merge kernel config snipplets, rather use one config file per arch
     and kernel version (2.4/2.6)
   * added some drivers for various network cards and scsi controllers 
     (closes: #328232)
@@ -26,7 +27,7 @@ fai-kernels (1.10) unstable; urgency=low
     a non-deprecated value
   * added myself to maintainers field
 
- -- Holger Levsen <debian@layer-acht.org>  Fri, 19 Nov 2005 22:42:23 +0100
+ -- Holger Levsen <debian@layer-acht.org>  Fri, 21 Nov 2005 14:42:23 +0100
 
 fai-kernels (1.9.1) unstable; urgency=high
 

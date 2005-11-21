@@ -1,20 +1,18 @@
 fai-kernels on other archs than i386
 ------------------------------------
 
-Currently there is only preliminary support for powerpc fai-kernels. If you
-built fai-kernels for other archs please contact me.
+With the release of fai-kernels 1.10 packages for amd64 and powerpc are also
+available. Please send feedback directly to me if they work for you and/or
+report errors and missing drivers to the BTS.
 
-You can build your own fai-kernels-powerpc.deb if you download fai-kernels
-source package and change the line "Architecture: i386" to 
-"Architecture: i386 powerpc" inside the control file. Now rebuild the package
-on powerpc.
+If you use FAI on other archs, don't hesitate to submit a wishlist bug to the 
+BTS. Depending on the progress of using using standard debian kernels with 
+"nfsroot"-initrds for FAI I might upload another version of fai-kernels then
+or point you to another solution.
 
-Beware that the powerpc kernel configs only have been tested on PMac 4400 and 
-7200, the Pegasos2 and on an IBook G3. 
-Beware that only those configs have been tested, the actual kernels have been
-built differently. 
-I will tests those kernels ASAP.
+make-fai-bootfloppy (which also can build .iso images for cdroms) has only
+been tested on i386, it should work on amd64, but it will not work on 
+powerpc.
 
-make-fai-bootfloppy has not been used at all on powerpc.
 
-Holger Levsen <debian@layer-acht.org>,  2005-04-06
+Holger Levsen <debian@layer-acht.org>,  2005-11-21

@@ -1,3 +1,9 @@
+NEW in fai-kernels 1.10
+
+  - updated to 2.6.14
+  - builds on amd64 and ppc now
+  - new maintainer
+  
 NEW in fai-kernels 1.9
 
   - support for building fai-kernels on other archicectures added
