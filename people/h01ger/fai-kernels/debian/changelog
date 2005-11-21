@@ -21,13 +21,15 @@ fai-kernels (1.10) unstable; urgency=low
   * added some drivers for various network cards and scsi controllers 
     (closes: #328232)
   * updated README (closes: #328230)
+  * append "fai-kernels" to version of the build kernel-packages instead of
+    "fai"
   * updated the FSF address in copyright
   * confirmed that the package conforms to debian-policy 3.6.2
   * made build-dependency to debhelper versioned and raised debian/compat to
     a non-deprecated value
   * added myself to maintainers field
 
- -- Holger Levsen <debian@layer-acht.org>  Fri, 21 Nov 2005 14:42:23 +0100
+ -- Holger Levsen <debian@layer-acht.org>  Fri, 21 Nov 2005 16:23:42 +0100
 
 fai-kernels (1.9.1) unstable; urgency=high
 

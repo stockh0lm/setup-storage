@@ -21,7 +21,6 @@ createconfig26=cp kernel-config-2.6.$(DEB_HOST_ARCH) $(kname)/.config
 include versions
 REVISION=1
 kname24=kernel-source-$(kversion24)
-
 kname=linux-source-$(kversion)
 
 unpack: unpack-stamp
@@ -43,7 +42,7 @@ stamp-kernel: unpack-stamp
 	cd $(kname) ; \
 	yes '' | make oldconfig ; \
 	cd $(kname) ; make-kpkg clean ; \
-	make-kpkg --rootcmd fakeroot --append-to-version -fai --revision $(REVISION) kernel-image 
+	make-kpkg --rootcmd fakeroot --append-to-version -fai-kernels --revision $(REVISION) kernel-image 
 	touch stamp-kernel
 
 # kernel 2.4
@@ -53,7 +52,7 @@ stamp-24: unpack-stamp24
 	cd $(kname24) ; \
 	yes '' | make oldconfig ; \
 	make-kpkg clean ; \
-	make-kpkg --rootcmd fakeroot --append-to-version -fai --revision $(REVISION) kernel-image 
+	make-kpkg --rootcmd fakeroot --append-to-version -fai-kernels --revision $(REVISION) kernel-image 
 	touch stamp-24
 
 # build 2.4 and 2.6 only on i386
