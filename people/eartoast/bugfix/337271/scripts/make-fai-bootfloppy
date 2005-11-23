@@ -280,7 +280,7 @@ cd_image() {
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # main part
 
-while getopts "lgvf:s:m:hd:c:Fi:" opt ; do
+while getopts "lgvf:s:m:hd:c:Fi:I:" opt ; do
     case "$opt" in
 	c) cfdir=$OPTARG ;;
 	l) lilo=1 ;;
