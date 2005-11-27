@@ -1,3 +1,9 @@
+fai-kernels (1.10.1) unstable; urgency=low
+
+  * added build-depends on gcc-3.3 (closes: #340884)
+
+ -- Holger Levsen <debian@layer-acht.org>  Sat, 26 Nov 2005 11:13:16 +0000
+
 fai-kernels (1.10) unstable; urgency=low
 
   * fai-kernels was removed as requested in #323183. Unfortunatly neither
