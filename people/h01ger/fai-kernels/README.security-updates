@@ -12,10 +12,6 @@ file as well.
 
 fai kernels control file supports different abi versions for 2.4 and 2.6.
 
-Currently the fai-kernels package is only build on i386, building it on
-powerpc is worked on at the moment. (BTW, note that there is no abi version in
-the debians powerpc kernel image packages currently.)
-
 
 In etch FAI should be changed to use debian standard kernels, so security
 updates are no issue anymore (from a fai kernel POV :)

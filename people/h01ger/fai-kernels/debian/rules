@@ -55,13 +55,17 @@ stamp-24: unpack-stamp24
 	make-kpkg --rootcmd fakeroot --append-to-version -fai-kernels --revision $(REVISION) kernel-image 
 	touch stamp-24
 
-# build 2.4 and 2.6 only on i386
+# build 2.4 and 2.6 only on i386, only 2.4 on alpha, only 2.6 on amd64 and powerpc
 build:	
 ifeq ($(DEB_HOST_ARCH),i386)
 	debian/rules kernel24 
 	debian/rules kernel
 else
+ifeq	($(DEB_HOST_ARCH),alpha)
+	debian/rules kernel24 
+else
 	debian/rules kernel
+endif
 endif
 	
 veryclean:

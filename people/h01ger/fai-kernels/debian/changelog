@@ -3,8 +3,9 @@ fai-kernels (1.10.1) unstable; urgency=low
   * added build-depends on gcc-3.3 (closes: #340884)
   * reenabled serial console on 2.6 on i386 (closes: #296932) and also on
     powerpc and amd64 as well as on 2.4 on powerpc
-  * added support for Fusion MPT on i386 and amd64
-
+  * streamlined support for Fusion MPT on i386 and amd64
+  * added support for 2.4 fai-kernels on alpha - thanks to Steffen Grunewald
+ 
  -- Holger Levsen <debian@layer-acht.org>  Wed, 30 Nov 2005 11:42:16 +0100
 
 fai-kernels (1.10) unstable; urgency=low
