@@ -1,3 +1,9 @@
+fai-kernels (1.10.2) unstable; urgency=low
+
+  * the test, if the patch for #328707 applies, now works as intended. 
+
+ -- Holger Levsen <debian@layer-acht.org>  Sun,  4 Dec 2005 15:03:20 +0100
+
 fai-kernels (1.10.1) unstable; urgency=low
 
   * added build-depends on gcc-3.3 (closes: #340884)
