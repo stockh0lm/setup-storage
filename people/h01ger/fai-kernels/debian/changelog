@@ -1,8 +1,11 @@
 fai-kernels (1.10.2) unstable; urgency=low
 
   * the test, if the patch for #328707 applies, now works as intended. 
+    (That means fai-kernels builds with kernel-source-2.4.27-12 in sid.)
+  * increased CONFIG_BLK_DEV_RAM_SIZE=8192 as this is needed for the new
+    fai-cd and also matches the debian default kernels
 
- -- Holger Levsen <debian@layer-acht.org>  Sun,  4 Dec 2005 15:03:20 +0100
+ -- Holger Levsen <debian@layer-acht.org>  Sat, 10 Dec 2005 15:03:20 +0100
 
 fai-kernels (1.10.1) unstable; urgency=low
 
@@ -11,7 +14,7 @@ fai-kernels (1.10.1) unstable; urgency=low
     powerpc and amd64 as well as on 2.4 on powerpc
   * streamlined support for Fusion MPT on i386 and amd64
   * added support for 2.4 fai-kernels on alpha - thanks to Steffen Grunewald
- 
+
  -- Holger Levsen <debian@layer-acht.org>  Wed, 30 Nov 2005 11:42:16 +0100
 
 fai-kernels (1.10) unstable; urgency=low
