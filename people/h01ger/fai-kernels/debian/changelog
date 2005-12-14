@@ -4,6 +4,9 @@ fai-kernels (1.10.2) unstable; urgency=low
     (That means fai-kernels builds with kernel-source-2.4.27-12 in sid.)
   * increased CONFIG_BLK_DEV_RAM_SIZE=8192 as this is needed for the new
     fai-cd and also matches the debian default kernels
+  * added arch specific build-depends on kernel sources
+  * bugfix: don't copy the 2.6 kernel config on alpha - the real fix (tm)
+    should be to build 2.6 fai-kernels on alpha...
 
  -- Holger Levsen <debian@layer-acht.org>  Sat, 10 Dec 2005 15:03:20 +0100
 

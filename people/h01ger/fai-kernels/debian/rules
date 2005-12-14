@@ -56,6 +56,7 @@ stamp-24: unpack-stamp24
 	touch stamp-24
 
 # build 2.4 and 2.6 only on i386, only 2.4 on alpha, only 2.6 on amd64 and powerpc
+# this is gettin ugly...
 build:	
 ifeq ($(DEB_HOST_ARCH),i386)
 	debian/rules kernel24 
@@ -92,10 +93,15 @@ binary-arch: build install
 	dh_testdir
 	dh_testroot
 	dh_installdocs
+	# this is getting ugly...
 ifeq ($(DEB_HOST_ARCH),i386)
 	cp -p $(kname24)/.config `pwd`/debian/fai-kernels/usr/share/doc/fai-kernels/config-$(kversion24)
 endif	
+ifeq	($(DEB_HOST_ARCH),alpha)
+	cp -p $(kname24)/.config `pwd`/debian/fai-kernels/usr/share/doc/fai-kernels/config-$(kversion24)
+else
 	cp -p $(kname)/.config `pwd`/debian/fai-kernels/usr/share/doc/fai-kernels/config-$(kversion)
+endif
 	dh_installchangelogs 
 	dh_compress
 	dh_fixperms
