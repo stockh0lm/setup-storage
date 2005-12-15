@@ -1,3 +1,10 @@
+fai-kernels (1.9.1sarge1) stable-security; urgency=high
+
+  * rebuild against new kernel sources (DSA 921-1 and 922-1)
+  * added myself to maintainers field
+
+ -- Holger Levsen <debian@layer-acht.org>  Thu, 15 Dec 2005 10:27:52 +0100
+
 fai-kernels (1.9.1) unstable; urgency=high
 
   * recompile with new kernel sources
