@@ -7,7 +7,9 @@ fai-kernels (1.10.2) unstable; urgency=low
   * added arch specific build-depends on kernel sources
   * bugfix: don't copy the 2.6 kernel config on alpha - the real fix (tm)
     should be to build 2.6 fai-kernels on alpha...
-  * build HW_RANDOM as module on archs that support it (2.6 only)
+  * build HW_RANDOM as module on archs that support it (2.6 only) - requested
+    by user via private mail
+  * build with CONFIG_PDC202XX_FORCE=y as requested by user via private mail 
 
  -- Holger Levsen <debian@layer-acht.org>  Wed, 14 Dec 2005 15:03:20 +0100
 
