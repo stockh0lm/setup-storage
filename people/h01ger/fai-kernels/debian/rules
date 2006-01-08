@@ -68,7 +68,7 @@ else
 	debian/rules kernel
 endif
 endif
-	
+
 veryclean:
 	rm -f *stamp* *.deb
 	-rm -rf $(kname) $(kname24)
