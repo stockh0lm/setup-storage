@@ -11,6 +11,7 @@ fai-kernels (1.10.2) unstable; urgency=low
   * build HW_RANDOM as module on archs that support it (2.6 only) - requested
     by user via private mail (please use the BTS instead)
   * build with CONFIG_PDC202XX_FORCE=y as requested by user via private mail 
+  * set CONFIG_FUSION=y as it's an option, not a driver
 
  -- Holger Levsen <debian@layer-acht.org>  Wed, 14 Dec 2005 15:03:20 +0100
 
