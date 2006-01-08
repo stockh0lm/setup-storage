@@ -15,7 +15,7 @@ fai-kernels (1.10.2) unstable; urgency=low
   * more driver needed for 2.6 i386, requested by Thomas Lange (TULIP, 
     CONFIG_DE4X5, CONFIG_WINBOND_840, CONFIG_DM9102, CONFIG_ULI526X)
 
- -- Holger Levsen <debian@layer-acht.org>  Wed, 14 Dec 2005 15:03:20 +0100
+ -- Holger Levsen <debian@layer-acht.org>  Sun,  8 Jan 2006 17:08:20 +0100
 
 fai-kernels (1.10.1) unstable; urgency=low
 
