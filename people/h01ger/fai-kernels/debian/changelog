@@ -12,6 +12,8 @@ fai-kernels (1.10.2) unstable; urgency=low
     by user via private mail (please use the BTS instead)
   * build with CONFIG_PDC202XX_FORCE=y as requested by user via private mail 
   * set CONFIG_FUSION=y as it's an option, not a driver
+  * more driver needed for 2.6 i386, requested by Thomas Lange (TULIP, 
+    CONFIG_DE4X5, CONFIG_WINBOND_840, CONFIG_DM9102, CONFIG_ULI526X)
 
  -- Holger Levsen <debian@layer-acht.org>  Wed, 14 Dec 2005 15:03:20 +0100
 
