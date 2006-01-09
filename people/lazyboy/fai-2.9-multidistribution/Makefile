@@ -6,6 +6,7 @@ LIBDIR = $(DESTDIR)/usr/lib/fai
 USRSBIN_SCRIPTS = make-fai-nfsroot make-fai-bootfloppy fai-setup fcopy ftar install_packages fai-chboot faimond fai-cd fai setup_harddisks faireboot
 
 USRBIN_SCRIPTS = fai-class fai-do-scripts fai-mirror fai-debconf device2grub
+
 libfiles=$(wildcard lib/[a-z]*)  # do not include CVS dir
 
 # files with variable KERNLEVERSION in it; this string will be substituted
@@ -40,5 +41,6 @@ install:
 	perl -pi -e 's/FAIVERSIONSTRING/$(VERSIONSTRING)/' $(DESTDIR)/usr/sbin/fai
 	cp -a examples $(DOCDIR)
 	cp -a utils $(DOCDIR)/examples
+	cp -a dists $(LIBDIR)
 
 .PHONY: clean veryclean
