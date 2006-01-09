@@ -92,11 +92,17 @@ task_partition() {
 }
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 task_extrbase() {
-
     local fs=$FAI_ROOT/etc/$fstab
     # extract the tar file which was the result of debootstrap
-    echo "Unpacking Debian base archive"
-    gzip -dc /var/tmp/base.tgz | tar -C $FAI_ROOT -xpf -
+
+    # calculate base_filename depending from distribution 
+    BASE_FILENAME="base.tgz"
+    if ! [ -z $DISTRIBUTION ]; then
+        BASE_FILENAME="base-$DISTRIBUTION.tgz"
+    fi
+    echo "Unpacking base archive $BASE_FILENAME"
+    gzip -dc /var/tmp/$BASE_FILENAME | tar -C $FAI_ROOT -xpf -
+
     # now we can copy fstab
     [ -f $fs ] && mv $fs $fs.old
     cp -p $LOGDIR/$fstab $fs
@@ -125,7 +131,13 @@ task_debconf () {
     fai-debconf $FAI/debconf
 }
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# FIXME: will break as soon somebody start using DISTRIBUTION=debian_sarge!!!
 task_prepareapt () {
+    # run this only for default distribution
+    if ! [ -z $DISTRIBUTION ]; then
+        echo "not running prepareapt because we are installing DISTRIBUTION=$DISTRIBUTION"
+        return 0
+    fi
 
     # ftp and http needs resolv.conf in chroot environment, /etc/hosts is useful
     # think about using fcopy for these two files
@@ -136,10 +148,17 @@ task_prepareapt () {
       echo -e "$IPADDR\t$HOSTNAME.$DOMAIN $HOSTNAME" >>$FAI_ROOT/etc/hosts
       echo $HOSTNAME >$FAI_ROOT/etc/hostname
     fi
+
     cp -r /etc/apt/* $FAI_ROOT/etc/apt/
 }
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# FIXME: will break as soon somebody start using DISTRIBUTION=debian_sarge!!!
 task_updatebase() {
+    # run this only for default distribution
+    if ! [ -z $DISTRIBUTION ]; then
+        echo "not running updatebase because we are installing DISTRIBUTION=$DISTRIBUTION"
+        return 0
+    fi
 
     # maybe the base system is not up to date
     echo "Updating base"
@@ -206,7 +225,7 @@ task_chboot() {
 	$frsh true >/dev/null 2>&1
 	if [ $? -ne 0 ]; then
 	    terror=3
-	    echo "WARNING: $frsh failed. Can't call fai-chboot on the install server."
+	    echo "Error: $frsh failed."
 	else
 	    # remove pxe config, so host will use default and boot from local disk
 	    $frsh /usr/sbin/fai-chboot -r $hostname
@@ -218,7 +237,11 @@ sndmon() {
 
     # send message to monitor daemon
     [ "$faimond" -eq 0 ] && return 0
-    echo "$sndhostname $*" | nc $monserver 4711 2>/dev/null
+    if [ "$debug" ];then
+	echo "$sndhostname $*" | nc $monserver 4711
+    else
+	echo "$sndhostname $*" | nc $monserver 4711 2>/dev/null
+    fi
     return $?
 }
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
