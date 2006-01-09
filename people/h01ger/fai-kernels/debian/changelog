@@ -1,5 +1,6 @@
 fai-kernels (1.10.2) unstable; urgency=low
 
+  * updated to use 2.6.15
   * the test, if the patch for #328707 applies, now works as intended. 
     (That means fai-kernels builds with kernel-source-2.4.27-12 in sid.)
   * increased CONFIG_BLK_DEV_RAM_SIZE=8192 as this is needed for the new
