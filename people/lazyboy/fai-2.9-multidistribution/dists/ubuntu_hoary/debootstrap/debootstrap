@@ -1,0 +1,246 @@
+#!/bin/sh -e
+
+unset TMP TEMP TMPDIR || true
+
+if [ "$DEBOOTSTRAP_DIR" = "" ]; then
+    DEBOOTSTRAP_DIR=/welt/produktion/fai-devel/dev/fai-multi-distribution/dist-base-scripts/ubuntu_hoary/debootstrap/
+fi
+
+if [ -x "/usr/bin/gettext" ]; then
+    USE_GETTEXT_INTERACTION=yes
+fi
+
+DEVICES_TARGZ=$DEBOOTSTRAP_DIR/devices.tar.gz
+
+. $DEBOOTSTRAP_DIR/functions
+
+GETTEXT_LANG=$LANG
+LANG=C
+USE_COMPONENTS=main
+VARIANT=""
+KEYRING=""
+DEBCONF_ADMIN_EMAIL=""
+
+export LANG USE_COMPONENTS DEBCONF_ADMIN_EMAIL
+umask 022
+
+usage_err()
+{
+  info USAGE1 "usage: [OPTION]... <suite> <target> [<mirror> [<script>]]"
+  info USAGE2 "Try \`${0##*/} --help' for more information."
+  error "$@"
+}
+
+usage()
+{
+    echo "Usage: ${0##*/} [OPTION]... <suite> <target> [<mirror> [<script>]]"
+    echo "Bootstrap Debian base system."
+    echo
+    cat <<EOF
+      --arch                 set the target architecture (use if no dpkg)
+                               [ --arch powerpc ]
+      --download-only        download packages, but don't perform installation
+      --print-debs           print the packages to be installed, and exit
+      --unpack-tarball       acquire .debs from a tarball instead of http
+      --boot-floppies        used for internal purposes by boot-floppies
+      --debian-installer     used for internal purposes by debian-installer
+      --help                 display this help and exit
+      --include=A,B,C        adds specified names to the list of base packages
+      --exclude=A,B,C        removes specified packages from the list
+      --verbose              don't turn off the output of wget
+      --components=A,B,C     use packages from the listed components of the 
+                             archive
+      --variant=X            use variant X of the bootstrap scripts
+                             (currently supported variants: buildd)
+      --keyring=K            check Release files against keyring K
+EOF
+}
+
+if [ $# != 0 ] ; then
+  while true ; do
+    case "$1" in
+	--help)
+	  usage
+	  exit 0
+	  ;;
+	--boot-floppies)
+	  if [ -n "$USE_DEBIANINSTALLER_INTERACTION" ] ; then
+	    error 1 ARG_BFDI "Can only use one of --boot-floppies and --debian-installer"
+	  fi
+	  if ! (echo -n "" >&3) 2>/dev/null; then
+	    error 1 ARG_BFBYHAND "If running debootstrap by hand, don't use --boot-floppies"
+	  fi
+	  USE_BOOTFLOPPIES_INTERACTION=yes
+	  shift
+	  ;;
+        --debian-installer)
+	  if [ -n "$USE_BOOTFLOPPIES_INTERACTION" ] ; then
+	    error 1 ARG_BFDI "Can only use one of --boot-floppies and --debian-installer"
+	  fi
+	  if ! (echo -n "" >&3) 2>/dev/null; then
+	    error 1 ARG_DIBYHAND "If running debootstrap by hand, don't use --debian-installer"
+	  fi
+	  USE_DEBIANINSTALLER_INTERACTION=yes
+	  shift
+	  ;;
+	--print-debs)
+	  JUST_PRINT_DEBS=yes
+	  shift
+	  ;;
+	--download-only)
+	  DOWNLOAD_ONLY=yes
+	  shift
+	  ;;
+	--arch)
+	  if [ -n "$2" ] ; then
+	    ARCH="$2"
+	    shift 2
+	  else
+	    error 1 NEEDARG "option requires an argument %s" "$1"
+	  fi
+	  ;;
+	--unpack-tarball)
+	  if [ -n "$2" ] ; then
+	    if [ ! -f "$2" ] ; then
+	      error 1 NOTARBALL "%s: No such file or directory" "$2"
+	    fi
+	    UNPACK_TARBALL="$2"
+	    shift 2
+	  else
+	    error 1 NEEDARG "option requires an argument %s" "$1"
+	  fi
+	  ;;
+  --include*)
+    additional="$(echo $1 | cut -f2 -d"="|tr , " ")"
+    shift 1
+    ;;
+  --exclude*)
+    exclude="$(echo $1 | cut -f2 -d"="|tr , " ")"
+    shift 1
+    ;;
+  --verbose)
+    verbose=true
+    export verbose
+    shift 1
+    ;;
+  --components*)
+    USE_COMPONENTS="$(echo "$1" | cut -f2 -d"="|tr , "|")"
+    export USE_COMPONENTS
+    shift 1
+    ;;
+  --variant*)
+    VARIANT="$(echo "$1" | cut -f2 -d"=")"
+    shift 1
+    ;;
+  --keyring*)
+    if ! gpgv --version >/dev/null 2>&1; then
+        error 1 NEEDGPGV "gpgv not installed, but required by --keyring option"
+    fi
+    KEYRING="$(echo "$1" | cut -f2 -d"=")"
+    shift 1
+    ;;
+	*)
+	  break
+	  ;;
+    esac
+  done
+else
+  usage_err 1 NEEDSUITETARGET "You must specify a suite and a target."
+fi
+
+if [ "$1" = "" ] || ( [ "$2" = "" ] && [ "$JUST_PRINT_DEBS" = "" ] ); then
+  usage_err 1 NEEDSUITETARGET "You must specify a suite and a target."
+fi
+
+SUITE="$1"
+TARGET="$2"
+if [ "${TARGET#/}" = "${TARGET}" ]; then
+  if [ "${TARGET%/*}" = "$TARGET" ] ; then
+    TARGET="$(echo `pwd`/$TARGET)"
+  else
+    TARGET="$(cd ${TARGET%/*}; echo `pwd`/${TARGET##*/})"
+  fi
+fi
+
+MIRRORS="http://ftp.debian.org/debian"
+SCRIPT="$DEBOOTSTRAP_DIR/scripts/$1"
+if [ -n "$VARIANT" ]; then
+    SCRIPT="${SCRIPT}.${VARIANT}"
+fi
+if [ "$3" != "" ]; then
+  MIRRORS="$3"
+  if [ "$4" != "" ]; then
+    SCRIPT="$4"
+  fi
+fi
+
+# Remove trailing /'s
+TARGET="${TARGET%/}"
+MIRRORS="${MIRRORS%/}"
+
+if [ "$ARCH" != "" ]; then
+	true
+elif [ -x /usr/bin/dpkg ] && /usr/bin/dpkg --print-installation-architecture >/dev/null 2>&1
+then
+	ARCH=`/usr/bin/dpkg --print-installation-architecture`
+elif [ -e $DEBOOTSTRAP_DIR/arch ]; then
+	ARCH=`cat $DEBOOTSTRAP_DIR/arch`
+else
+	error 1 WHATARCH "Couldn't work out current architecture"
+fi
+
+export MIRRORS ARCH SUITE TARGET
+
+if [ "$JUST_PRINT_DEBS" = "" ] && [ "$DOWNLOAD_ONLY" = "" ] && [ -x /usr/bin/id ] && [ `id -u` -ne 0 ]; then
+  error 1 NEEDROOT "debootstrap can only run as root"
+fi
+
+if [ ! -e "$SCRIPT" ]; then
+  error 1 NOSCRIPT "No such script: %s" "$SCRIPT"
+fi
+
+mkdir -p "$TARGET"
+
+PKGDETAILS=$DEBOOTSTRAP_DIR/pkgdetails
+
+if [ "$UNPACK_TARBALL" ]; then
+  if [ "${UNPACK_TARBALL#/}" = "$UNPACK_TARBALL" ]; then
+    error 1 TARPATH "Tarball must be given a complete path"
+  fi
+  if [ "${UNPACK_TARBALL%.tar}" != "$UNPACK_TARBALL" ]; then
+    (cd "$TARGET" && tar -xf "$UNPACK_TARBALL")
+  elif [ "${UNPACK_TARBALL%.tgz}" != "$UNPACK_TARBALL" ]; then
+    (cd "$TARGET" && zcat "$UNPACK_TARBALL" | tar -xf -)
+  else
+    error 1 NOTTAR "Unknown tarball: must be either .tar or .tgz"
+  fi
+fi
+
+. "$SCRIPT"
+
+work_out_debs
+
+if [ "$JUST_PRINT_DEBS" ]; then
+  echo "$all_debs"
+  exit 0
+fi
+
+download $all_debs
+
+if [ "$DOWNLOAD_ONLY" ]; then
+  exit 0
+fi
+
+install_debs
+
+if [ -e "$TARGET/etc/apt/sources.list" ]; then
+  rm -f "$TARGET/etc/apt/sources.list"
+fi
+
+sync
+
+if [ -n "$USE_BOOTFLOPPIES_INTERACTION" ] ; then
+  echo "I: debootstrap: Successfully completed" # goes to /dev/tty4
+  sleep 1 || true # give the user a second to see the success notice.
+fi
+

@@ -1,0 +1,83 @@
+#
+timeout 5
+default 0
+color cyan/blue white/blue
+
+### BEGIN AUTOMAGIC KERNELS LIST
+## lines between the AUTOMAGIC KERNELS LIST markers will be modified
+## by the debian update-grub script except for the default optons below
+
+## DO NOT UNCOMMENT THEM, Just edit them to your needs
+
+## ## Start Default Options ##
+## default kernel options
+## default kernel options for automagic boot options
+## If you want special options for specifiv kernels use kopt_x_y_z
+## where x.y.z is kernel version. Minor versions can be omitted.
+## e.g. kopt=root=/dev/hda1 ro
+# kopt=root=/dev/hda1 ro
+
+## default grub root device
+## e.g. groot=(hd0,0)
+# groot=(hd0,0)
+
+## should update-grub create alternative automagic boot options
+## e.g. alternative=true
+##      alternative=false
+# alternative=true
+
+## should update-grub lock alternative automagic boot options
+## e.g. lockalternative=true
+##      lockalternative=false
+# lockalternative=true
+
+## altoption boot targets option
+## multiple altoptions lines are allowed
+## e.g. altoptions=(extra menu suffix) extra boot options
+##      altoptions=(recovery mode) single
+# altoptions=(recovery mode) single
+
+## nonaltoption boot targets option
+## This option controls options to pass to only the
+## primary kernel menu item.
+## You can have ONLY one nonaltoptions line
+# nonaltoptions=quiet splash
+
+## controls how many kernels should be put into the menu.lst
+## only counts the first occurence of a kernel, not the
+## alternative kernel options
+## e.g. howmany=all
+##      howmany=7
+# howmany=all
+
+## should update-grub create memtest86 boot option
+## e.g. memtest86=true
+##      memtest86=false
+# memtest86=true
+
+## ## End Default Options ##
+
+title		Ubuntu, kernel 2.6.12-9-686
+root		(hd0,0)
+kernel		/boot/vmlinuz-2.6.12-9-686 root=/dev/hda1 ro quiet splash
+initrd		/boot/initrd.img-2.6.12-9-686
+savedefault
+boot
+
+title		Ubuntu, kernel 2.6.12-9-686 (recovery mode)
+lock
+root		(hd0,0)
+kernel		/boot/vmlinuz-2.6.12-9-686 root=/dev/hda1 ro single
+initrd		/boot/initrd.img-2.6.12-9-686
+savedefault
+boot
+
+title		Ubuntu, kernel memtest86+ 
+root		(hd0,0)
+kernel		/boot/memtest86+.bin  
+savedefault
+boot
+
+### END DEBIAN AUTOMAGIC KERNELS LIST
+
+
