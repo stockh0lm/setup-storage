@@ -5,9 +5,9 @@
 # use a list of classes for our demo machine
 case $HOSTNAME in
     demohost)
-	echo "FAIBASE DHCPC DEMO" ;;
+	echo "FAIBASE DHCPC DEMO EXIM" ;;
     gnomehost)
-	echo "FAIBASE DHCPC DEMO XFREE GNOME";;
+	echo "FAIBASE DHCPC DEMO XFREE GNOME EXIM";;
     *)
 	echo "FAIBASE DHCPC" ;;
 esac
