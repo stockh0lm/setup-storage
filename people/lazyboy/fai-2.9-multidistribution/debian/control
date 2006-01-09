@@ -1,7 +1,7 @@
 Source: fai
 Section: admin
 Priority: extra
-Maintainer: Thomas Lange <lange@debian.org>
+Maintainer: Henning Sprang <henning@sprang.de> 
 Standards-Version: 3.6.1
 Build-Depends-Indep: debhelper (>= 4.1.16), debiandoc-sgml, tetex-bin, tetex-extra
 
@@ -54,3 +54,9 @@ Description: Fully Automatic Installation nfsroot package
  systems. This package contains the software that is only needed in
  the FAI nfsroot. Do not install this package on a normal machine.
 
+Package: fai-distributions
+Architecture: all
+Depends: fai-server
+Description: Package to enable installation of Ubuntu Hoary
+ a dirty hackaed binary package for hoary base image creation
+ (basic scripts needed for an ubuntu install still in fai configdir)

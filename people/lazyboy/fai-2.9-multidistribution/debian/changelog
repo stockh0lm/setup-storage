@@ -1,3 +1,40 @@
+fai (2.9-multi-distribution-0.1-05) unstable; urgency=low
+
+  * fixing a small error in subroutines
+  * using mirrorhost as mirror for breezy base image creation
+
+ -- Henning Sprang <henning@sprang.de>  Tue,  3 Jan 2006 21:04:11 +0100
+
+fai (2.9-multi-distribution-0.1-04) unstable; urgency=low
+
+  * fix nfs v3 problem in fai-chboot (warning - unable to open initial
+    console) 
+  * adding ubuntu examples
+  * fixing ubuntu breezy support
+
+ -- Henning Sprang <henning@sprang.de>  Sun,  1 Jan 2006 23:05:39 +0100
+
+fai (2.9-multi-distribution-0.1-03) unstable; urgency=low
+
+  * fixing make-base-tgz bug 
+  * add examples for multi-distribution
+  * re-enable prepareapt and updatebase for default distribution (to get
+    backwards compatibility
+
+ -- Henning Sprang <henning@sprang.de>  Sun,  1 Jan 2006 21:16:04 +0100
+
+fai (2.9-multi-distribution-0.1-02) unstable; urgency=low
+
+  * fixing extrbase task for debian installation 
+
+ -- Henning Sprang <henning@rio.lazy>  Fri, 30 Dec 2005 19:11:58 +0100
+
+fai (2.9-multi-distribution-0.1-01) unstable; urgency=low
+
+  * add stuff for nicely integrating Ubuntu hoary
+
+ -- Henning Sprang <henning@sprang.de>  Fri, 30 Dec 2005 00:56:25 +0100
+
 fai (2.9) unstable; urgency=low
 
   * splitting binary package fai into fai-server, fai-client, fai-doc and
