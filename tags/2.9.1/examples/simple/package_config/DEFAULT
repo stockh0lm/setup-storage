@@ -1,0 +1,28 @@
+PACKAGES install I386
+memtest86+
+kernel-image-2.6-386
+
+PACKAGES install AMD64
+memtest86+
+kernel-image-2.6-amd64-k8-smp
+
+PACKAGES aptitude DHCPC
+dhcp3-client
+
+PACKAGES aptitude GRUB
+grub lilo-
+
+PACKAGES aptitude LILO
+lilo grub-
+
+PACKAGES aptitude-r GERMAN
+german
+
+PACKAGES aptitude-r FAISERVER
+fai-kernels
+# is not available in sarge: fai-quickstart
+mknbi dhcp3-server tftpd-hpa
+rsh-server wget syslinux
+debmirror tcpdump
+apache2
+apt-move mkinitrd-cd mkisofs grub
