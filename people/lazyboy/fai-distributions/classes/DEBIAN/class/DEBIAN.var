@@ -1,0 +1,2 @@
+addpackages="kernel-image-2.6.8-2-686"
+kernelversion=2.6.8 # for the packages  kernel-doc and kernel-source

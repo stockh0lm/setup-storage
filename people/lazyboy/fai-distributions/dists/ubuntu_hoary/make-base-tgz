@@ -1,0 +1,92 @@
+#!/bin/sh
+PATH=/usr/local/bin:/usr/local/sbin:/bin:/sbin:/usr/bin:/usr/sbin
+
+DISTRIBUTION="ubuntu_hoary"
+
+if [ `id -u` -ne 0 ]; then
+    echo "Run this program as root."
+    exit 9
+fi
+
+# option e currently does nothing
+while getopts vc:f: opt ; do
+    case "$opt" in
+        c) cfdir=$OPTARG ;;
+        v) verbose=1 ; v=-v ;;
+        f) cfg=$OPTARG ;;
+        ?) exit 5 ;; # error in option parsing
+    esac
+done
+
+set -e
+
+# source fai.conf and make-fai-nfsroot.conf
+[ -z "$cfdir" ] && cfdir=/etc/fai
+if [ ! -d "$cfdir" ]; then
+    echo "$cfdir is not a directory"
+    exit 6
+fi
+
+[ "$verbose" ] && echo "Using configuration files from directory $cfdir"
+if [ -n "$cfg" ]; then
+    . $cfdir/$cfg
+else
+    . $cfdir/fai.conf
+fi
+
+. /etc/fai-distributions/${DISTRIBUTION}.conf
+
+if [ -z "$NFSROOT" ]; then
+    echo "\$NFSROOT is not set. Please check your settings in $cfdir/fai.conf."
+    exit 4
+fi
+
+BOOTSTRAP_DIR=/var/fai/bootstrappers/$DISTRIBUTION
+mkdir -p $BOOTSTRAP_DIR
+cd $BOOTSTRAP_DIR
+
+echo fetching t $BOOTSTRAP_ARCHIVE/$DISTRIBUTION/$BOOTSTRAP_PACKAGE
+wget $BOOTSTRAP_ARCHIVE/$DISTRIBUTION/$BOOTSTRAP_PACKAGE
+
+
+# extact debootstrap archive
+dpkg-deb -x $BOOTSTRAP_PACKAGE .
+
+cd -
+
+
+# call debootstrap as necesary - (how can this be done without having the
+# ubuntu debootstrap installed?)
+
+# FIXME: can/should probably be defined somewhere in /etc/fai?
+# TODO: solve chroot deletetion problem! ubuntu-users/ubuntu-devel?
+TMPDIR=/tmp/fai/ubuntu_hoary_debootstrap/
+
+FAI_DEBOOTSTRAP_OPTIONS="--arch i386 \
+    --exclude=pcmcia-cs,pppoe,dhcp-client,exim4,exim4-base,exim4-config,exim4-daemon-light,modconf,libident,exim \
+    --include=lilo \
+    hoary \
+    $TMPDIR \
+    ftp://$mirrorhost/ubuntu"
+
+# cleanup
+echo "cleaning up TMPDIR $TMPDIR"
+rm -rf $TMPDIR
+
+cd `dirname $0`
+
+export DEBOOTSTRAP_DIR=$BOOTSTRAP_DIR/usr/lib/debootstrap/
+
+echo run $BOOTSTRAP_DIR/usr/sbin/debootstrap $FAI_DEBOOTSTRAP_OPTIONS
+$BOOTSTRAP_DIR/usr/sbin/debootstrap $FAI_DEBOOTSTRAP_OPTIONS
+
+chroot $TMPDIR apt-get clean
+       
+echo "Creating base-$DISTRIBUTION.tgz"
+
+cd $TMPDIR
+tar cfz $NFSROOT/var/tmp/base-$DISTRIBUTION.tgz *
+
+chroot $TMPDIR umount /dev
+chroot $TMPDIR umount /.dev
+ 

@@ -1,0 +1,51 @@
+#! /bin/sh
+
+# do stuff that is essential before string software installation
+
+#  stolen from subroutines-linus task_prepareapt:
+
+# ftp and http needs resolv.conf in chroot environment, /etc/hosts is useful
+# think about using fcopy for these two files
+[ -f /tmp/etc/resolv.conf ] && cp /tmp/etc/resolv.conf $FAI_ROOT/etc
+[ -f /etc/hosts ] && cp /etc/hosts $FAI_ROOT/etc
+# set hostname in $FAI_ROOT
+if [ -f /var/run/fai//FAI_INSTALLATION_IN_PROGRESS ]; then
+  echo -e "$IPADDR\t$HOSTNAME.$DOMAIN $HOSTNAME" >>$FAI_ROOT/etc/hosts
+  echo $HOSTNAME >$FAI_ROOT/etc/hostname
+fi
+
+fcopy /etc/apt/sources.list
+fcopy /etc/apt/apt.conf
+
+# stolen from FAI's updatebase...
+
+if [ "$FAI_ACTION" = "install" ]; then
+    # some packages must access /proc even in chroot environment
+    mount -t proc proc $FAI_ROOT/proc
+    # if we are using udev, also mount it into $FAI_ROOT
+    [ -f /etc/init.d/udev ] && mount --bind /dev $FAI_ROOT/dev
+    # if libc is upgraded init u is called in chroot environment and
+    # then init will eat up much cpu time
+    fai-divert -a /sbin/init /usr/sbin/liloconfig /usr/sbin/invoke-rc.d
+    # fake some more programs
+    fai-divert -a /etc/init.d/nis /sbin/start-stop-daemon
+    cp /sbin/start-stop-daemon $FAI_ROOT/sbin/start-stop-daemon
+fi
+
+# update the apt-get information inside the nfsroot 
+
+export aptopt='-y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold"'
+$ROOTCMD apt-get $aptopt update
+$ROOTCMD apt-get $aptopt check
+[ $? -ne 0 ] && $ROOTCMD apt-get $aptopt -f install </dev/null 
+$ROOTCMD dpkg -C
+[ $? -ne 0 ] && yes '' | $ROOTCMD dpkg --configure -a 
+# using the above value, causes an error: "dpkg need action"
+export aptopt=
+$ROOTCMD apt-get $aptopt -f -y dist-upgrade </dev/null
+# update dpkg info which packages are available
+tmp=$($ROOTCMD mktemp)
+$ROOTCMD apt-cache dumpavail > $FAI_ROOT/$tmp
+$ROOTCMD dpkg --update-avail $tmp
+rm -f $FAI_ROOT/$tmp
+
