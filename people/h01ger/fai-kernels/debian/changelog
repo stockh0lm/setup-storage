@@ -15,8 +15,11 @@ fai-kernels (1.10.2) unstable; urgency=low
   * set CONFIG_FUSION=y as it's an option, not a driver
   * more driver needed for 2.6 i386, requested by Thomas Lange (TULIP, 
     CONFIG_DE4X5, CONFIG_WINBOND_840, CONFIG_DM9102, CONFIG_ULI526X)
+  * the i386, amd64 and powerpc kernel configs have been generated with "make
+    menuconfig" so in future it will be easier to diff them. The alpha config
+    still needs to be updated that way. 
 
- -- Holger Levsen <debian@layer-acht.org>  Sun,  8 Jan 2006 17:08:20 +0100
+ -- Holger Levsen <debian@layer-acht.org>  Wed, 18 Jan 2006 15:33:12 +0100
 
 fai-kernels (1.10.1) unstable; urgency=low
 
