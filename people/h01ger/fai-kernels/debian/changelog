@@ -18,8 +18,10 @@ fai-kernels (1.10.2) unstable; urgency=low
   * the i386, amd64 and powerpc kernel configs have been generated with "make
     menuconfig" so in future it will be easier to diff them. The alpha config
     still needs to be updated that way. 
+  * enabled CONFIG_SCSI_SATA_ULI=m (and therefore experimental drivers) on
+    2.6/i386 as requested by Thomas Lange.
 
- -- Holger Levsen <debian@layer-acht.org>  Wed, 18 Jan 2006 15:33:12 +0100
+ -- Holger Levsen <debian@layer-acht.org>  Wed, 18 Jan 2006 15:44:37 +0100
 
 fai-kernels (1.10.1) unstable; urgency=low
 
