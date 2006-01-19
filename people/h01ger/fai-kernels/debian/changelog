@@ -15,9 +15,9 @@ fai-kernels (1.10.2) unstable; urgency=low
   * set CONFIG_FUSION=y as it's an option, not a driver
   * more driver needed for 2.6 i386, requested by Thomas Lange (TULIP, 
     CONFIG_DE4X5, CONFIG_WINBOND_840, CONFIG_DM9102, CONFIG_ULI526X)
-  * the i386, amd64 and powerpc kernel configs have been generated with "make
-    menuconfig" so in future it will be easier to diff them. The alpha config
-    still needs to be updated that way. 
+  * the i386, amd64 and powerpc kernel configs have been re-generated with 
+    "make menuconfig" so in future it will be easier to diff them. The alpha
+    config still needs to be updated that way. 
   * enabled CONFIG_SCSI_SATA_ULI=m (and therefore experimental drivers) on
     2.6 on i386 and amd64 as requested by Thomas Lange.
 
