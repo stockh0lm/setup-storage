@@ -1,0 +1,26 @@
+#!/bin/sh
+
+# from florent vuillemin's fai 2.8.4 multidistribution subroutines-linux
+
+# this won't be there - where is it? (we want a native nfsroot - the default
+# distribution, no nfsroot per distribution)
+
+#!/bin/sh
+# ftp and http needs resolv.conf in chroot environment, /etc/hosts is useful
+# think about using fcopy for these two files
+[ -f /tmp/etc/resolv.conf ] && cp /tmp/etc/resolv.conf $FAI_ROOT/etc
+[ -f /etc/hosts ] && cp /etc/hosts $FAI_ROOT/etc
+# set hostname in $FAI_ROOT
+if [ -f /var/run/fai//FAI_INSTALLATION_IN_PROGRESS ]; then
+    echo -e "$IPADDR\t$HOSTNAME.$DOMAIN $HOSTNAME" >>$FAI_ROOT/etc/hosts
+    echo $HOSTNAME >$FAI_ROOT/etc/hostname
+fi
+
+fcopy /etc/urpmi/urpmi.cfg
+
+chroot $FAI_ROOT urpmi.update -f Main
+chroot $FAI_ROOT urpmi.update -f Contrib
+chroot $FAI_ROOT urpmi.update -f Jpackage
+touch $FAI_ROOT/etc/mtab
+touch $FAI_ROOT/var/log/urpmi.log
+

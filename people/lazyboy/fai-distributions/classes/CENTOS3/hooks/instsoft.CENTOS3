@@ -1,0 +1,8 @@
+#! /bin/sh
+
+# 
+local pkglist;
+pkglist=`install_rpms`
+#### The --installroot option does not work properly:
+#### yum could not resolve its dependencies
+chroot $FAI_ROOT yum -e 10 -t -y install $pkglist ;;

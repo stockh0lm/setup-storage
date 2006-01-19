@@ -1,0 +1,4 @@
+Main http://debmirror/mandriva_dvd_10.2/media/main/ {
+  hdlist: hdlist.Main.cz
+  with_hdlist: ../../media/media_info/hdlist1.cz
+}

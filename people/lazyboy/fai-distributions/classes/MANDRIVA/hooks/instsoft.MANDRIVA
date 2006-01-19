@@ -1,0 +1,12 @@
+#! /bin/sh
+
+# 
+#local pkglist;
+
+
+pkglist=`install_rpms`
+echo "=======================packages to install====================================="
+echo $pkglist
+echo "==============================================================================="
+chroot $FAI_ROOT urpmi --auto --force --allow-force --keep $pkglist
+

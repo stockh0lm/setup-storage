@@ -1,0 +1,59 @@
+#! /bin/sh
+
+# (c) Thomas Lange, 2001-2005, lange@debian.org
+
+error=0 ; trap "error=$((error|1))" ERR
+
+# a list of modules which are loaded at boot time
+# fcopy -i /etc/modules
+# for module in $moduleslist; do
+#     egrep -q "^$module\$" $target/etc/modules || echo $module >> $target/etc/modules
+# done
+# 
+# disable fsck on ext3 filesystems
+# case $(uname -r) in
+#     2.6*) : ;; # may cause major kernel problems on 2.6 kernel
+#     *)
+# for part in $(mount|grep $target |grep "type ext3"|perl -ane 'print "$F[0] "')
+# do
+#     echo "Disable periodic fsck on $part"
+#     tune2fs -c 0 -i 0 $part
+# done
+#     ;;
+# 
+# esac
+
+# assuming that make-fai-nfsroot.conf sets
+# FAI_LOCAL_REPOSITORY="deb file:/fai/files packages/"
+# install additional packags that are located in /fai/files/packages/
+if [ -d /fai/files/packages ] && [ ! -f /fai/files/packages/Packages.gz ]; then
+    # Mm. It seems not to be a simple repository. I assume it's configured in sources.list
+    echo "WARNING! Index file Packages.gz is missing in /fai/files/packages."
+fi
+
+echo $HOSTNAME > $target/etc/hostname
+cat > $target/etc/sysconfig/clock <<-EOF
+    ZONE="$timezone"
+    UTC=false
+    ARC=false
+EOF
+rm -f $target/etc/localtime && ln -sf /usr/share/zoneinfo/$timezone $target/etc/localtime
+
+fcopy -C /tmp/fai/FAI_CLASSES -iM /etc/hosts /etc/motd
+
+# set root password
+echo "root:$rootpw" | $ROOTCMD chpasswd -e
+# make /root accessable only by root
+chmod 0700 $target/root
+chown root:root $target/root
+# copy default dotfiles for root account
+fcopy -C /tmp/fai/FAI_CLASSES -ir /root
+
+# create keyboard layput table
+[ -f "$target/etc/sysconfig/keyboard" ] || touch $target/etc/sysconfig/keyboard
+cat > $target/etc/sysconfig/keyboard <<-EOF
+KEYBOARDTYPE="pc"
+KEYTABLE="$FAI_KEYMAP"
+EOF
+
+exit $error

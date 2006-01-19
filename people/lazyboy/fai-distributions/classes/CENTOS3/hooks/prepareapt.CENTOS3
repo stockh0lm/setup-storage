@@ -1,0 +1,4 @@
+#!/bin/sh
+
+#cp /etc/yum.conf $FAI_ROOT/etc/yum.conf ;;
+fcopy /etc/yum.conf

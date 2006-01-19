@@ -3,6 +3,7 @@ Section: unknown
 Priority: optional
 Maintainer: Henning Sprang <henning@sprang.de>
 Build-Depends: debhelper (>= 4.0.0)
+Recommends: rpmstrap
 Standards-Version: 3.6.1
 
 Package: fai-distributions

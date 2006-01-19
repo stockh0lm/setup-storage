@@ -1,0 +1,131 @@
+#!/usr/bin/perl
+
+# $Id: install_rpms,v 1.1 2005/07/28 14:10:40 root Exp $
+#*********************************************************************
+#
+# install_packages -- read package config and install packages via apt-get
+#
+# This script is part of FAI (Fully Automatic Installation)
+# (c) 2000-2005, Thomas Lange, lange@informatik.uni-koeln.de
+#
+#*********************************************************************
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; see the file COPYING. If not, write to the
+# Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
+# MA 02111-1307, USA.
+#*********************************************************************
+
+my $version = "Version 2.14, 28-apr-2005";
+$0=~ s#.+/##; # remove path from program name
+
+# import variables: $verbose, $MAXPACKAGES, $classes, $FAI, $FAI_ROOT
+
+my $verbose = 1;
+my $FAI_ROOT;
+my @classes;
+my $classpath;
+my $rootcmd;
+my @preloadlist;
+my @preloadrmlist;
+my %list;
+my %classisdef;
+
+# PRELOAD feature from Thomas Gebhardt  <gebhardt@hrz.uni-marburg.de>
+
+$| = 1;
+# order of commands to execute
+
+$FAI_ROOT = $ENV{FAI_ROOT};
+$classpath = "$ENV{FAI}/package_config";
+@classes = grep { !/^#|^\s*$/ } split(/[\s\n]+/,$ENV{classes});
+foreach (@classes) { $classisdef{$_}=1; }
+
+warn "Classes defined: ".join(' ', @classes)."\n" if $verbose;
+
+# read all package config files
+foreach (@classes) {
+  my $filename = "$classpath/$_";
+  &readconfig($filename) if -f $filename;
+}
+
+# get files which must exist before installing packages
+foreach my $entry (@preloadlist,@preloadrmlist) {
+  my ($url, $directory) = @$entry;
+  if ($url =~ m!^file:/(.+)!) {
+    my $file = $1;
+    exec("cp $FAI_ROOT/$file $FAI_ROOT/$directory") unless $listonly;
+  } else {
+    exec("wget -nv -P$FAI_ROOT/$directory $url") unless $listonly;
+  }
+}
+
+# remove preloaded files
+foreach my $entry (@preloadrmlist) {
+  my ($url, $directory) = @$entry;
+  $url =~ m#/([^/]+$)#;
+  my $file =  "$directory/$1";
+  print "rm $file\n" if $verbose;
+  unlink $file || warn "Can't remove $file\n";
+}
+
+print join(" ", @{$list{'install'}})."\n";
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - -
+sub readconfig {
+
+  my $filename = shift;
+  my ($package,$type,$cllist,@oclasses,$doit);
+
+  open (FILE,"$filename") || warn "ERROR $0: Can't read config file: $filename\n";
+  warn "$0: read config file $filename\n" if $verbose;
+
+  while (<FILE>) {
+    next if /^#/;    # skip comments
+    s/#.*$//;        # delete comments
+    next if /^\s*$/; # skip empty lines
+    chomp;
+    /^PRELOAD\s+(\S+)\s+(\S+)/   and push(@preloadlist,   [$1,$2]),next;
+    /^PRELOADRM\s+(\S+)\s+(\S+)/ and push(@preloadrmlist, [$1,$2]),next;
+
+    if (/^PACKAGES\s+(\S+)\s*/) {
+      ($type,$cllist) = ($1,$');
+      # by default no classes are listed after this command so doit
+      $doit = 1;
+      if ($cllist) {
+	# no classes specified after PACKAGES command
+	# so add all packages listed
+	# use packages on for a list of classes
+
+	$doit = 0; # assume no class is defined
+	@oclasses = split(/\s+/,$cllist);
+	# if a listed class is defined, add the packaes, otherwise skip these packages
+	foreach (@oclasses) { exists $classisdef{$_} and $doit = 1;}
+      }
+      next;
+    }
+
+    warn "PACKAGES .. line missing in $filename\n",next unless $type;
+    push @{$list{$type}}, split if $doit;
+  }
+}
+# - - - - - - - - - - - - - - - - - - - - - - - - - - -
+sub usage {
+
+  print "
+install_packages $version
+
+Ow ow ow... I don't even know how to use this tool !
+";
+exit 0;
+}
+# - - - - - - - - - - - - - - - - - - - - - - - - - - -

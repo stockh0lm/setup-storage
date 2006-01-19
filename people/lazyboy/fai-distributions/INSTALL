@@ -1,0 +1,6 @@
+#run 
+cp -a /usr/share/doc/fai-distributions/classes/*/* fai/
+
+#and 
+chmod +x /usr/local/share/fai/hooks/*
+# to get going nicer...

@@ -1,0 +1,18 @@
+# FIXME: we just include the contents of FAIBASE.var
+# - split up the stuff in FAIBASE so we can have out basic variables without
+# being forced to run the other FAIBASE scripts not applicable for non-debian
+# dists
+
+# default values for installation. You can override them in your *.var files
+
+# Set UTC=yes if your system clock is set to UTC (GMT), and UTC=no if not.
+UTC=yes
+
+# root password for the new installed linux system; pw is "fai"
+rootpw='56hNVqht51tzc'
+
+# moduleslist contains modules that will be loaded by the new system,
+# not during installation these modules will be written to /etc/modules
+# If you need a module during installation, add it to $kernelmodules
+# in 20-hwdetect.source. But discover should do most of this job
+moduleslist="usbkbd usb-uhci keybdev mousedev hid psmouse"

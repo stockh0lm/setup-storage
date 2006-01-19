@@ -1,0 +1,1229 @@
+# Sed script to generate FAI package groups from RedHats comps.xml
+# Usage: sed -f sed.txt comps.xml > /usr/local/share/fai/packages_config/CLASSNAME
+# ... where CLASSNAME can be the $DISTRIBUTION used, in uppercase (ex: REDHAT). 
+# Generated from comps.xml
+PACKAGES install CORE
+#
+
+ash
+basesystem
+bash
+coreutils
+cpio
+e2fsprogs
+ed
+efibootmgr
+elilo
+file
+filesystem
+glibc
+grub
+hdparm
+hotplug
+initscripts
+iproute
+iputils
+kbd
+kernel
+libgcc
+libtermcap
+losetup
+passwd
+procps
+raidtools
+readline
+redhat-logos
+rootfiles
+rpm
+setserial
+setup
+sysklogd
+SysVinit
+termcap
+util-linux
+vim-minimal
+authconfig
+kudzu
+s390utils
+yaboot
+ppc64-utils
+redhat-config-mouse
+shadow-utils
+#
+# Generated from comps.xml
+PACKAGES install BASE
+#
+
+acl
+apmd
+acpid
+aspell
+at
+attr
+authconfig
+autofs
+bc
+bind-utils
+bridge-utils
+brltty
+bzip2
+crontabs
+cyrus-sasl-plain
+cyrus-sasl-gssapi
+devlabel
+dhclient
+diffutils
+dos2unix
+dosfstools
+dump
+ethtool
+eject
+fbset
+finger
+ftp
+gpm
+ipsec-tools
+iptables
+iptables-ipv6
+irda-utils
+iscsi
+kernel-pcmcia-cs
+kernel-utils
+krbafs-utils
+krb5-workstation
+kudzu
+lftp
+lha
+logrotate
+lsof
+lslk
+logwatch
+mailcap
+man
+man-pages
+mdadm
+mgetty
+mkbootdisk
+mt-st
+mtools
+mtr
+nano
+nc
+ncompress
+netconfig
+netdump
+nfs-utils
+nss_ldap
+ntsysv
+openssh-clients
+pam_krb5
+pam_smb
+parted
+pax
+pciutils
+pdksh
+pinfo
+prctl
+prelink
+psacct
+quota
+rdate
+redhat-config-network-tui
+redhat-config-securitylevel-tui
+redhat-logos
+redhat-lsb
+reiserfs-utils
+rp-pppoe
+rpmdb-redhat
+rsh
+rsync
+jfsutils
+jwhois
+schedutils
+setarch
+setuptool
+sendmail
+sharutils
+slocate
+specspo
+star
+sudo
+stunnel
+symlinks
+sysreport
+talk
+tcp_wrappers
+tcsh
+telnet
+tftp
+traceroute
+time
+tmpwatch
+up2date
+utempter
+wireless-tools
+rdist
+tcpdump
+openssh-server
+wget
+unix2dos
+unzip
+vconfig
+vim-common
+vixie-cron
+ypbind
+zip
+#
+# Generated from comps.xml
+PACKAGES install PRINTING_SUPPORT
+#
+
+4Suite
+XFree86-font-utils
+a2ps
+cups
+enscript
+ghostscript
+gimp-print-cups
+hpijs
+hpoj
+ttfprint
+redhat-config-printer
+#
+# Generated from comps.xml
+PACKAGES install X_WINDOW_SYSTEM
+#
+
+authconfig-gtk
+bitmap-fonts
+firstboot
+desktop-backgrounds-basic
+desktop-backgrounds-extra
+gdm
+openssh-askpass
+openssh-askpass-gnome
+redhat-config-date
+redhat-config-network
+redhat-config-services
+redhat-config-soundcard
+redhat-config-users
+redhat-config-xfree86
+redhat-logviewer
+redhat-config-printer-gui
+redhat-config-packages
+switchdesk
+tkinter
+usermode-gtk
+vnc-server
+xterm
+XFree86
+XFree86-font-utils
+XFree86-tools
+XFree86-twm
+XFree86-xauth
+XFree86-75dpi-fonts
+XFree86-100dpi-fonts
+xinitrc
+XFree86-xdm
+up2date-gnome
+rhn-applet
+XFree86-Xnest
+XFree86-Xvfb
+XFree86-doc
+#
+# Generated from comps.xml
+PACKAGES install DIALUP_NETWORKING_SUPPORT
+#
+
+ppp
+lrzsz
+minicom
+statserial
+wvdial
+isdn4k-utils
+#
+# Generated from comps.xml
+PACKAGES install GNOME_DESKTOP_ENVIRONMENT
+#
+
+at-spi
+control-center
+desktop-file-utils
+desktop-printing
+eog
+file-roller
+gconf-editor
+gedit
+gftp
+gimp-print-utils
+gnome-applets
+gnome-audio
+gnome-icon-theme
+gnome-media
+gnome-panel
+gnome-session
+gnome-system-monitor
+gnome-terminal
+gnome-themes
+gnome-user-docs
+gnome-utils
+gnome-vfs2-extras
+gtk-engines
+gtk2-engines
+ggv
+magicdev
+hwbrowser
+libgail-gnome
+metacity
+nautilus
+nautilus-media
+switchdesk-gnome
+yelp
+#
+# Generated from comps.xml
+PACKAGES install KDE_DESKTOP_ENVIRONMENT
+#
+
+kdeutils
+arts
+autorun
+desktop-printing
+fam
+htdig
+kdegraphics
+kdepim
+kdeaddons
+kdeartwork
+kdemultimedia
+kdebase
+kdenetwork
+switchdesk-kde
+xinetd
+#
+# Generated from comps.xml
+PACKAGES install GRAPHICAL_INTERNET
+#
+
+evolution
+gaim
+gnomemeeting
+mozilla
+mozilla-psm
+mozilla-chat
+mozilla-mail
+mozilla-dom-inspector
+mozilla-js-debugger
+xchat
+indexhtml
+#
+# Generated from comps.xml
+PACKAGES install TEXT-BASED_INTERNET
+#
+
+elinks
+fetchmail
+mutt
+#
+# Generated from comps.xml
+PACKAGES install SOUND_AND_VIDEO
+#
+
+aumix
+cdparanoia
+cdrecord
+dvdrecord
+dvd+rw-tools
+kdemultimedia
+sox
+vorbis-tools
+xmms
+#
+# Generated from comps.xml
+PACKAGES install GRAPHICS
+#
+
+ImageMagick
+sane-frontends
+xsane
+xsane-gimp
+gimp
+gimp-data-extras
+gimp-print-plugin
+gtkam
+gtkam-gimp
+kdegraphics
+netpbm-progs
+xfig
+#
+# Generated from comps.xml
+PACKAGES install OFFICE_PRODUCTIVITY
+#
+
+openoffice
+xpdf
+ggv
+mrproject
+kdepim
+kdegraphics
+tetex-xdvi
+#
+# Generated from comps.xml
+PACKAGES install MAIL_SERVER
+#
+
+sendmail
+imap
+sendmail-cf
+spamassassin
+squirrelmail
+postfix
+redhat-switch-mail
+redhat-switch-mail-gnome
+#
+# Generated from comps.xml
+PACKAGES install NETWORK_SERVERS
+#
+
+amanda-server
+dhcp
+freeradius
+krb5-server
+netdump-server
+openldap-servers
+pxe
+quagga
+radvd
+rarpd
+tftp-server
+ypserv
+#
+# Generated from comps.xml
+PACKAGES install LEGACY_NETWORK_SERVER
+#
+
+rsh-server
+rusers
+rusers-server
+rwho
+telnet-server
+#
+# Generated from comps.xml
+PACKAGES install NEWS_SERVER
+#
+
+inn
+#
+# Generated from comps.xml
+PACKAGES install WINDOWS_FILE_SERVER
+#
+
+samba-client
+samba
+redhat-config-samba
+#
+# Generated from comps.xml
+PACKAGES install SERVER_CONFIGURATION_TOOLS
+#
+
+redhat-config-bind
+redhat-config-httpd
+redhat-config-nfs
+redhat-config-network
+redhat-config-printer
+redhat-config-printer-gui
+redhat-config-samba
+redhat-config-securitylevel
+redhat-config-services
+XFree86-xauth
+redhat-switch-mail
+redhat-switch-mail-gnome
+#
+# Generated from comps.xml
+PACKAGES install FTP_SERVER
+#
+
+vsftpd
+#
+# Generated from comps.xml
+PACKAGES install SQL_DATABASE
+#
+
+unixODBC
+unixODBC-kde
+perl-DBD-Pg
+perl-DB_File
+tora
+rh-postgresql
+rh-postgresql-docs
+rh-postgresql-jdbc
+rh-postgresql-contrib
+rh-postgresql-python
+rh-postgresql-tcl
+postgresql-odbc
+rhdb-utils
+#
+# Generated from comps.xml
+PACKAGES install MYSQL_DATABASE
+#
+
+unixODBC
+MyODBC
+MySQL-python
+libdbi-dbd-mysql
+mod_auth_mysql
+mysql
+mysql-bench
+mysql-devel
+perl-DBD-MySQL
+php-mysql
+qt-MySQL
+#
+# Generated from comps.xml
+PACKAGES install WEB_SERVER
+#
+
+bcel
+commons-beanutils
+commons-collections
+commons-digester
+commons-logging
+commons-modeler
+httpd
+httpd-devel
+hwcrypto
+jakarta-regexp
+crypto-utils
+distcache
+distcache-devel
+mod_authz_ldap
+mod_python
+mod_perl
+mod_ssl
+mx4j
+php
+php-imap
+php-ldap
+php-odbc
+php-pgsql
+mod_auth_pgsql
+php-mysql
+mod_auth_mysql
+squid
+webalizer
+redhat-config-httpd
+redhat-java-rpm-scripts
+xalan-j
+xerces-j
+#
+# Generated from comps.xml
+PACKAGES install DNS_NAME_SERVER
+#
+
+caching-nameserver
+bind
+#
+# Generated from comps.xml
+PACKAGES install AUTHORING_AND_PUBLISHING
+#
+
+xhtml1-dtds
+docbook-style-dsssl
+docbook-style-xsl
+docbook-utils
+docbook-utils-pdf
+linuxdoc-tools
+tetex
+tetex-afm
+tetex-xdvi
+xmlto
+#
+# Generated from comps.xml
+PACKAGES install ENGINEERING_AND_SCIENTIFIC
+#
+
+blas
+gnuplot
+lam
+lapack
+octave
+pvm
+units
+#
+# Generated from comps.xml
+PACKAGES install EDITORS
+#
+
+vim-enhanced
+nedit
+#
+# Generated from comps.xml
+PACKAGES install EMACS
+#
+
+emacs
+emacs-el
+emacs-leim
+emacspeak
+psgml
+#
+# Generated from comps.xml
+PACKAGES install XEMACS
+#
+
+xemacs
+xemacs-el
+xemacs-info
+#
+# Generated from comps.xml
+PACKAGES install RUBY
+#
+
+ruby
+ruby-devel
+ruby-libs
+ruby-mode
+#
+# Generated from comps.xml
+PACKAGES install SYSTEM_TOOLS
+#
+
+amanda-client
+am-utils
+cipe
+ckermit
+dtach
+ethereal
+ethereal-gnome
+festival
+mrtg
+net-snmp-utils
+nmap
+open
+openldap-clients
+rdesktop
+rhnmd
+samba-client
+shapecfg
+sysstat
+tn5250
+tsclient
+uucp
+vlock
+vnc
+x3270-text
+x3270-x11
+xdelta
+screen
+zsh
+#
+# Generated from comps.xml
+PACKAGES install ADMINISTRATION_TOOLS
+#
+
+authconfig-gtk
+redhat-config-date
+redhat-config-keyboard
+redhat-config-kickstart
+redhat-config-language
+redhat-config-rootpassword
+redhat-config-soundcard
+redhat-config-users
+redhat-config-packages
+redhat-config-proc
+redhat-logviewer
+redhat-config-nfs
+#
+# Generated from comps.xml
+PACKAGES install GAMES_AND_ENTERTAINMENT
+#
+
+gnome-games
+#
+# Generated from comps.xml
+PACKAGES install ISO8859-2_SUPPORT
+#
+
+fonts-ISO8859-2
+XFree86-ISO8859-2-75dpi-fonts
+XFree86-ISO8859-2-100dpi-fonts
+fonts-ISO8859-2-75dpi
+fonts-ISO8859-2-100dpi
+#
+# Generated from comps.xml
+PACKAGES install ISO8859-9_SUPPORT
+#
+
+XFree86-ISO8859-9-75dpi-fonts
+XFree86-ISO8859-9-100dpi-fonts
+#
+# Generated from comps.xml
+PACKAGES install ISO8859-14_SUPPORT
+#
+
+XFree86-ISO8859-14-75dpi-fonts
+XFree86-ISO8859-14-100dpi-fonts
+#
+# Generated from comps.xml
+PACKAGES install ISO8859-15_SUPPORT
+#
+
+XFree86-ISO8859-15-75dpi-fonts
+XFree86-ISO8859-15-100dpi-fonts
+#
+# Generated from comps.xml
+PACKAGES install CYRILLIC_SUPPORT
+#
+
+XFree86-cyrillic-fonts
+fonts-KOI8-R
+fonts-KOI8-R-75dpi
+fonts-KOI8-R-100dpi
+#
+# Generated from comps.xml
+PACKAGES install SYRIAC_SUPPORT
+#
+
+XFree86-syriac-fonts
+#
+# Generated from comps.xml
+PACKAGES install AFRIKAANS_SUPPORT
+#
+
+kde-i18n-Afrikaans
+#
+# Generated from comps.xml
+PACKAGES install BRITISH_SUPPORT
+#
+
+aspell-en-gb
+kde-i18n-British
+#
+# Generated from comps.xml
+PACKAGES install CANADIAN_SUPPORT
+#
+
+aspell-en-ca
+#
+# Generated from comps.xml
+PACKAGES install CATALAN_SUPPORT
+#
+
+kde-i18n-Catalan
+#
+# Generated from comps.xml
+PACKAGES install BRAZILIAN_SUPPORT
+#
+
+aspell-pt_BR
+kde-i18n-Brazil
+#
+# Generated from comps.xml
+PACKAGES install CZECH_SUPPORT
+#
+
+kde-i18n-Czech
+man-pages-cs
+#
+# Generated from comps.xml
+PACKAGES install DANISH_SUPPORT
+#
+
+aspell-da
+kde-i18n-Danish
+man-pages-da
+#
+# Generated from comps.xml
+PACKAGES install DUTCH_SUPPORT
+#
+
+aspell-nl
+kde-i18n-Dutch
+#
+# Generated from comps.xml
+PACKAGES install ESTONIAN_SUPPORT
+#
+
+kde-i18n-Estonian
+#
+# Generated from comps.xml
+PACKAGES install FINNISH_SUPPORT
+#
+
+kde-i18n-Finnish
+#
+# Generated from comps.xml
+PACKAGES install GERMAN_SUPPORT
+#
+
+aspell-de
+kde-i18n-German
+man-pages-de
+#
+# Generated from comps.xml
+PACKAGES install GREEK_SUPPORT
+#
+
+kde-i18n-Greek
+#
+# Generated from comps.xml
+PACKAGES install HEBREW_SUPPORT
+#
+
+kde-i18n-Hebrew
+fonts-hebrew
+#
+# Generated from comps.xml
+PACKAGES install HUNGARIAN_SUPPORT
+#
+
+kde-i18n-Hungarian
+#
+# Generated from comps.xml
+PACKAGES install SPANISH_SUPPORT
+#
+
+aspell-es
+kde-i18n-Spanish
+man-pages-es
+#
+# Generated from comps.xml
+PACKAGES install FRENCH_SUPPORT
+#
+
+aspell-fr
+kde-i18n-French
+man-pages-fr
+#
+# Generated from comps.xml
+PACKAGES install ICELANDIC_SUPPORT
+#
+
+kde-i18n-Icelandic
+#
+# Generated from comps.xml
+PACKAGES install ITALIAN_SUPPORT
+#
+
+aspell-it
+kde-i18n-Italian
+man-pages-it
+#
+# Generated from comps.xml
+PACKAGES install KOREAN_SUPPORT
+#
+
+kde-i18n-Korean
+man-pages-ko
+ami
+h2ps
+nhpf
+ttfonts-ko
+#
+# Generated from comps.xml
+PACKAGES install NORWEGIAN_SUPPORT
+#
+
+aspell-no
+kde-i18n-Norwegian
+kde-i18n-Norwegian-Nynorsk
+#
+# Generated from comps.xml
+PACKAGES install POLISH_SUPPORT
+#
+
+kde-i18n-Polish
+man-pages-pl
+#
+# Generated from comps.xml
+PACKAGES install PORTUGUESE_SUPPORT
+#
+
+aspell-pt
+kde-i18n-Portuguese
+#
+# Generated from comps.xml
+PACKAGES install ROMANIAN_SUPPORT
+#
+
+kde-i18n-Romanian
+#
+# Generated from comps.xml
+PACKAGES install RUSSIAN_SUPPORT
+#
+
+kde-i18n-Russian
+man-pages-ru
+#
+# Generated from comps.xml
+PACKAGES install SERBIAN_SUPPORT
+#
+
+kde-i18n-Serbian
+#
+# Generated from comps.xml
+PACKAGES install SLOVAK_SUPPORT
+#
+
+kde-i18n-Slovak
+#
+# Generated from comps.xml
+PACKAGES install SLOVENIAN_SUPPORT
+#
+
+kde-i18n-Slovenian
+#
+# Generated from comps.xml
+PACKAGES install SWEDISH_SUPPORT
+#
+
+aspell-sv
+kde-i18n-Swedish
+#
+# Generated from comps.xml
+PACKAGES install TURKISH_SUPPORT
+#
+
+kde-i18n-Turkish
+#
+# Generated from comps.xml
+PACKAGES install UKRAINIAN_SUPPORT
+#
+
+kde-i18n-Ukrainian
+#
+# Generated from comps.xml
+PACKAGES install CHINESE_SUPPORT
+#
+
+kde-i18n-Chinese
+kde-i18n-Chinese-Big5
+miniChinput
+ttfonts-zh_TW
+ttfonts-zh_CN
+taipeifonts
+xcin
+bg5ps
+#
+# Generated from comps.xml
+PACKAGES install JAPANESE_SUPPORT
+#
+
+Canna
+kon2
+kon2-fonts
+ttfonts-ja
+kde-i18n-Japanese
+fonts-ja
+jisksp14
+jisksp16-1990
+FreeWnn
+kappa20
+kinput2-canna-wnn6
+knm_new
+skkinput
+man-pages-ja
+Wnn6-SDK-devel
+#
+# Generated from comps.xml
+PACKAGES install DEVELOPMENT_TOOLS
+#
+
+ElectricFence
+ant
+autoconf213
+autoconf
+automake14
+automake15
+automake
+binutils
+bison
+byacc
+cdecl
+cproto
+crash
+ctags
+cvs
+ddd
+dejagnu
+dev86
+diffstat
+doxygen
+expect
+flex
+gcc
+gcc-c++
+gcc-g77
+gcc-gnat
+gcc-java
+gcc-objc
+gcc-ssa
+gcc-c++-ssa
+gcc-java-ssa
+gcc-g77-ssa
+gcc-objc-ssa
+gdb
+gettext
+glibc-utils
+gperf
+im-sdk
+indent
+libmudflap
+libmudflap-devel
+libtool
+ltrace
+make
+memprof
+oprofile
+oprofile-devel
+patchutils
+perl-CPAN
+pkgconfig
+pstack
+python-devel
+rcs
+rpm-build
+redhat-rpm-config
+splint
+strace
+texinfo
+#
+# Generated from comps.xml
+PACKAGES install DEVELOPMENT_LIBRARIES
+#
+
+aspell-devel
+bzip2-devel
+curl-devel
+cyrus-sasl-devel
+db4-devel
+db4-utils
+dialog
+e2fsprogs-devel
+elfutils-devel
+expat-devel
+fam-devel
+gdbm-devel
+glibc-profile
+gmp-devel
+gpm-devel
+hesiod-devel
+krb5-devel
+krbafs-devel
+kudzu-devel
+libaio-devel
+libao-devel
+libcap-devel
+libtermcap-devel
+libusb-devel
+libuser-devel
+libxml2-devel
+lockdev-devel
+modutils-devel
+ncurses-devel
+net-snmp-devel
+newt-devel
+nptl-devel
+openldap-devel
+openssl-devel
+pam-devel
+pciutils-devel
+rh-postgresql-devel
+pspell-devel
+readline-devel
+rpm-devel
+slang-devel
+swig
+zlib-devel
+libogg-devel
+libvorbis-devel
+#
+# Generated from comps.xml
+PACKAGES install KERNEL_DEVELOPMENT
+#
+
+kernel-source
+libattr-devel
+libacl-devel
+tk
+#
+# Generated from comps.xml
+PACKAGES install LEGACY_SOFTWARE_DEVELOPMENT
+#
+
+compat-gcc
+compat-glibc
+compat-gcc-c++
+compat-libstdc++
+compat-libstdc++-devel
+#
+# Generated from comps.xml
+PACKAGES install COMPATIBILITY_ARCH_SUPPORT
+#
+
+glibc
+libgcc
+libgcj
+libobjc
+libstdc++
+redhat-lsb
+zlib
+XFree86-libs
+pam_krb5
+pam_smp
+nss_ldap
+samba
+#
+# Generated from comps.xml
+PACKAGES install COMPATIBILITY_ARCH_DEVELOPMENT_SUPPORT
+#
+
+compat-gcc
+compat-gcc-c++
+compat-libstdc++
+compat-libstdc++-devel
+glibc-devel
+libstdc++-devel
+ncurses-devel
+pam-devel
+zlib-devel
+gdb64
+XFree86-devel
+#
+# Generated from comps.xml
+PACKAGES install LEGACY_SOFTWARE_SUPPORT
+#
+
+compat-libstdc++
+compat-db
+compat-pwdb
+compat-slang
+openmotif21
+openssl096b
+#
+# Generated from comps.xml
+PACKAGES install X_SOFTWARE_DEVELOPMENT
+#
+
+XFree86-devel
+gd-devel
+libjpeg-devel
+libtiff-devel
+libpng-devel
+libmng-devel
+libungif-devel
+freetype-devel
+netpbm-devel
+openmotif-devel
+SDL-devel
+#
+# Generated from comps.xml
+PACKAGES install GNOME_SOFTWARE_DEVELOPMENT
+#
+
+at-spi-devel
+bug-buddy
+pygtk2-devel
+glib-devel
+glib2-devel
+gtk+-devel
+GConf2-devel
+ORBit-devel
+ORBit2-devel
+atk-devel
+bonobo-activation-devel
+eel2-devel
+fontconfig-devel
+gail-devel
+gdk-pixbuf-devel
+gnome-desktop-devel
+gnome-libs-devel
+gnome-vfs2-devel
+gtk-doc
+gtk2-devel
+gtkhtml2-devel
+libIDL-devel
+libart_lgpl-devel
+libbonobo-devel
+libbonoboui-devel
+libglade2-devel
+libgnome-devel
+libgnomecanvas-devel
+libgnomeprint22-devel
+libgnomeprintui22-devel
+libgnomeui-devel
+libole2-devel
+librsvg2-devel
+libxslt-devel
+linc-devel
+pango-devel
+startup-notification-devel
+vte-devel
+glade2
+#
+# Generated from comps.xml
+PACKAGES install KDE_SOFTWARE_DEVELOPMENT
+#
+
+arts-devel
+cups-devel
+kdebase-devel
+kdelibs-devel
+kdenetwork-devel
+kdesdk
+kdesdk-devel
+kdepim-devel
+kdevelop
+kdeutils-devel
+kdegraphics-devel
+kdoc
+pilot-link-devel
+qt-designer
+qt-devel
+sane-backends-devel
+sip-devel
+libxslt-devel
+#
+# Generated from comps.xml
+PACKAGES install WORKSTATION_COMMON
+#
+
+#
+# Generated from comps.xml
+PACKAGES install SERVER
+#
+
+#
+# Generated from comps.xml
+PACKAGES install GNOME
+#
+
+#
+# Generated from comps.xml
+PACKAGES install KDE
+#
+
+#
+# Generated from comps.xml
+PACKAGES install MISCELLANEOUS_INCLUDED_PACKAGES
+#
+
+bitmap-fonts-cjk
+bogl
+bogl-bterm
+busybox-anaconda
+dietlibc
+anaconda
+anaconda-help
+anaconda-images
+anaconda-product
+anaconda-runtime
+lilo
+kernel
+kernel-BOOT
+kernel-unsupported
+kernel-hugemem
+kernel-hugemem-unsupported
+kernel-smp
+kernel-smp-unsupported
+booty
+#
