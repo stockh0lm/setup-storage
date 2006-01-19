@@ -1,3 +1,10 @@
+fai (2.9-multi-distribution-0.1-07) unstable; urgency=low
+
+  * put florent vuillemins 2.8.4 multi-distribution stuff in here and in the
+    fai-distributions package
+
+ -- Henning Sprang <henning@sprang.de>  Thu, 19 Jan 2006 20:00:33 +0100
+
 fai (2.9-multi-distribution-0.1-06) unstable; urgency=low
 
   * remove distribution specific stuff into an extra package 

@@ -32,8 +32,16 @@ for mod in $kernelmodules; do
     modprobe -a $mod 1>/dev/null 2>&1
 done
 
-# let discover do most of the job
-/etc/init.d/discover start
+#### SMITH
+case $DISTRIBUTION in
+    debian)
+        # let discover do most of the job
+	/etc/init.d/discover start ;;
+    centos3)
+        kudzu -q ;;
+    *)
+        # what can I do ?
+esac
 
 # now we can mount the usb file system
 mount -t usbfs  usbfs /proc/bus/usb
@@ -44,13 +52,17 @@ echo 6 > /proc/sys/kernel/printk
 
 # try to detect graphics card
 # the variable videodrv may be used to generate the XF86config file
-if discover --version | grep "discover \(version \)*1\." ; then
-    videodrv=$(discover --xdriver video 2> /dev/null)
-else
-    videodrv=$(discover --data-path=xfree86/server/device/driver display)
-fi
-[ -n "$videodrv" ] && echo "videodrv=$videodrv" >> $LOGDIR/additional.var
-echo "Video card detected: $videodrv"
+#### SMITH
+case $DISTRIBUTION in
+    debian)
+	if discover --version | grep "discover \(version \)*1\." ; then
+	    videodrv=$(discover --xdriver video 2> /dev/null)
+	else
+	    videodrv=$(discover --data-path=xfree86/server/device/driver display)
+	fi
+	[ -n "$videodrv" ] && echo "videodrv=$videodrv" >> $LOGDIR/additional.var
+	echo "Video card detected: $videodrv" ;;
+esac
 
 set_disk_info  # calculate number of available disks
 save_dmesg     # save new boot messages (from loading modules)

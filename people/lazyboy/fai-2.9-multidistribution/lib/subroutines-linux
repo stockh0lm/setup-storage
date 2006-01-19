@@ -132,6 +132,9 @@ task_debconf () {
 }
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # FIXME: will break as soon somebody start using DISTRIBUTION=debian_sarge!!!
+# you need to have a prepareapt hook that does this job. but we are
+# backward-compatible like that and I don't want have the code duplicated...
+# errm, move to a library?
 task_prepareapt () {
     # run this only for default distribution
     if ! [ -z $DISTRIBUTION ]; then
@@ -153,6 +156,7 @@ task_prepareapt () {
 }
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # FIXME: will break as soon somebody start using DISTRIBUTION=debian_sarge!!!
+#  see prepareapt...
 task_updatebase() {
     # run this only for default distribution
     if ! [ -z $DISTRIBUTION ]; then
@@ -173,6 +177,10 @@ task_updatebase() {
 }
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 task_instsoft() {
+    if ! [ -z $DISTRIBUTION ]; then
+        echo "not running instsoft because we are installing DISTRIBUTION=$DISTRIBUTION"
+        return 0
+    fi
 
     echo "Installing software may take a while"
     if [ "$debug" ]; then

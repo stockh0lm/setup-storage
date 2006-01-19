@@ -1,0 +1,16 @@
+# fedora example host for use with fai-distributions
+
+#DEFAULT
+FEDORA4
+
+# Package groups to install
+CORE
+BASE
+MISCELLANEOUS_INCLUDED_PACKAGES
+SYSTEM_TOOLS
+
+# Miscellaneous FAI configuration scripts
+GRUB
+
+DEFAULT_HARDDISK
+DEFAULT_VARIABLES

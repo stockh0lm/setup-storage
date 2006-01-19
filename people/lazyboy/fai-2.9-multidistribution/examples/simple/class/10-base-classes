@@ -1,8 +1,18 @@
 #! /bin/sh
 
-# echo architecture and OS name in upper case. Do NOT remove these two lines
+# echo architecture, OS name and distribution in upper case.
+# Do NOT remove these lines
+
 uname -s | tr '[:lower:]' '[:upper:]'
-[ -x "`which dpkg`" ] && dpkg --print-installation-architecture | tr a-z A-Z
+
+#### SMITH
+echo $DISTRIBUTION | tr '[:lower:]' '[:upper:]'
+case $DISTRIBUTION in
+    debian)
+        [ -x "`which dpkg`" ] && dpkg --print-installation-architecture | tr /a-z/ /A-Z/ ;;
+    *)
+        uname -i | tr '[:lower:]' '[:upper:]'
+esac
 
 [ -f /boot/RUNNING_FROM_FAICD ] && echo "FAICD"
 exit 0

@@ -2,16 +2,27 @@
 
 error=0 ; trap "error=$((error|1))" ERR
 
+#### SMITH:set -a
 set -a
 [ -r $target/etc/fai/disk_var.sh ] && . $target/etc/fai/disk_var.sh
 
 # if class NOMBR is defined, write boot loader into root partition, not into mbr
 ifclass NOMBR && BOOT_DEVICE=$BOOT_PARTITION
 
-grub-install --no-floppy --root-directory=$target $BOOT_DEVICE
-GROOT=$(device2grub $BOOT_PARTITION)
+case $DISTRIBUTION in
+    debian)
+	grub-install --no-floppy --root-directory=$target $BOOT_DEVICE ;;
+    *)
+	grub-install --root-directory=$target $BOOT_DEVICE ;;
+esac
+
+GROOT=$(/usr/lib/fai/device2grub $BOOT_PARTITION)
 perl -pi -e 's/#(\w+)#/$ENV{$1}/' $2
 $ROOTCMD /sbin/update-grub
+
+#### found a problem where GRUB doesn't want to boot (Error 1) if 'savedefault'
+#### is written several times in menu.lst => I remove them all
+sed -i 's/^savedefault$//g' $FAI_ROOT/boot/grub/menu.lst
 echo "Grub installed on $BOOT_DEVICE on $GROOT"
 
 exit $error
