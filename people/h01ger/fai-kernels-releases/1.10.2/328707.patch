@@ -1,0 +1,111 @@
+--- linux/arch/i386/kernel/apm.c.seg	2005-03-27 13:10:45.000000000 -0800
++++ linux/arch/i386/kernel/apm.c	2005-03-28 10:30:24.000000000 -0800
+@@ -327,7 +327,7 @@ extern int (*console_blank_hook)(int);
+  * Save a segment register away
+  */
+ #define savesegment(seg, where) \
+-		__asm__ __volatile__("movl %%" #seg ",%0" : "=m" (where))
++		__asm__ __volatile__("mov %%" #seg ",%0" : "=m" (where))
+ 
+ /*
+  * Maximum number of events stored
+@@ -553,7 +553,7 @@ static inline void apm_restore_cpus(unsi
+ 
+ #ifdef APM_ZERO_SEGS
+ #	define APM_DECL_SEGS \
+-		unsigned int saved_fs; unsigned int saved_gs;
++		unsigned short saved_fs; unsigned short saved_gs;
+ #	define APM_DO_SAVE_SEGS \
+ 		savesegment(fs, saved_fs); savesegment(gs, saved_gs)
+ #	define APM_DO_ZERO_SEGS \
+--- linux/arch/i386/kernel/process.c.seg	2005-03-27 13:10:45.000000000 -0800
++++ linux/arch/i386/kernel/process.c	2005-03-28 10:30:24.000000000 -0800
+@@ -544,7 +544,7 @@ void release_thread(struct task_struct *
+  * Save a segment.
+  */
+ #define savesegment(seg,value) \
+-	asm volatile("movl %%" #seg ",%0":"=m" (*(int *)&(value)))
++	asm volatile("mov %%" #seg ",%0":"=m" (value))
+ 
+ int copy_thread(int nr, unsigned long clone_flags, unsigned long esp,
+ 	unsigned long unused,
+@@ -661,8 +661,8 @@ void fastcall __switch_to(struct task_st
+ 	 * Save away %fs and %gs. No need to save %es and %ds, as
+ 	 * those are always kernel segments while inside the kernel.
+ 	 */
+-	asm volatile("movl %%fs,%0":"=m" (*(int *)&prev->fs));
+-	asm volatile("movl %%gs,%0":"=m" (*(int *)&prev->gs));
++	asm volatile("mov %%fs,%0":"=m" (prev->fs));
++	asm volatile("mov %%gs,%0":"=m" (prev->gs));
+ 
+ 	/*
+ 	 * Restore %fs and %gs.
+--- linux/arch/x86_64/kernel/process.c.seg	2005-03-27 13:10:51.000000000 -0800
++++ linux/arch/x86_64/kernel/process.c	2005-03-28 11:16:57.000000000 -0800
+@@ -527,10 +527,10 @@ int copy_thread(int nr, unsigned long cl
+ 	p->thread.fs = me->thread.fs;
+ 	p->thread.gs = me->thread.gs;
+ 
+-	asm("movl %%gs,%0" : "=m" (p->thread.gsindex));
+-	asm("movl %%fs,%0" : "=m" (p->thread.fsindex));
+-	asm("movl %%es,%0" : "=m" (p->thread.es));
+-	asm("movl %%ds,%0" : "=m" (p->thread.ds));
++	asm("mov %%gs,%0" : "=m" (p->thread.gsindex));
++	asm("mov %%fs,%0" : "=m" (p->thread.fsindex));
++	asm("mov %%es,%0" : "=m" (p->thread.es));
++	asm("mov %%ds,%0" : "=m" (p->thread.ds));
+ 
+ 	unlazy_fpu(current);	
+ 	p->thread.i387 = current->thread.i387;
+@@ -575,11 +575,11 @@ struct task_struct *__switch_to(struct t
+ 	/* 
+ 	 * Switch DS and ES.	 
+ 	 */
+-	asm volatile("movl %%es,%0" : "=m" (prev->es)); 
++	asm volatile("mov %%es,%0" : "=m" (prev->es)); 
+ 	if (unlikely(next->es | prev->es))
+ 		loadsegment(es, next->es); 
+ 	
+-	asm volatile ("movl %%ds,%0" : "=m" (prev->ds)); 
++	asm volatile ("mov %%ds,%0" : "=m" (prev->ds)); 
+ 	if (unlikely(next->ds | prev->ds))
+ 		loadsegment(ds, next->ds);
+ 
+@@ -588,7 +588,7 @@ struct task_struct *__switch_to(struct t
+ 	 */
+ 	{ 
+ 		unsigned fsindex;
+-		asm volatile("movl %%fs,%0" : "=g" (fsindex)); 
++		asm volatile("movl %%fs,%0" : "=r" (fsindex)); 
+ 		/* segment register != 0 always requires a reload. 
+ 		   also reload when it has changed. 
+ 		   when prev process used 64bit base always reload
+@@ -609,7 +609,7 @@ struct task_struct *__switch_to(struct t
+ 	}
+ 	{
+ 		unsigned gsindex;
+-		asm volatile("movl %%gs,%0" : "=g" (gsindex)); 
++		asm volatile("movl %%gs,%0" : "=r" (gsindex)); 
+ 		if (unlikely((gsindex | next->gsindex) || prev->gs)) {
+ 			load_gs_index(next->gsindex);
+ 			if (gsindex)
+--- linux/include/asm-i386/system.h.seg	2005-03-27 15:33:12.000000000 -0800
++++ linux/include/asm-i386/system.h	2005-03-28 10:30:24.000000000 -0800
+@@ -84,7 +84,7 @@ static inline unsigned long _get_base(ch
+ #define loadsegment(seg,value)			\
+ 	asm volatile("\n"			\
+ 		"1:\t"				\
+-		"movl %0,%%" #seg "\n"		\
++		"mov %0,%%" #seg "\n"		\
+ 		"2:\n"				\
+ 		".section .fixup,\"ax\"\n"	\
+ 		"3:\t"				\
+@@ -96,7 +96,7 @@ static inline unsigned long _get_base(ch
+ 		".align 4\n\t"			\
+ 		".long 1b,3b\n"			\
+ 		".previous"			\
+-		: :"m" (*(unsigned int *)&(value)))
++		: :"m" (value))
+ 
+ /*
+  * Clear and set 'TS' bit respectively
