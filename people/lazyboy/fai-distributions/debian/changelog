@@ -1,3 +1,9 @@
+fai-distributions (0.1-5) unstable; urgency=low
+
+  * optimize base-image fetching, fix bugs
+
+ -- Henning Sprang <henning@sprang.de>  Sat, 21 Jan 2006 22:26:28 +0100
+
 fai-distributions (0.1-4) unstable; urgency=low
 
   * put florent vuillemin's 2.8.4 multi-distribution stuff in here  and into

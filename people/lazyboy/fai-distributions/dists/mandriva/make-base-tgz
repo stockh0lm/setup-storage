@@ -42,53 +42,31 @@ if [ -z "$NFSROOT" ]; then
     exit 4
 fi
 
-# call debootstrap as necesary - (how can this be done without having the
-# ubuntu debootstrap installed?)
+# workaround/timesaver: fetch a pre-build base image
+if ! [ -z $BASE_IMAGE ];then
+    cd /tmp/
+    if [ -e $BASE_IMAGE ]; then
+        rm $BASE_IMAGE
+    fi
+    wget $BASE_IMAGE_ARCHIVE/$BASE_IMAGE
 
-### in case the bootstrapper isn't installed, fetch it.
-#BOOTSTRAP_DIR=/var/fai/bootstrappers/$DISTRIBUTION
-#mkdir -p $BOOTSTRAP_DIR
-#cd $BOOTSTRAP_DIR
-#wget $BOOTSTRAP_ARCHIVE/ubuntu_breezy/$BOOTSTRAP_PACKAGE
-
-# extact debootstrap archive
-#dpkg-deb -x $BOOTSTRAP_PACKAGE .
-
-#cd -
+    mv $BASE_IMAGE $NFSROOT/var/tmp/
+    echo "base image $BASE_IMAGE successfully fetched and placed in nfsroot"
+    exit 0
+fi
 
 # FIXME: can/should probably be defined somewhere in /etc/fai?
 TMPDIR="/tmp/fai/${DISTRIBUTION}_debootstrap/"
 echo "TMPDIT is $TMPDIR"
 
-#FAI_DEBOOTSTRAP_OPTIONS="--arch i386 \
-#    --exclude=pcmcia-cs,pppoe,dhcp-client,exim4,exim4-base,exim4-config,exim4-daemon-light,modconf,libident,exim \
-#    --include=lilo \
-#    breezy \
-#    $TMPDIR \
-#    $MIRROR_LOCATION"
 
-# cleanup
-#echo "cleaning up TMPDIR $TMPDIR"
-#rm -rf $TMPDIR
-
-#cd `dirname $0`
-
-#export DEBOOTSTRAP_DIR=$BOOTSTRAP_DIR/usr/lib/debootstrap/
-
-#echo run $BOOTSTRAP_DIR/usr/sbin/debootstrap $FAI_DEBOOTSTRAP_OPTIONS
-#$BOOTSTRAP_DIR/usr/sbin/debootstrap $FAI_DEBOOTSTRAP_OPTIONS
-
+# FIXME: doesn't work yet
+#rpmstrap --include=$BASE_EXTRA_PACKAGES mandriva10 $TMPDIR $MANDRIVA_MIRROR
 rpmstrap mandriva10 $TMPDIR $MANDRIVA_MIRROR
 
-#chroot $TMPDIR apt-get clean
-
-
-       
 echo "Creating base-$DISTRIBUTION.tgz"
 
 cd $TMPDIR
 tar cfz $NFSROOT/var/tmp/base-$DISTRIBUTION.tgz *
 
-#chroot $TMPDIR umount /dev
-chroot $TMPDIR umount /.dev
- 
+rm -r $TMPDIR

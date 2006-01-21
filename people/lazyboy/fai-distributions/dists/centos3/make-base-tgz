@@ -1,7 +1,7 @@
 #!/bin/sh
 PATH=/usr/local/bin:/usr/local/sbin:/bin:/sbin:/usr/bin:/usr/sbin
 
-DISTRIBUTION="ubuntu_breezy"
+DISTRIBUTION="centos3"
 
 if [ `id -u` -ne 0 ]; then
     echo "Run this program as root."
@@ -42,50 +42,18 @@ if [ -z "$NFSROOT" ]; then
     exit 4
 fi
 
-# call debootstrap as necesary - (how can this be done without having the
-# ubuntu debootstrap installed?)
-
-BOOTSTRAP_DIR=/var/fai/bootstrappers/$DISTRIBUTION
-mkdir -p $BOOTSTRAP_DIR
-cd $BOOTSTRAP_DIR
-wget $BOOTSTRAP_ARCHIVE/ubuntu_breezy/$BOOTSTRAP_PACKAGE
-
-
-# extact debootstrap archive
-dpkg-deb -x $BOOTSTRAP_PACKAGE .
-
-cd -
 
 # FIXME: can/should probably be defined somewhere in /etc/fai?
 TMPDIR="/tmp/fai/${DISTRIBUTION}_debootstrap/"
 echo "TMPDIT is $TMPDIR"
 
-FAI_DEBOOTSTRAP_OPTIONS="--arch i386 \
-    --exclude=pcmcia-cs,pppoe,dhcp-client,exim4,exim4-base,exim4-config,exim4-daemon-light,modconf,libident,exim \
-    --include=lilo \
-    breezy \
-    $TMPDIR \
-    $MIRROR_LOCATION"
+rpmstrap centos3 $TMPDIR $MIRROR
 
-cd `dirname $0`
-
-export DEBOOTSTRAP_DIR=$BOOTSTRAP_DIR/usr/lib/debootstrap/
-
-echo run $BOOTSTRAP_DIR/usr/sbin/debootstrap $FAI_DEBOOTSTRAP_OPTIONS
-$BOOTSTRAP_DIR/usr/sbin/debootstrap $FAI_DEBOOTSTRAP_OPTIONS
-
-chroot $TMPDIR apt-get clean
-       
 echo "Creating base-$DISTRIBUTION.tgz"
 
 cd $TMPDIR
 tar cfz $NFSROOT/var/tmp/base-$DISTRIBUTION.tgz *
 
-chroot $TMPDIR umount /dev
+#chroot $TMPDIR umount /dev
 chroot $TMPDIR umount /.dev
  
-# cleanup
-echo "cleaning up TMPDIR $TMPDIR"
-rm -rf $TMPDIR
-
-

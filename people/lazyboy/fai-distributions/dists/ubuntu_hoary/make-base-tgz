@@ -69,10 +69,6 @@ FAI_DEBOOTSTRAP_OPTIONS="--arch i386 \
     $TMPDIR \
     ftp://$mirrorhost/ubuntu"
 
-# cleanup
-echo "cleaning up TMPDIR $TMPDIR"
-rm -rf $TMPDIR
-
 cd `dirname $0`
 
 export DEBOOTSTRAP_DIR=$BOOTSTRAP_DIR/usr/lib/debootstrap/
@@ -90,3 +86,6 @@ tar cfz $NFSROOT/var/tmp/base-$DISTRIBUTION.tgz *
 chroot $TMPDIR umount /dev
 chroot $TMPDIR umount /.dev
  
+# cleanup
+echo "cleaning up TMPDIR $TMPDIR"
+rm -rf $TMPDIR
