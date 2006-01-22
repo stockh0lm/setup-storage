@@ -1,3 +1,9 @@
+fai (2.9-multi-distribution-0.1-08) unstable; urgency=low
+
+  * fixing error for debian install 
+
+ -- Henning Sprang <henning@sprang.de>  Sun, 22 Jan 2006 23:44:21 +0100
+
 fai (2.9-multi-distribution-0.1-07) unstable; urgency=low
 
   * put florent vuillemins 2.8.4 multi-distribution stuff in here and in the
