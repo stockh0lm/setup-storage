@@ -37,6 +37,9 @@ case $DISTRIBUTION in
     debian)
         # let discover do most of the job
 	/etc/init.d/discover start ;;
+    "")
+        # let discover do most of the job
+	/etc/init.d/discover start ;;
     centos3)
         kudzu -q ;;
     *)
