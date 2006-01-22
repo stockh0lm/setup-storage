@@ -1,5 +1,5 @@
 #run 
-cp -a /usr/share/doc/fai-distributions/classes/*/* fai/
+cp -a /usr/share/doc/fai-distributions/classes/*/* /usr/local/share/fai/
 
 #and 
 chmod +x /usr/local/share/fai/hooks/*
