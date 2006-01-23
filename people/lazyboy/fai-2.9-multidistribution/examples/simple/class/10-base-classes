@@ -5,19 +5,11 @@
 
 uname -s | tr '[:lower:]' '[:upper:]'
 
-# FIXME: this will only work well for debian if
-# DISTRIBUTION=debian is set. but thuis will break other stuff, also
-# for the time being, we need to define more classes for sarge hosts
-# explicitly, see example host sarge!
-echo $DISTRIBUTION | tr '[:lower:]' '[:upper:]'
-case $DISTRIBUTION in
-    debian)
-        [ -x "`which dpkg`" ] && dpkg --print-installation-architecture | tr /a-z/ /A-Z/ ;;
-    "")
-        [ -x "`which dpkg`" ] && dpkg --print-installation-architecture | tr /a-z/ /A-Z/ ;;
-    *)
-        uname -i | tr '[:lower:]' '[:upper:]'
-esac
+if [ `which dpkg` ]; then
+    dpkg --print-installation-architecture | tr /a-z/ /A-Z/
+else    
+    uname -i | tr '[:lower:]' '[:upper:]'
+fi
 
 [ -f /boot/RUNNING_FROM_FAICD ] && echo "FAICD"
 exit 0
