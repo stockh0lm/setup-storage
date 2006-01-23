@@ -60,13 +60,13 @@ cd -
 
 # FIXME: can/should probably be defined somewhere in /etc/fai?
 # TODO: solve chroot deletetion problem! ubuntu-users/ubuntu-devel?
-TMPDIR=/tmp/fai/ubuntu_hoary_debootstrap/
+TMP_CHROOT_DIR=`mktemp -d /tmp/fai/${DISTRIBUTION}_debootstrap.XXXXXX`
 
 FAI_DEBOOTSTRAP_OPTIONS="--arch i386 \
     --exclude=pcmcia-cs,pppoe,dhcp-client,exim4,exim4-base,exim4-config,exim4-daemon-light,modconf,libident,exim \
     --include=lilo \
     hoary \
-    $TMPDIR \
+    $TMP_CHROOT_DIR \
     ftp://$mirrorhost/ubuntu"
 
 cd `dirname $0`
@@ -76,16 +76,16 @@ export DEBOOTSTRAP_DIR=$BOOTSTRAP_DIR/usr/lib/debootstrap/
 echo run $BOOTSTRAP_DIR/usr/sbin/debootstrap $FAI_DEBOOTSTRAP_OPTIONS
 $BOOTSTRAP_DIR/usr/sbin/debootstrap $FAI_DEBOOTSTRAP_OPTIONS
 
-chroot $TMPDIR apt-get clean
+chroot $TMP_CHROOT_DIR apt-get clean
        
 echo "Creating base-$DISTRIBUTION.tgz"
 
-cd $TMPDIR
+cd $TMP_CHROOT_DIR
 tar cfz $NFSROOT/var/tmp/base-$DISTRIBUTION.tgz *
 
-chroot $TMPDIR umount /dev
-chroot $TMPDIR umount /.dev
+chroot $TMP_CHROOT_DIR umount /dev
+chroot $TMP_CHROOT_DIR umount /.dev
  
 # cleanup
-echo "cleaning up TMPDIR $TMPDIR"
-rm -rf $TMPDIR
+echo "cleaning up TMP_CHROOT_DIR $TMP_CHROOT_DIR"
+rm -rf $TMP_CHROOT_DIR

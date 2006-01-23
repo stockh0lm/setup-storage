@@ -44,16 +44,17 @@ fi
 
 
 # FIXME: can/should probably be defined somewhere in /etc/fai?
-TMPDIR="/tmp/fai/${DISTRIBUTION}_debootstrap/"
-echo "TMPDIT is $TMPDIR"
+TMP_CHROOT_DIR=`mktemp -d /tmp/fai/${DISTRIBUTION}_debootstrap.XXXXXX`
+echo "TMPDIR is $TMP_CHROOT_DIR"
 
-rpmstrap centos3 $TMPDIR $MIRROR
+rpmstrap centos3 $TMP_CHROOT_DIR $MIRROR
 
 echo "Creating base-$DISTRIBUTION.tgz"
 
-cd $TMPDIR
+cd $TMP_CHROOT_DIR
 tar cfz $NFSROOT/var/tmp/base-$DISTRIBUTION.tgz *
 
-#chroot $TMPDIR umount /dev
-chroot $TMPDIR umount /.dev
+#chroot $TMP_CHROOT_DIR umount /dev
+chroot $TMP_CHROOT_DIR umount /.dev
  
+rm -r $TMP_CHROOT_DIR

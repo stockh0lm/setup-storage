@@ -56,17 +56,17 @@ if ! [ -z $BASE_IMAGE ];then
 fi
 
 # FIXME: can/should probably be defined somewhere in /etc/fai?
-TMPDIR="/tmp/fai/${DISTRIBUTION}_debootstrap/"
-echo "TMPDIT is $TMPDIR"
+TMP_CHROOT_DIR=`mktemp -d /tmp/fai/${DISTRIBUTION}_debootstrap.XXXXXX`
+echo "TMPDIT is $TMP_CHROOT_DIR"
 
 
 # FIXME: doesn't work yet
-#rpmstrap --include=$BASE_EXTRA_PACKAGES mandriva10 $TMPDIR $MANDRIVA_MIRROR
-rpmstrap mandriva10 $TMPDIR $MANDRIVA_MIRROR
+#rpmstrap --include=$BASE_EXTRA_PACKAGES mandriva10 $TMP_CHROOT_DIR $MANDRIVA_MIRROR
+rpmstrap mandriva10 $TMP_CHROOT_DIR $MANDRIVA_MIRROR
 
 echo "Creating base-$DISTRIBUTION.tgz"
 
-cd $TMPDIR
+cd $TMP_CHROOT_DIR
 tar cfz $NFSROOT/var/tmp/base-$DISTRIBUTION.tgz *
 
-rm -r $TMPDIR
+rm -r $TMP_CHROOT_DIR
