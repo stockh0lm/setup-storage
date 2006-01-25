@@ -1,13 +1,19 @@
 #!/bin/sh
 
-# stop when not run as root!
+# TODO:stop when not run as root!
+
+# or better hardcode those here, so everything is in one place first?
+# TODO: make 'this flexible so it can be used when
+# projects are only in /welt, also
+TEMPLATE_DIR=/welt/produktion/fai-devel/dev/chroot_templates/
+
+if ! [ -x $TEMPLATE_DIR ];then
+  echo "template dir $TEMPLATE_DIR not found -exiting"
+  exit 1
+fi
 
 # TODO: fill in create-base-sarge chroot code here?
 ~/bin/create-base-sarge-chroot chroot
-
-# TODO: put stuff in TEMPLATE_DIR
-# or better hardcode those here, so everything is in one place first?
-TEMPLATE_DIR=/hier/produktion/fai-devel/dev/chroot_templates/
 
 # copy/link the config files needed in chroot
 rm ./chroot/etc/apt/sources.list

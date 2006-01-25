@@ -49,3 +49,16 @@ $ROOTCMD apt-cache dumpavail > $FAI_ROOT/$tmp
 $ROOTCMD dpkg --update-avail $tmp
 rm -f $FAI_ROOT/$tmp
 
+
+
+echo "Installing software may take a while"
+if [ "$debug" ]; then
+    install_packages | tee -a $LOGDIR/software.log
+elif [ "$verbose" ]; then
+    install_packages </dev/null 2>&1 | tee -a $LOGDIR/software.log
+else
+    install_packages </dev/null >> $LOGDIR/software.log 2>&1
+fi
+# This almost indicates an error
+egrep "^E:" $LOGDIR/software.log && terror=1
+

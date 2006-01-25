@@ -1,3 +1,9 @@
+fai (2.9-multi-distribution-0.1-09) unstable; urgency=low
+
+  * fix stuff in class examples 
+
+ -- Henning Sprang <henning@sprang.de>  Mon, 23 Jan 2006 22:23:58 +0100
+
 fai (2.9-multi-distribution-0.1-08) unstable; urgency=low
 
   * fixing error for debian install 
