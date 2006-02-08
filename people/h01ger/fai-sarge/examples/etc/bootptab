@@ -5,7 +5,7 @@
 	:ms=1024:\
 	:hd=/boot/fai:\
 	:hn:bs=auto:\
-	:rp=/usr/lib/fai/nfsroot:
+	:rp=/var/lib/fai/nfsroot:
 
 # rp: the nfsroot on the install server
 # your local values

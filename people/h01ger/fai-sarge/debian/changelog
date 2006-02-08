@@ -1,3 +1,10 @@
+fai (2.8.4sarge0.h01ger.1) stable; urgency=low
+
+  * merged 2.8.4sarge1 with my 2.8.4 branch (fai-2.8.4.0.holger.2 used at
+    debconf5 last year)
+
+ -- Holger Levsen <debian@layer-acht.org>  Wed,  8 Feb 2006 18:04:04 +0100
+
 fai (2.8.4sarge1) stable; urgency=medium
 
    * closes three important bugs
@@ -11,6 +18,37 @@ fai (2.8.4sarge1) stable; urgency=medium
      (closes: #312128) 
 
  -- Thomas Lange <lange@debian.org>  Wed,  4 Jan 2006 13:29:39 +0100
+
+fai (2.8.4.0.holger.2) unstable; urgency=high
+
+  * modified examples/simple/hoooks/savelog.LAST to keep the config dir local 
+    working copy after successful use so updates (and local edits) become 
+    possible
+  * changed default svn repository as anonymous svn currently doesn't work at 
+    debconf5 - so we use a local svn server instead of alioth :-(
+
+ -- Holger Levsen <debian@layer-acht.org>  Sun,  4 July 2005 16:34:28 +0300
+ 
+fai (2.8.4.0.holger.1) unstable; urgency=high
+
+  * add $FAI_ACTION class (closes: #313440)
+  * access fai_configdir with svn (closes: #314991)
+  * define GRUB only on fai installs (closes: #313069, #314995)
+  * don't call task_prepareapt on softupdates (closes: #315000)  
+  * propose /var/lib/fai/config and /v/l/f/nfsroot instead of
+    /usr/local/share/fai and /usr/lib/fai/nfsroot (closes: #309554)
+  * use fai_configdir from alioth-project fai-config-dir as default
+    this is target at debconf5 and does not really belong into this
+    branch!
+  * disabled catch-all classes in examples/simple/class/50-host-classes
+    (was allready present in 2.8.4.0.holger.1 but forget to save
+    the changelog in another term...)
+  * added subversion to depends (for debconf5), in the end, it should
+    only be recommended
+  * sometimes I only addressed the bug somehow - so the above "closes"
+    might be inaccurate wordings.
+
+ -- Holger Levsen <debian@layer-acht.org>  Sun, 21 June 2005 15:29:31 +0200
 
 fai (2.8.4) unstable; urgency=high
 

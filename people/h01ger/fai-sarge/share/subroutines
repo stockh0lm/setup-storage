@@ -189,6 +189,24 @@ get_fai_cvs() {
 	   cvs -q -d"$FAI_CVSROOT" co -P -d $(basename "$FAI") \
 	     $TAG $FAI_CVSMODULE > $LOGDIR/cvs.log
 	fi
+    elif [ "$FAI_SVNREPO" ] ; then
+	export FAI_CONFIG_AREA=$FAI_ROOT$FAI
+	export FAI=$(mktemp -t -d fai-config.XXXXXX)
+ 
+	[ "$debug" ] && echo "\$FAI now points to $FAI"
+
+	if [ -d "$FAI_CONFIG_AREA/.svn" -a -z "$FORCE" ] ; then
+	   echo "Config found at $FAI_CONFIG_AREA: Copying"
+	   mkdir -p $FAI	# not really sure if this is appropriate (here)
+           cp -a $FAI_CONFIG_AREA/. $FAI
+           echo "Updating SVN"
+           cd $FAI
+           svn up > $LOGDIR/svn.log
+        else
+           echo "Checking out SVN"
+           cd /tmp
+           svn co "$FAI_SVNREPO" $(basename "$FAI")  > $LOGDIR/cvs.log
+        fi
     else
 	echo "Warning $0: Neither \$FAI_LOCATION nor \$FAI_CVSROOT are defined."
     fi
@@ -426,7 +444,7 @@ task_softupdate() {
     local start_seconds=$(cut -d . -f 1 /proc/uptime)
     task mirror
     task debconf
-    task prepareapt
+    #task prepareapt
     task updatebase
     task instsoft
     task configure

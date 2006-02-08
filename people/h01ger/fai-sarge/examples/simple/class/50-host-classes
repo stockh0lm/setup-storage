@@ -8,9 +8,9 @@ case $HOSTNAME in
 	echo "FAIBASE DHCPC DEMO" ;;
     gnomehost)
 	echo "FAIBASE DHCPC DEMO XFREE GNOME";;
-    *)
-	echo "FAIBASE DHCPC" ;;
+#    *)
+#	echo "FAIBASE DHCPC" ;;
 esac
 
-ifclass I386 && echo "GRUB"
+ifclass I386 && ifclass FAI_INSTALL && echo "GRUB"
 exit 0

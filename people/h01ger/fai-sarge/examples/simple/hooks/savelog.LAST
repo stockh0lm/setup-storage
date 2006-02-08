@@ -109,3 +109,21 @@ if [ -s $errfile ]; then
 else
    echo "Congratulations! No errors found in log files."
 fi
+
+#!/bin/bash
+# code snipplet by Henning Glawe
+#
+# FAI_CONFIG_AREA is set by subroutines/get_fai_cvs to the directory where the
+# configuration is to be stored
+# 
+# the old contents are rotated to $FAI_CONFIG_AREA.old
+
+
+if [ -n "$FAI_CONFIG_AREA" ] ; then
+	echo "Saving installtime configuration to $FAI_CONFIG_AREA"
+       
+	cp -a "$FAI" "${FAI_CONFIG_AREA}.new"
+	[ -d "${FAI_CONFIG_AREA}.old" ] && rm -rf "${FAI_CONFIG_AREA}.old"
+	mv "$FAI_CONFIG_AREA" "${FAI_CONFIG_AREA}.old"
+	mv "${FAI_CONFIG_AREA}.new" "$FAI_CONFIG_AREA"
+fi

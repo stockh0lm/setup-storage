@@ -4,5 +4,9 @@
 uname -s | tr '[:lower:]' '[:upper:]'
 [ -x "`which dpkg`" ] && dpkg --print-installation-architecture | tr /a-z/ /A-Z/
 
+# define a class named after $FAI_ACTION
+[ $ROOTCMD ] && echo "FAI_INSTALL"
+[ ! $ROOTCMD ] && echo "FAI_SOFTUPDATE"
+
 [ -f /boot/RUNNING_FROM_FAICD ] && echo "FAICD"
 exit 0
