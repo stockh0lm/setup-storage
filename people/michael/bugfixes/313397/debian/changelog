@@ -1,3 +1,10 @@
+fai (2.8.4.michael.1) unstable; urgency=low
+
+  * Added a modified version of ucf.conf to the simple example (closes:
+    #313397)
+
+ -- Michael Tautschnig <tautschn@model.in.tum.de>  Thu, 09 Mar 2006 14:03:09 +0100
+
 fai (2.8.4) unstable; urgency=high
 
   * fix important bug: remove non-US entry (closes: #310392)
