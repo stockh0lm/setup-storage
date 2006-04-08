@@ -1,3 +1,11 @@
+fai-kernels (1.10.3) unstable; urgency=low
+
+  * upgraded to build with 2.6.16
+  * enabled aacraid driver (as module) in i386, amd64 and powerpc 2.6 kernels
+    as well as in powerpc 2.4 kernels (closes: #357918)
+
+ -- Holger Levsen <debian@layer-acht.org>  Sat,  8 Apr 2006 15:45:01 +0000
+
 fai-kernels (1.10.2) unstable; urgency=low
 
   * updated to use 2.6.15
