@@ -2,6 +2,7 @@ Source: fai-kernels
 Section: admin
 Priority: extra
 Maintainer: Holger Levsen <debian@layer-acht.org>
+Uploaders: Thomas Lange <lange@debian.org>
 Standards-Version: 3.6.2
 Build-Depends: linux-tree-2.6.16 [!alpha], kernel-source-2.4.27 (>= 2.4.27-11) [i386 alpha], modutils, kernel-package, debhelper (>= 4), bin86, fakeroot, gcc-3.3
 
