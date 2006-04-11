@@ -1,0 +1,47 @@
+# disk configuration for a 6 disk configuration
+
+# This is set up much like everything else; 
+
+# <type> <mountpoint> <size in mb> <mount options> <filesystem> [extra options]
+
+disk_config sda
+
+primary  /    256         - -  
+primary  swap 1024        -                   -
+primary  -		0-				 - -
+
+disk_config sdb
+primary  -		0-				 - -
+
+disk_config sdc
+primary  -		0-				 - -
+
+disk_config sdd
+primary  -             	256         - -
+primary  -          	1024        -                   -
+primary  -		0-				 - -
+
+disk_config sde
+primary  -		0-				 - -
+
+disk_config sdf
+primary  -		0-				 - -
+
+disk_config raid
+
+1        /    sda1,sdd1  rw,errors=remount-ro    ext2
+1        swap sda2,sdd2  rw                      swap
+1        -    sda3,sdd3  default                 ext2
+
+1        -    sdb1,sde1  default                 ext2
+1        -    sdc1,sdf1  default                 ext2
+
+# config the LVM
+disk_config lvm
+pv  default   md2,md3   
+lv:default	_usr:/usr			2048        rw,notail    reiser
+lv:default	_var:/var			600         rw,notail    reiser
+lv:default	_e_h:/export/home		10240       rw,notail    reiser
+lv:default	_e_s:/export/sites		2048        rw,notail    reiser
+lv:default	_v:/vservers		2048        rw       ext3
+

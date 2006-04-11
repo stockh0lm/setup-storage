@@ -1,0 +1,243 @@
+#!/usr/bin/perl -w
+ 
+# file ::= <lines> EOF
+# 
+# lines ::= EOL
+#           /* empty lines or whitespace only */
+#           | <comment> EOL
+#           | <config> EOL
+# 
+# comment ::= #.*
+# 
+# config ::= disk_config lvm
+#            | disk_config raid
+#            | disk_config end
+#            | disk_config disk[[:digit:]]+
+#            | disk_config [^[:space:]]+ 
+#            /* fully qualified device-path or short form, like hda, whereby full
+#             * path is assumed to be /dev/hda */
+#            | <volume>
+# 
+# volume ::= <type> <mountpoint> <size> <mount_options> <filesystem> <fs_options>
+#            | pv <name> <size>
+#            /* lvm pv */
+# 
+# type ::= primary
+#          /* for physical disks only */
+#          | logical
+#          /* for physical disks only */
+#          | [015]
+#          /* raid level */
+#          | lv:[^/[:space:]]+
+#          /* lvm logical volume and pv name */
+# 
+# mountpoint ::= -
+#                /* do not mount */
+#                | swap
+#                /* swap space */
+#                | /[^[:space:]]*
+#                /* fully qualified path */
+#                | [^:[:space:]]:/[^[:space:]]*
+#                /* lvm lv name:fully qualified path */
+# 
+# name ::= [^/[:space:]]+
+#          /* lvm volume group name */
+# 
+# size ::= [[:digit:]]+%?(-[[:digit:]]+%?)?
+#          /* size in megabytes or %, possibly given as a range; physical
+#           * partitions or lvm logical volumes only */
+#          | -[[:digit:]]+%?
+#          /* size in megabytes or % given as upper limit; physical partitions 
+#           * or lvm logical volumes only */
+#          | preserve[[:digit:]]+
+#          /* do not modify this partition */
+#          | [^,[:space:]]+(,[^,[:space:]])*
+#          /* devices for a raid or lvm pv */
+#     
+# mount_options ::= [^[:space:]]+
+# 
+# filesystem ::= -
+#                | swap
+#                | [^[:space:]]
+#                /* mkfs.xxx must exist */
+# 
+# fs_options ::= .*
+#                /* options appended to mkfs.xxx call */
+#
+#
+# TODO - Other things the parser/semantic analysis must take care of in the future:
+# * for lv:<name> a line pv <name> must have been found before
+# * only a single RAID and LVM stanza should be allowed
+# * boot option is not supported yet - is it used by anybody?
+# * check Debian BTS for other requests
+#
+# TODO - next steps
+# * create fstab from input
+# * create command script
+
+my $mode = "";
+my $line_no = 0;
+
+while(<>)
+{
+  $line_no++;
+  chomp;
+  my $line = $_;
+  # throw away trailing whitespace
+  if( $line =~ /(.*?)\s+$/ )
+  {
+    $line = $1;
+  }
+
+  # comment
+  if( $line =~ /^\s*#/ )
+  {
+    next;
+  }
+  # blank line
+  elsif( $line =~ /^\s*$/ )
+  {
+    next;
+  }
+  # disk_config
+  elsif( $line =~ /^disk_config\s+(end|lvm|raid|disk\d+|[^\s]+)$/ )
+  {
+    my $dev = $1;
+    # end of disk_config
+    if( $dev =~ /^end$/ )
+    {
+      $mode = "";
+    }
+    # lvm
+    elsif( $dev =~ /^lvm$/ )
+    {
+      $mode = "lvm";
+    }
+    # raid
+    elsif( $dev =~ /^raid$/ )
+    {
+      $mode = "raid";
+    }
+    # n-th of disklist
+    elsif( $dev =~ /^disk(\d+)$/ )
+    {
+      $mode = "phy_";
+      my $i = 0;
+      foreach my $d ( split( /\s/, $ENV{disklist} ) )
+      {
+        $i++;
+        if( $i == $1 )
+        {
+          $dev = "/dev/" . $d;
+          last;
+        }
+      }
+      $mode = $mode . $dev;
+    }
+    # device name, full path name given
+    elsif( $dev =~ /^\// )
+    {
+      $mode = "phy_" . $dev;
+    }
+    # device name, short form
+    else
+    {
+      $mode = "phy_/dev/" . $dev;
+    }
+  }
+  # volume
+  else
+  {
+    my $type = "";
+    my $mountpoint = "";
+    my $size = "";
+    my $mount_options = "";
+    my $filesystem = "";
+    my $fs_options = "";
+    if( $mode eq "lvm" && $line =~ /^pv\s+([^\/\s]+)\s+(\S+)$/ )
+    {
+      $type = "pv";
+      $mountpoint = $1;
+      $size = $2;
+    }
+    elsif( $mode =~ /^phy/ && $line =~ /^(primary|logical)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)(\s+(.*))?$/ )
+    {
+      $type = $1;
+      $mountpoint = $2;
+      $size = $3;
+      $mount_options = $4;
+      $filesystem = $5;
+      $fs_options = $7;
+    }
+    elsif( $mode eq "raid" && $line =~ /^([015])\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)(\s+(.*))?$/ )
+    {
+      $type = $1;
+      $mountpoint = $2;
+      $size = $3;
+      $mount_options = $4;
+      $filesystem = $5;
+      $fs_options = $7;
+    }
+    elsif( $mode eq "lvm" && $line =~ /^(lv:\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)(\s+(.*))?$/ )
+    {
+      $type = $1;
+      $mountpoint = $2;
+      $size = $3;
+      $mount_options = $4;
+      $filesystem = $5;
+      $fs_options = $7;
+    }
+    else
+    {
+      die "Syntax error in line " . $line_no . "\n";
+    }
+
+    if( $mode ne "lvm" && $mountpoint =~ /^(-|swap|\/(\S+)?)$/ )
+    {
+    }
+    elsif( $type =~ /^lv/ && $mountpoint =~ /^[^:\s]+:(-|swap|\/(\S+)?)$/ )
+    {
+    }
+    elsif( $type eq "pv" )
+    {
+    }
+    else
+    {
+      die "Syntax error in line " . $line_no . " - invalid mount point " . $mountpoint . "\n";
+    }
+    
+    if( ( $type eq "pv" || $mode eq "raid" ) && $size =~ /^[^,\s]+(,[^,\s]+)*$/ )
+    {
+    }
+    elsif( ( $mode =~ /^phy/ || $type =~ /^lv/ ) && ( $size =~ /^(\d+%?(-(\d+%?)?)?|-\d+%?)$/ ) )
+    {
+    }
+    elsif( $mode =~ /^phy/ && ( $size =~ /^preserve\d+$/ ) )
+    {
+    }
+    else
+    {
+      if( $type eq "pv" || $mode eq "raid" )
+      {
+        die "Syntax error in line " . $line_no . " - invalid device name\n";
+      }
+      else
+      {
+        die "Syntax error in line " . $line_no . " - invalid size\n";
+      }
+    }
+
+    if( $type ne "pv" )
+    {
+      if( $filesystem =~ /^(-|swap)$/ )
+      {
+      }
+      else
+      {
+        # test for existance of mkfs.$filesystem
+      }
+    } 
+  }
+}
+      
+
