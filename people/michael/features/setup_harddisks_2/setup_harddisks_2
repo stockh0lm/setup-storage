@@ -12,11 +12,17 @@
 # config ::= disk_config lvm
 #            | disk_config raid
 #            | disk_config end
-#            | disk_config disk[[:digit:]]+
-#            | disk_config [^[:space:]]+ 
+#            | disk_config disk[[:digit:]]+( <option>)*
+#            | disk_config [^[:space:]]+( <option>)*
 #            /* fully qualified device-path or short form, like hda, whereby full
 #             * path is assumed to be /dev/hda */
 #            | <volume>
+# 
+# option ::= /* empty */
+#            | preserve:[[:digit:]]+(,[[:digit:]]+)*
+#            /* preserve partitions */
+#            | disklabel:(msdos|sun)
+#            /* write a disklabel - default is msdos */
 # 
 # volume ::= <type> <mountpoint> <size> <mount_options> <filesystem> <fs_options>
 #            | pv <name> <size>
@@ -26,10 +32,10 @@
 #          /* for physical disks only */
 #          | logical
 #          /* for physical disks only */
-#          | [015]
+#          | raid[015]
 #          /* raid level */
-#          | lv:[^/[:space:]]+
-#          /* lvm logical volume and pv name */
+#          | [^/[:space:]]+:[^/[:space:]]+
+#          /* lvm logical volume: pv name and lv name*/
 # 
 # mountpoint ::= -
 #                /* do not mount */
@@ -37,8 +43,6 @@
 #                /* swap space */
 #                | /[^[:space:]]*
 #                /* fully qualified path */
-#                | [^:[:space:]]:/[^[:space:]]*
-#                /* lvm lv name:fully qualified path */
 # 
 # name ::= [^/[:space:]]+
 #          /* lvm volume group name */
@@ -66,7 +70,6 @@
 #
 #
 # TODO - Other things the parser/semantic analysis must take care of in the future:
-# * for lv:<name> a line pv <name> must have been found before
 # * only a single RAID and LVM stanza should be allowed
 # * boot option is not supported yet - is it used by anybody?
 # * check Debian BTS for other requests
@@ -100,9 +103,16 @@ while(<>)
     next;
   }
   # disk_config
-  elsif( $line =~ /^disk_config\s+(end|lvm|raid|disk\d+|[^\s]+)$/ )
+  elsif( $line =~ /^disk_config\s+(end|lvm|raid|disk\d+(\s+.*)?|\S+(\s+.*)?)$/ )
   {
     my $dev = $1;
+    my $dev_options = undef;
+    if( $dev =~ /^(\S+)\s+(\S+.*)$/ )
+    {
+      $dev = $1;
+      $dev_options = $2;
+    }
+    
     # end of disk_config
     if( $dev =~ /^end$/ )
     {
@@ -144,6 +154,28 @@ while(<>)
     {
       $mode = "phy_/dev/" . $dev;
     }
+
+    # parse options
+    if( $mode =~ /^phy/ && defined( $dev_options ) )
+    {
+      foreach my $o ( split( /\s+/, $dev_options ) )
+      {
+        if( $o =~ /^preserve:\d+(,\d+)*$/ )
+        {
+        }
+        elsif( $o =~ /^disklabel:(msdos|sun)$/ )
+        {
+        }
+        else
+        {
+          die "Syntax error in line " . $line_no . " - invalid option " . $o . "\n";
+        }
+      }
+    }
+    elsif( defined( $dev_options ) )
+    {
+      die "Syntax error in line " . $line_no . "\n";
+    } 
   }
   # volume
   else
@@ -154,12 +186,14 @@ while(<>)
     my $mount_options = "";
     my $filesystem = "";
     my $fs_options = "";
+    # volume group
     if( $mode eq "lvm" && $line =~ /^pv\s+([^\/\s]+)\s+(\S+)$/ )
     {
       $type = "pv";
       $mountpoint = $1;
       $size = $2;
     }
+    # physical partition
     elsif( $mode =~ /^phy/ && $line =~ /^(primary|logical)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)(\s+(.*))?$/ )
     {
       $type = $1;
@@ -169,7 +203,8 @@ while(<>)
       $filesystem = $5;
       $fs_options = $7;
     }
-    elsif( $mode eq "raid" && $line =~ /^([015])\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)(\s+(.*))?$/ )
+    # RAID definition
+    elsif( $mode eq "raid" && $line =~ /^(raid[015])\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)(\s+(.*))?$/ )
     {
       $type = $1;
       $mountpoint = $2;
@@ -178,7 +213,8 @@ while(<>)
       $filesystem = $5;
       $fs_options = $7;
     }
-    elsif( $mode eq "lvm" && $line =~ /^(lv:\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)(\s+(.*))?$/ )
+    # logical volume
+    elsif( $mode eq "lvm" && $line =~ /^(\S+:\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)(\s+(.*))?$/ )
     {
       $type = $1;
       $mountpoint = $2;
@@ -192,10 +228,8 @@ while(<>)
       die "Syntax error in line " . $line_no . "\n";
     }
 
-    if( $mode ne "lvm" && $mountpoint =~ /^(-|swap|\/(\S+)?)$/ )
-    {
-    }
-    elsif( $type =~ /^lv/ && $mountpoint =~ /^[^:\s]+:(-|swap|\/(\S+)?)$/ )
+    # test for valid mount point
+    if( $type ne "pv" && $mountpoint =~ /^(-|swap|\/(\S+)?)$/ )
     {
     }
     elsif( $type eq "pv" )
@@ -206,10 +240,11 @@ while(<>)
       die "Syntax error in line " . $line_no . " - invalid mount point " . $mountpoint . "\n";
     }
     
+    # test valid size format
     if( ( $type eq "pv" || $mode eq "raid" ) && $size =~ /^[^,\s]+(,[^,\s]+)*$/ )
     {
     }
-    elsif( ( $mode =~ /^phy/ || $type =~ /^lv/ ) && ( $size =~ /^(\d+%?(-(\d+%?)?)?|-\d+%?)$/ ) )
+    elsif( ( $mode =~ /^phy/ || $type =~ /\S+:\S+/ ) && ( $size =~ /^(\d+%?(-(\d+%?)?)?|-\d+%?)$/ ) )
     {
     }
     elsif( $mode =~ /^phy/ && ( $size =~ /^preserve\d+$/ ) )
@@ -227,6 +262,7 @@ while(<>)
       }
     }
 
+    # make sure that filesystem creator exists
     if( $type ne "pv" )
     {
       if( $filesystem =~ /^(-|swap)$/ )
@@ -234,9 +270,14 @@ while(<>)
       }
       else
       {
-        # test for existance of mkfs.$filesystem
+        # TODO - test for existance of mkfs.$filesystem
       }
     } 
+
+    if( $type =~ /\S+:\S+/ )
+    {
+      # TODO - verify that pv name has been defined already
+    }
   }
 }
       

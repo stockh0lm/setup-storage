@@ -1,8 +1,8 @@
-disk_config hda
+disk_config hda   preserve:7   disklabel:msdos  
 primary /boot     20        rw                  ext3
 primary swap      1000     sw         swap
-primary /         12000      rw                  ext3
+primary /         12000      rw                  ext2  -j
 logical /tmp      1000      rw,nosuid		ext3
-logical /usr      15000      rw                  ext3
-logical /var      preserve7      rw                  ext3
+logical /usr      preserve6      rw                  ext3
+logical /var      2000-      rw                  ext3
 logical /nobackup 0-	rw                   ext3
