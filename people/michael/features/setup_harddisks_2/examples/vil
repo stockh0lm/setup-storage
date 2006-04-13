@@ -38,10 +38,10 @@ raid0        -    sdc1,sdf1  default                 ext2
 
 # config the LVM
 disk_config lvm
-pv  default   md2,md3   
-default:_usr	/usr			2048        rw,notail    reiser
-default:_var	/var			600         rw,notail    reiser
-default:_e_h	/export/home		10240       rw,notail    reiser
-default:_e_s	/export/sites		2048        rw,notail    reiser
-default:_v	/vservers		2048        rw       ext3
+pv  my_pv   md2,md3   
+my_pv:_usr	/usr			2048        rw,notail    reiser
+my_pv:_var	/var			600         rw,notail    reiser
+my_pv:_e_h	/export/home		10240       rw,notail    reiser
+my_pv:_e_s	/export/sites		2048        rw,notail    reiser
+my_pv:_v	/vservers		2048        rw       ext3
 
