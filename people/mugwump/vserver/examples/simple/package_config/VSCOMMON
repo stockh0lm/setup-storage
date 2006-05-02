@@ -5,7 +5,6 @@ cron
 debconf-utils
 file
 less
-linuxlogo
 rsync
 ssh
 sysutils
