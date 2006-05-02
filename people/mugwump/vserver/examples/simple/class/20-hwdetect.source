@@ -5,6 +5,8 @@
 # NOTE: Files named *.source will be evaluated, but their output ignored and instead 
 # the contents of $newclasses will be added to the list of defined classes.
 
+ifclass VSCHILD && return
+
 echo 0 > /proc/sys/kernel/printk
 
 # load all IDE drivers
