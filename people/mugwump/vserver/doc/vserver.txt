@@ -1,0 +1,34 @@
+Building VServers with FAI
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+You will need:
+
+ - util-vserver-0.30.210, patched with:
+
+   https://savannah.nongnu.org/patch/index.php?func=detailitem&item_id=5058
+
+   (but if your 'vserver xxx build --help' already lists 'fai' as a
+    build method, the feature is already upstream)
+
+ - a system with a vs2.0 series patch installed (vs2.0.2+ recommended)
+
+   I tested this with:
+   http://vserver.13thfloor.at/Experimental/patch-2.6.16-vs2.0.2-rc14.diff
+
+Once you have this, you need to build yourself a vserver that will
+hold the FAI configuration.
+
+vserver faiprof build -m debootstrap --interface dummy0:192.168.1.2/24 \
+   --flags nproc
+
+Add 'secure_mount' to /etc/vservers/fai/ccapabilities and 'mknod' to
+/etc/vservers/fai/bcapabilities.  This will allow 'make-fai-nfsroot'
+to work within that vserver.  Manually configure that vserver until it
+starts and stops properly, resolves hosts, apt-get updates ok, etc.
+You will also need to configure /etc/fai/fai.conf, sources.list, etc.
+
+Then you can build children with:
+
+vserver mychild build -m fai --interface dummy0:192.168.1.42/24 \
+   --flags nproc -- -f faiprof
+
+
