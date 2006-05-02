@@ -1,0 +1,4 @@
+vsname="vs3"
+childdev="eth0"
+childip="192.168.0.12"
+childprefix="24"

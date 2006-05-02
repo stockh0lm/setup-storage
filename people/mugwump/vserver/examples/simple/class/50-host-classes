@@ -12,6 +12,16 @@ case $HOSTNAME in
 	echo "FAIBASE DHCPC DEMO XFREE GNOME";;
     atom*)
 	echo "FAIBASE DHCPC DEMO" ;;
+# from http://faiwiki.informatik.uni-koeln.de/index.php/User:BrianShowalter/Using_FAI_to_install_Linux-vservers
+    vshost)
+        echo "FAIBASE VSHOST VSCOMMON";;
+    vschild1)
+        echo "VSCHILD VSCOMMON APACHE" && exit 0;;
+    vschild2)
+        echo "VSCHILD VSCOMMON MYSQL" && exit 0;;
+    vschild3)
+        echo "VSCHILD VSCOMMON POSTFIX" && exit 0;;
+
     *)
 	echo "FAIBASE DHCPC" ;;
 esac

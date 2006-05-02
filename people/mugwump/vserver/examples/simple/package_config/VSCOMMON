@@ -1,0 +1,12 @@
+PACKAGES aptitude
+bzip2
+cfengine
+cron
+debconf-utils
+file
+less
+linuxlogo
+rsync
+ssh
+sysutils
+time
