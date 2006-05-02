@@ -28,13 +28,20 @@ mkrwsize() {
 	rm $temp && return
     fi
 
+    if [ -n "$3" ]
+    then
+        n="-n";
+    else
+        n="";
+    fi
+
     local tmp1=$(mktemp) || exit 12
     tar -C $2 -cf $tmp1 .
-    mount -o size=$1 -t tmpfs tmpfs $2 2>/dev/null || (
+    mount $n -o size=$1 -t tmpfs tmpfs $2 2>/dev/null || (
 	dirname="`echo $2 | sed 's/\//_/g'`"
 	mkdir /tmp/$dirname
 	echo "Making $2 writable with a bind mount from /tmp/$dirname"
-	mount --bind /tmp/$dirname $2
+	mount $n --bind /tmp/$dirname $2
     )
     tar -C $2 -xf $tmp1
     rm -f $tmp1
@@ -43,13 +50,14 @@ mkrwsize() {
 
 size=10m # default size
 
-while getopts s: opt ; do
+while getopts s:n opt ; do
     case "$opt" in
         s) size="$OPTARG" ;;
+        n) no_mount=1 ;;
         esac
 done
 shift $(($OPTIND - 1))
 
 for f in "$@"; do
-    mkrwsize $size $f
+    mkrwsize $size $f $no_mount
 done
