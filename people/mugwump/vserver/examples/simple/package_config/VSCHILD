@@ -1,0 +1,17 @@
+PACKAGES install
+console-common-
+console-data-
+console-tools-
+iptables-
+klogd-
+makedev-
+modutils-
+pciutils-
+
+PACKAGES install I386
+kernel-image-2.6-386-
+
+PACKAGES install AMD64
+kernel-image-2.6-amd64-k8-smp-
+memtest86+-
+
