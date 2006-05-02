@@ -12,7 +12,9 @@ case $HOSTNAME in
 	echo "FAIBASE DHCPC DEMO XFREE GNOME";;
     atom*)
 	echo "FAIBASE DHCPC DEMO" ;;
-# from http://faiwiki.informatik.uni-koeln.de/index.php/User:BrianShowalter/Using_FAI_to_install_Linux-vservers
+
+# For building VServer hosts and children
+
     vshost)
         echo "FAIBASE VSHOST VSCOMMON";;
     vschild1)
@@ -23,8 +25,13 @@ case $HOSTNAME in
         echo "VSCHILD VSCOMMON POSTFIX" && exit 0;;
 
     *)
-	echo "FAIBASE DHCPC" ;;
+	if ifclass VSCHILD
+	then
+	    echo "VSCOMMON";
+        else
+	    echo "FAIBASE DHCPC" 
+        fi;;
 esac
 
-(ifclass I386 || ifclass AMD64) && echo GRUB 
+(ifclass I386 || ifclass AMD64) && ( ifclass VSCHILD || echo GRUB )
 exit 0
