@@ -157,8 +157,13 @@ skiptask() {
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 get_fai_dir() {
 
-    # get /fai directory; mount it or get it from a cvs repository
+    # maybe /fai has already been put magically where we want it
+    if [ -d "$FAI/class" ]
+    then
+        return
+    fi
 
+    # get /fai directory; mount it or get it from a cvs repository
     [ -f /boot/RUNNING_FROM_FAICD ] && mkrw $FAI
     if [ -z "$FAI_LOCATION" ]; then
        get_fai_cvs
@@ -384,6 +389,7 @@ task_savelog() {
 task_faiend() {
 
     [ $DO_INIT_TASKS -eq 0 ] && exit 0
+    [ -n "$VIRTUAL" ] && exit 0
     wait_for_jobs
     echo "Press <RETURN> to reboot or ctrl-c to execute a shell"
     # reboot without prompting if FAI_FLAG reboot is set

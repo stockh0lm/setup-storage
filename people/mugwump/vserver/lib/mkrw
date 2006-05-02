@@ -20,9 +20,22 @@ mkrwsize() {
 	return
     fi
 
+    # test for already writable
+    temp=`mktemp -q -p $2`
+    if [ $? -eq 0 ]
+    then
+	echo "mkrw: $2 is already writable."
+	rm $temp && return
+    fi
+
     local tmp1=$(mktemp) || exit 12
     tar -C $2 -cf $tmp1 .
-    mount -o size=$1 -t tmpfs tmpfs $2
+    mount -o size=$1 -t tmpfs tmpfs $2 2>/dev/null || (
+	dirname="`echo $2 | sed 's/\//_/g'`"
+	mkdir /tmp/$dirname
+	echo "Making $2 writable with a bind mount from /tmp/$dirname"
+	mount --bind /tmp/$dirname $2
+    )
     tar -C $2 -xf $tmp1
     rm -f $tmp1
 }

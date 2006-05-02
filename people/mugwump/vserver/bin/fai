@@ -35,6 +35,7 @@ rundir=/var/run/fai
 stamp=$rundir/FAI_INSTALLATION_IN_PROGRESS
 romountopt="-o async,noatime,nolock,ro,actimeo=1800"
 fstab=fstab  # Solaris uses vfstab
+debug=1
 
 # the type of operating system (linux, sunos)
 oclass=$(uname -s | tr a-z A-Z)
@@ -112,14 +113,16 @@ fai_init() {
 
     if [ X$oclass = XLINUX ]; then
 	if [ $DO_INIT_TASKS -eq 1 ]; then
-	    grep -q '[[:space:]]sysfs' /proc/filesystems && mount -t sysfs sysfs /sys
-	    ifup lo
-	    [ -x /etc/init.d/udev ] && /etc/init.d/udev start
-	    [ -x /sbin/portmap ] && /sbin/portmap
-	    mount -t devpts devpts /dev/pts
-	    # add other options for nfs mount of /dev/root to root-path in dhcpd.conf
-	    mount -o remount,noatime,ro /dev/root /
-	    cat /proc/kmsg >/dev/tty4 &
+	    if [ -z "$VIRTUAL" ]; then
+	        grep -q '[[:space:]]sysfs' /proc/filesystems && mount -t sysfs sysfs /sys
+	        ifup lo
+	        [ -x /etc/init.d/udev ] && /etc/init.d/udev start
+	        [ -x /sbin/portmap ] && /sbin/portmap
+	        mount -t devpts devpts /dev/pts
+	        # add other options for nfs mount of /dev/root to root-path in dhcpd.conf
+	        mount -o remount,noatime,ro /dev/root /
+	        cat /proc/kmsg >/dev/tty4 &
+            fi
 	fi
     fi
 
@@ -201,6 +204,8 @@ fi
     # HG: are we called as an init substitute ?
     export DO_INIT_TASKS=0
     [ "$0" = "/etc/init.d/rcS" ] && DO_INIT_TASKS=1
+    echo GOT HERE
+    [ -d /proc/self -a ! -e /proc/cmdline ] && export VIRTUAL=1
     [ $DO_INIT_TASKS -eq 1 ] && renewclass=1 # always renew class list when installing
 
     # Solaris has already a writable /tmp directory
