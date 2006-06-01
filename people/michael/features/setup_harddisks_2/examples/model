@@ -1,8 +1,8 @@
 disk_config hda   preserve:6,7   disklabel:msdos  bootable:3
-primary /boot     20        rw                  ext3
-primary swap      1000     sw         swap
-primary /         12000      rw                  ext3  -b 2048
-logical /tmp      1000      rw,nosuid		ext3
-logical /usr      preserve6      rw                  ext3
-logical /var      2000-      rw                  ext3 -L var_part
-logical /nobackup 0-	rw                   xfs
+primary /boot     20       ext3       rw 
+primary swap      1000     swap       sw 
+primary /         12000      ext3          rw   -b 2048
+logical /tmp      1000      ext3     rw,nosuid
+logical /usr      preserve6      ext3     rw
+logical /var      2000-      ext3    rw     -L var_part
+logical /nobackup 0-	xfs    rw 
