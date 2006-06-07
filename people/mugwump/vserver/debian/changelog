@@ -1,8 +1,8 @@
-fai (2.10.1-1) unstable; urgency=low
+fai (2.10.1vserver1) unstable; urgency=low
 
-  * get_fai_dir: check not already mounted
+  * various changes to support building vservers
 
- -- Sam Vilain <sam@vilain.net>  Thu, 27 Apr 2006 16:32:59 +1200
+ -- Sam Vilain <samv@catalyst.net.nz>  Thu, 27 Apr 2006 16:32:59 +1200
 
 fai (2.10.1) unstable; urgency=low
 
