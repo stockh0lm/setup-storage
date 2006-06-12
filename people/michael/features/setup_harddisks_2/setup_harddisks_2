@@ -87,7 +87,7 @@
 #            /* preserve partitions */
 #            | disklabel:(msdos|sun)
 #            /* write a disklabel - default is msdos */
-#            | bootable:[[:digit:]]
+#            | bootable:[[:digit:]]+
 #            /* mark a partition bootable, default is / */
 #            | virtual
 #            /* do not assume the disk to be a physical device, use with xen */
@@ -100,7 +100,7 @@
 #          /* for physical disks only */
 #          | logical
 #          /* for physical disks only */
-#          | raid[015]
+#          | raid[0156]
 #          /* raid level */
 #          | [^/[:space:]]+-[^/[:space:]]+
 #          /* lvm logical volume: vg name and lv name*/
@@ -299,7 +299,7 @@ while(<>)
       $fs_options = $7;
     }
     # RAID definition
-    elsif( $mode eq "raid" && $line =~ /^(raid[015])\s+(\S+)\s+(\S+)\s+([^,\s]+)\s+(\S+)(\s+(.*))?$/ )
+    elsif( $mode eq "raid" && $line =~ /^(raid[0156])\s+(\S+)\s+(\S+)\s+([^,\s]+)\s+(\S+)(\s+(.*))?$/ )
     {
       $type = $1;
       $mountpoint = $2;

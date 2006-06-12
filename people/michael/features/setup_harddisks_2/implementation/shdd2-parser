@@ -1,35 +1,110 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -w
+
+use strict;
+
+#
+# file ::= <lines> EOF
+# 
+# lines ::= EOL
+#           /* empty lines or whitespace only */
+#           | <comment> EOL
+#           | <config> EOL
+# 
+# comment ::= #.*
+# 
+# config ::= disk_config lvm
+#            | disk_config raid
+#            | disk_config end
+#            | disk_config disk[[:digit:]]+( <option>)*
+#            | disk_config [^[:space:]]+( <option>)*
+#            /* fully qualified device-path or short form, like hda, whereby full
+#             * path is assumed to be /dev/hda */
+#            | <volume>
+# 
+# option ::= /* empty */
+#            | preserve:[[:digit:]]+(,[[:digit:]]+)*
+#            /* preserve partitions */
+#            | disklabel:(msdos|sun)
+#            /* write a disklabel - default is msdos */
+#            | bootable:[[:digit:]]+
+#            /* mark a partition bootable, default is / */
+#            | virtual
+#            /* do not assume the disk to be a physical device, use with xen */
+# 
+# volume ::= <type> <mountpoint> <size> <filesystem> <mount_options> <fs_options>
+#            | vg <name> <size>
+#            /* lvm vg */
+# 
+# type ::= primary
+#          /* for physical disks only */
+#          | logical
+#          /* for physical disks only */
+#          | raid[0156]
+#          /* raid level */
+#          | [^/[:space:]]+-[^/[:space:]]+
+#          /* lvm logical volume: vg name and lv name*/
+# 
+# mountpoint ::= -
+#                /* do not mount */
+#                | swap
+#                /* swap space */
+#                | /[^[:space:]]*
+#                /* fully qualified path */
+# 
+# name ::= [^/[:space:]]+
+#          /* lvm volume group name */
+# 
+# size ::= [[:digit:]]+%?(-[[:digit:]]+%?)?(:resize)?
+#          /* size in megabytes or %, possibly given as a range; physical
+#           * partitions or lvm logical volumes only */
+#          | -[[:digit:]]+%?(:resize)?
+#          /* size in megabytes or % given as upper limit; physical partitions 
+#           * or lvm logical volumes only */
+#          | preserve[[:digit:]]+
+#          /* do not modify this partition */
+#          | [^,:[:space:]]+(:(spare|missing))*(,[^,:[:space:]]+(:(spare|missing))*)*
+#          /* devices and options for a raid or lvm vg */
+#     
+# mount_options ::= [^[:space:]]+
+# 
+# filesystem ::= -
+#                | swap
+#                | [^[:space:]]
+#                /* mkfs.xxx must exist */
+# 
+# fs_options ::= .*
+#                /* options appended to mkfs.xxx call */
+#
 
 use Parse::RecDescent;
+# $Parse::RecDescent::skip = '[ \t]+';
+# $Parse::RecDescent::skip = '\s*';
 
 my $Parser = Parse::RecDescent->new(q{
     file: line(s?) /\Z/
-    line: /$/
-        | comment /$/
-        | config /$/
-    comment: /\s*#.*$/
-    config:
-          'disk_config' disk_config_arg
+    line: <skip: qr/[ \t]*/> "\\n"
+        | <skip: qr/[ \t]*/> comment "\\n"
+        | <skip: qr/[ \t]*/> config "\\n"
+        | <error>
+    comment: /\s*#.*/
+    config: 'disk_config' disk_config_arg
         | volume
-    disk_config_arg:
-          'raid'
+    disk_config_arg: 'raid'
         | 'lvm'
+        | 'end'
         | /disk\d+/ option(s?)
-        | /\S/ option(s?)
-    option:
-          /preserve:\d+(,\d+)*/
+        | /\S+/ option(s?)
+    option: /preserve:\d+(,\d+)*/
         | /disklabel:(msdos|sun)/
-        | /bootable:\d/
+        | /bootable:\d+/
         | 'virtual'
-    volume:
-          type mountpoint size filesystem mount_options fs_options
+    volume: type mountpoint size filesystem mount_options fs_options
         | 'vg' name size
     type: 'primary'
         | 'logical'
         | /raid[0156]/
         | m{[^/\s]+-[^/\s]+}
-    mountpoint:
-          '-'
+    mountpoint: '-'
         | 'swap'
         | m{/\S*}
     name: /\S+/
@@ -37,17 +112,24 @@ my $Parser = Parse::RecDescent->new(q{
         | /-\d+%?(:resize)?/
         | /preserve\d+/
         | /[^,:\s]+(:(spare|missing))*(,[^,:\s]+(:(spare|missing))*)*/
-    mount_options:
-          /\S+/
-    filesystem:
-          '-'
+    mount_options: /\S+/
+    filesystem: '-'
         | 'swap'
-        | \S+
-          { if ( !in_path("mkfs.$item[0]") ) {
-                die "unknown/invalid filesystem type '$item[0]'"
-            }
-          }
-    fs_options:
-          /.*$/
+        | /\S+/
+          # { if ( !in_path("mkfs.$item[1]") ) {
+                # die "unknown/invalid filesystem type '$item[1]'"
+            # }
+          # }
+    fs_options: /.*/
 });
+
+
+my $ifs = $/;
+undef $/;
+my $input = <STDIN>;
+$/ = $ifs;
+
+print "Input was:\n" . $input;
+
+defined $Parser->file( $input ) or die "Syntax error\n";
 
