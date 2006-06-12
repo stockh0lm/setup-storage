@@ -133,3 +133,5 @@ print "Input was:\n" . $input;
 
 defined $Parser->file( $input ) or die "Syntax error\n";
 
+1;
+
