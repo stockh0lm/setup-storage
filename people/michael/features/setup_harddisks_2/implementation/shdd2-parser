@@ -24,6 +24,8 @@ use strict;
 # option ::= /* empty */
 #            | preserve:[[:digit:]]+(,[[:digit:]]+)*
 #            /* preserve partitions */
+#            | resize:[[:digit:]]+(,[[:digit:]]+)*
+#            /* attempt to resize partitions */
 #            | disklabel:(msdos|sun)
 #            /* write a disklabel - default is msdos */
 #            | bootable:[[:digit:]]+
@@ -95,6 +97,7 @@ my $Parser = Parse::RecDescent->new(q{
         | /disk\d+/ option(s?)
         | /\S+/ option(s?)
     option: /preserve:\d+(,\d+)*/
+        | /resize:\d+(,\d+)*/
         | /disklabel:(msdos|sun)/
         | /bootable:\d+/
         | 'virtual'
