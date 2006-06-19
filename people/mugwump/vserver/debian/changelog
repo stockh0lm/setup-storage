@@ -1,3 +1,9 @@
+fai (2.10.1vserver2) unstable; urgency=low
+
+  * Some changes that got missed
+
+ -- Sam Vilain <samv@catalyst.net.nz>  Mon, 19 Jun 2006 19:28:57 +1200
+
 fai (2.10.1vserver1) unstable; urgency=low
 
   * various changes to support building vservers
