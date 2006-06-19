@@ -49,11 +49,11 @@ eval_cmdline() {
 task_confdir() {
 
     if [ $DO_INIT_TASKS -eq 1 ] ; then
-        local bootlog
-        eval_cmdline
-
 	if [ -z "$VIRTUAL" ]
 	then
+            local bootlog
+            eval_cmdline
+
             bootlog=$LOGDIR/boot.log
             get-boot-info
             echo "Reading $bootlog"
@@ -99,10 +99,14 @@ task_extrbase() {
 
     local fs=$FAI_ROOT/etc/$fstab
     local basefile=/var/tmp/base.tgz
-    [ $DO_INIT_TASKS -eq 0 ] && basefile=$NFSROOT/var/tmp/base.tgz
+    [ ! -e $basefile ] && [ $DO_INIT_TASKS -eq 0 ] && basefile=$NFSROOT/var/tmp/base.tgz
     # extract the tar file which was the result of debootstrap
     echo "Unpacking Debian base archive"
-    gzip -dc $basefile | tar -C $FAI_ROOT -xpf -
+    if [ -n "$VIRTUAL" ]
+    then
+	 tar_no_dev="--exclude=./dev --exclude=./proc"
+    fi
+    gzip -dc $basefile | tar -C $FAI_ROOT $tar_no_dev -xpf -
     # now we can copy fstab
     [ -f $fs ] && mv $fs $fs.old
     cp -p $LOGDIR/$fstab $fs
