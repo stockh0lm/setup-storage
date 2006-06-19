@@ -204,7 +204,6 @@ fi
     # HG: are we called as an init substitute ?
     export DO_INIT_TASKS=0
     [ "$0" = "/etc/init.d/rcS" ] && DO_INIT_TASKS=1
-    echo GOT HERE
     [ -d /proc/self -a ! -e /proc/cmdline ] && export VIRTUAL=1
     [ $DO_INIT_TASKS -eq 1 ] && renewclass=1 # always renew class list when installing
 
