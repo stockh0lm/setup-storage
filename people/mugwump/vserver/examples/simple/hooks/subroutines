@@ -68,4 +68,16 @@ task_vschild_install() {
         task vschild_updatebase
         task instsoft
         task configure
+	task savelog
 }
+
+task_savelog() {
+
+    [ -d $target/var/log/fai ] || mkdir -p $target/var/log/fai
+    [ -d $target/var/log/fai ] && fai-savelog -l
+    [ -f $LOGDIR/FAI_CLASSES ] && cp -p $LOGDIR/FAI_CLASSES $target/var/log/fai
+    [ -f $LOGDIR/variables.sh ] && cp -p $LOGDIR/variables.sh $target/var/log/fai
+    [ "x$diskvar" != "x" -a "$diskvar" != "/var/log/fai/disk_var.sh" -a -f "$diskvar" ] && cp -p $diskvar $target/var/log/fai
+    fai-savelog -r
+}
+
