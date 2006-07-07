@@ -3,7 +3,8 @@ fai-kernels (1.11) unstable; urgency=low
   * removed kernel 2.4 
   * therefore also removed alpha build as no 2.6 config for fai-kernels for
     alpha exits :-(
-  * compile SATA nvidia driver as a module on i386 (Closes: #366423)
+  * build SATA nvidia driver as a module on i386 (Closes: #366423)
+  * build all megaraid drivers as modules on i386 and amd64 (Closes: #375843)
 
  -- Holger Levsen <debian@layer-acht.org>  Fri,  7 Jul 2006 11:47:22 +0000
 
