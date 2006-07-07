@@ -1,3 +1,10 @@
+fai-kernels (1.11) unstable; urgency=low
+
+  * removed kernel 2.4 
+  * therefore also removed alpha build as no 2.6 config for fai-kernels for alpha exits :-(
+
+ -- Holger Levsen <debian@layer-acht.org>  Fri,  7 Jul 2006 11:47:22 +0000
+
 fai-kernels (1.10.3) unstable; urgency=low
 
   * upgraded to build with 2.6.16

@@ -1,16 +1,14 @@
 Howto handle security fixes for fai-kernels
 -------------------------------------------
 
-fai-kernels uses the kernel-source-2.4.27 and kernel-source-2.6.8 packages.
-If these packages get updated with a security fix, fai-kernels needs to be 
-rebuild. 
+fai-kernels builds with the linux-source-2.6.16 package. If these packages 
+get updated with a security fix, fai-kernels needs to be rebuild. 
 
 The kernel-image-debs which are included in the fai-kernel package contain
 the kernel abi version in the included packages name. If the abi version 
-changes, those abi version number has to be incremented in fai kernels control
+changes, those abi version number has to be incremented in fai kernels rules
 file as well. 
 
-fai kernels control file supports different abi versions for 2.4 and 2.6.
 
 
 In etch FAI should be changed to use debian standard kernels, so security
