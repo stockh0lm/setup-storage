@@ -3,7 +3,7 @@ Section: admin
 Priority: extra
 Maintainer: Holger Levsen <debian@layer-acht.org>
 Uploaders: Thomas Lange <lange@debian.org>
-Standards-Version: 3.6.2
+Standards-Version: 3.7.2
 Build-Depends: linux-tree-2.6.16 [!alpha], modutils, kernel-package, debhelper (>= 4), bin86, fakeroot
 
 Package: fai-kernels

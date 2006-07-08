@@ -5,8 +5,9 @@ fai-kernels (1.11) unstable; urgency=low
     alpha exits :-(
   * build SATA nvidia driver as a module on i386 (Closes: #366423)
   * build all megaraid drivers as modules on i386 and amd64 (Closes: #375843)
+  * confirmed that the package conforms to debian-policy 3.7.2
 
- -- Holger Levsen <debian@layer-acht.org>  Fri,  7 Jul 2006 11:47:22 +0000
+ -- Holger Levsen <debian@layer-acht.org>  Sat,  8 Jul 2006 11:47:22 +0000
 
 fai-kernels (1.10.3) unstable; urgency=low
 
