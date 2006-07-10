@@ -56,9 +56,9 @@ To setup swap space for Linux
 
 To set up LVM managed areas
 
-=item L<mkraid(8)>
+=item L<mdadm(8)>
 
-To set up Linux md-utils managed spaces.
+To set up Linux mdadm managed spaces.
 
 =back
 
@@ -1436,7 +1436,7 @@ sub StopAllRaid {
 	$count = @devices;
 	foreach (@devices) {
 	    say("stopping $_");
-	    if (!run("raidstop $_",1)) {
+	    if (!run("mdadm --manage --stop $_",1)) {
 		say("defering $_ (rc=$?)");
 		push @failed, $_;
 	    }
@@ -1444,8 +1444,6 @@ sub StopAllRaid {
     }
     barf("Could not stop raid devices: @failed")
 	if @failed;
-
-    
 
 }
 
@@ -1479,29 +1477,40 @@ sub zapDev {
 sub DoDeepRAIDnLVMmagic {
 
     my $raid10_start;
+    my @mdadm_commands;
     if (my @md = sort { $a <=> $b } keys %g_md) {
 
-	open RAIDTAB, ">$ENV{LOGDIR}/raidtab" or die $!;
-	print RAIDTAB RaidTabEntry($_) foreach @md;
+	push @mdadm_commands, [MdAdmCommand($_)] foreach @md;
 
-	$raid10_start = pop (@md) + 1;
+	# FIXME - this needs testing.
+	$raid10_start = scalar(@md);
 
 	if (my (@raid10) = (sort { $a <=> $b }
 			    grep { $_ >= $raid10_start }
 			    keys %g_md)) {
-	    print RAIDTAB RaidTabEntry($_) foreach @raid10;
+	    push @mdadm_commands, [MdAdmCommand($_)] foreach @raid10;
 
 	} else {
 	    $raid10_start = undef;
 	}
-	close RAIDTAB;
-
     }
 
     if ($test) {
-	say ("raid tab:");
-	#system("cat $ENV{LOGDIR}/raidtab");
+	say ("mdadm commands:");
+	print "    @$_\n" foreach @mdadm_commands;
     }
+
+    my $run_mdadm = sub {
+    	my $device = "/dev/".(shift);
+	my $i;
+	for ($i = 0; $i < @mdadm_commands; $i++) {
+	    last if ($mdadm_commands[$i][2] eq $device);
+	}
+	die if $i == @mdadm_commands;
+	run(join(" ",@{$mdadm_commands[$i]}));
+	@mdadm_commands = (@mdadm_commands[0..$i-1],
+			   @mdadm_commands[$i+1..$#mdadm_commands]);
+    };
 
     my $n;
     if ($raid10_start) {
@@ -1511,8 +1520,7 @@ sub DoDeepRAIDnLVMmagic {
 		say("Zap'ing partitions: @{$g_md{$n}->{members}}");
 		zapDev("/dev/$_") foreach @{$g_md{$n}->{members}};
 	    }
-	    run("mkraid --configfile $ENV{LOGDIR}/raidtab "
-		."/dev/md$n");
+	    $run_mdadm->("md$n");
 	    $n++;
 	}
     }
@@ -1524,8 +1532,7 @@ sub DoDeepRAIDnLVMmagic {
 	    say("Zap'ing partitions: @{$g_md{$n}->{members}}");
 	    zapDev("/dev/$_") foreach @{$g_md{$n}->{members}};
 	}
-	run("mkraid --configfile $ENV{LOGDIR}/raidtab "
-	    ."/dev/md$n");
+	$run_mdadm->("md$n");
 
 	# re-configure the device, etc
 	if (my $mountpoint = $g_md{$n}->{mountpoint}) {
@@ -1534,6 +1541,10 @@ sub DoDeepRAIDnLVMmagic {
 
 	$n++
     }
+
+    die "Extra mdadm commands that we didn't issue:\n"
+    	.join("\n",map { "    @$_" } @mdadm_commands)
+	if @mdadm_commands;
 
     my $vgs = [];
     while (my $vg = each %g_DiskMountpoints) {
@@ -1607,18 +1618,16 @@ sub DoDeepRAIDnLVMmagic {
     }
 }
 
-sub RaidTabEntry {
+sub MdAdmCommand {
     my $dev = shift;
     my $x = $g_md{$dev};
 
-    my $entry = "raiddev /dev/md$dev\n";
-    my $aii = sub { $entry .= sprintf "    %-24s %s\n", @_ };
+    my @command = (qw(mdadm -C), "/dev/md$dev");
 
-    $aii->("raid-level", $x->{level});
-    $aii->("chunk-size", (4<<($x->{chunk_factor}||=8)));
-    $aii->("persistent-superblock", "1");
+    push @command, "--level", $x->{level};
+    push @command, "--chunk", (4<<($x->{chunk_factor}||=10))>>10;
 
-    # RAID 10 is a special case
+    # manual RAID 10 (setting up raid 1 disks, then raid 0'ing them)
     if ($x->{sidea}) {
 
 	my @sides = map { $x->{"side$_"} || () } ("a".."z");
@@ -1642,15 +1651,14 @@ sub RaidTabEntry {
 
     }
 
-    $aii->("nr-raid-disks", scalar(@{$x->{members}}));
+    push @command, "--raid-devices", scalar(@{$x->{members}});
 
     my $num = 0;
     for my $device (sort @{$x->{members}}) {
-	$aii->("device", "/dev/$device");
-	$aii->("raid-disk", $num++);
+    	push @command, "/dev/$device";
     }
 
-    return $entry;
+    return @command;
 }
 
 
