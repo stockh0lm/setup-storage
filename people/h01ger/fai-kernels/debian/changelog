@@ -3,12 +3,13 @@ fai-kernels (1.11) unstable; urgency=low
   * removed kernel 2.4 
   * therefore also removed alpha build as no 2.6 config for fai-kernels for
     alpha exits :-(
-  * build SATA nvidia driver as a module on i386 (Closes: #366423)
+  * build SATA nvidia driver as a module on i386 (Closes: #366423) and the
+    AHCI SATA driver on i386 and amd64 (Closes:  #375653)
   * build all megaraid drivers as modules on i386 and amd64 (Closes: #375843)
-  * build with FORCEDETH nvidia driver support on i386
+  * build with FORCEDETH nvidia driver support on i386 (Closes: #368612)
   * confirmed that the package conforms to debian-policy 3.7.2
 
- -- Holger Levsen <debian@layer-acht.org>  Sat,  8 Jul 2006 11:47:22 +0000
+ -- Holger Levsen <debian@layer-acht.org>  Tue, 11 Jul 2006 18:47:22 +0000
 
 fai-kernels (1.10.3) unstable; urgency=low
 
