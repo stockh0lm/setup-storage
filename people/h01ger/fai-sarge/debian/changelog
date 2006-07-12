@@ -1,3 +1,10 @@
+fai (2.8.4sarge1.h01ger.2) stable; urgency=low
+
+  * default fai config is
+    svn://svn.debian.org/svn/fai-config-dir/trunk/debconf6 "again" 
+
+ -- Holger Levsen <debian@layer-acht.org>  Mon,  1 May 2006 16:59:25 +0200
+
 fai (2.8.4sarge1.h01ger.1) stable; urgency=low
 
   * upgraded version number to be higher than the one in sarge r2

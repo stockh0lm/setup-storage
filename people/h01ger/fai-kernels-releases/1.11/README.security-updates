@@ -1,0 +1,19 @@
+Howto handle security fixes for fai-kernels
+-------------------------------------------
+
+fai-kernels builds with the linux-source-2.6.16 package. If these packages 
+get updated with a security fix, fai-kernels needs to be rebuild. 
+
+The kernel-image-debs which are included in the fai-kernel package contain
+the kernel abi version in the included packages name. If the abi version 
+changes, those abi version number has to be incremented in fai kernels rules
+file as well. 
+
+
+
+In etch FAI should be changed to use debian standard kernels, so security
+updates are no issue anymore (from a fai kernel POV :)
+Currently this is not possible, as those kernels don't contain nfsroot 
+support, and FAI needs it (currently - the plan is to initrd kernel for FAI
+as well.) 
+
