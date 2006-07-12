@@ -1,3 +1,9 @@
+fai-kernels (1.11.1) unstable; urgency=low
+
+  * build SATA_SIS as a module on i386 (Closes: #378021)
+
+ -- Holger Levsen <debian@layer-acht.org>  Wed, 12 Jul 2006 18:39:15 +0000
+
 fai-kernels (1.11) unstable; urgency=low
 
   * removed kernel 2.4 
