@@ -39,12 +39,9 @@ stamp-kernel: unpack-stamp
 build:	
 	debian/rules kernel
 
-veryclean:
+clean:
 	rm -f *stamp* *.deb
 	-rm -rf $(kname) 
-	dh_clean
-
-clean:
 	dh_clean
 
 install: install-stamp
