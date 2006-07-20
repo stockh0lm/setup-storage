@@ -1,8 +1,13 @@
 fai-kernels (1.11.1) unstable; urgency=low
 
   * build SATA_SIS as a module on i386 (Closes: #378021)
+  * removed PATCH_THE_KERNEL=yes as suggested by Dann Frazier in 1.9.1sarge1,
+    removed build-conflicts linux-patch-bootsplash (Closes: #378008, #378018)
+  * added build-dep module-init-tools also suggested by him in that
+    security-upload
+  * removed veryclean target and moved its contents to clean
 
- -- Holger Levsen <debian@layer-acht.org>  Wed, 12 Jul 2006 18:39:15 +0000
+ -- Holger Levsen <debian@layer-acht.org>  Fri, 14 Jul 2006 16:28:19 +0000
 
 fai-kernels (1.11) unstable; urgency=low
 

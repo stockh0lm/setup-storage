@@ -13,8 +13,6 @@ export DH_ALWAYS_EXCLUDE=CVS:.svn
 
 DEB_HOST_ARCH=$(shell dpkg-architecture -qDEB_HOST_ARCH)
 
-export PATCH_THE_KERNEL=YES
-
 createconfig26=cp kernel-config-2.6.$(DEB_HOST_ARCH) $(kname)/.config
 
 include versions
