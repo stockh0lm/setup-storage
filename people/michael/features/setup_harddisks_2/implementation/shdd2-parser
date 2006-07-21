@@ -169,7 +169,7 @@ my $Parser = Parse::RecDescent->new(q{
             "virtual" => 0,
             "disklabel" => "msdos",
             "bootable" => -1,
-            "partitions" => ()
+            "partitions" => {}
           };
         }
     option: /^preserve:(\d+(,\d+)*)/
