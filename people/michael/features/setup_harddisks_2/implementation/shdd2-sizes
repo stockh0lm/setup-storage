@@ -46,7 +46,23 @@ foreach my $line ( @parted_print )
     my $fs = $1;
     print $fs . "\n";
   }
+
+
+  
 }
+
+
+@parted_print = split( "\n", `/sbin/parted -s /dev/hda unit B print` );
+{
+  foreach my $line ( @parted_print )
+  {
+    if( $line =~ /^(\d+)*\s+(\d+)B\s+(\d+)B\s+(\d+)B/i )
+    {
+      printf $1." ".$2." ".$3." ".$4."\n";
+    }
+  }
+}
+
 
 
 foreach my $config ( %FAI::configs )
