@@ -221,7 +221,7 @@ my $Parser = Parse::RecDescent->new(q{
           {
             ( $FAI::partition_primary_counter < 4 || $FAI::configs{ $FAI::device }{ "disklabel" } ne "msdos" ) or die "Too many primary partitions\n";
             $FAI::partition_primary_counter++;
-            $FAI::partition_pointer = (\%h)->{ $FAI::device}->{'partitions'}->{ $FAI::partition_primary_counter };
+            $FAI::partition_pointer = (\%FAI::configs)->{ $FAI::device }->{ "partitions" }->{ $FAI::partition_primary_counter };
             $FAI::configs{ $FAI::device }{ "partitions" }{ $FAI::partition_primary_counter }{ "size" } = (
               "extended" => 0
             );
@@ -241,7 +241,7 @@ my $Parser = Parse::RecDescent->new(q{
               );
             }
             $FAI::partition_logical_counter++;
-            $FAI::partition_pointer = (\%h)->{ $FAI::device}->{'partitions'}->{ $FAI::partition_primary_counteri+4 };
+            $FAI::partition_pointer = (\%FAI::configs)->{ $FAI::device }->{ "partitions" }->{ $FAI::partition_primary_counter+4 };
             $FAI::configs{ $FAI::device }{ "partitions" }{ $FAI::partition_primary_counter + 4 }{ "size" } = {
               "extended" => 0
             };
