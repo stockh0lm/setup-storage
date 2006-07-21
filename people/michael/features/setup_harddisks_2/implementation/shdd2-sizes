@@ -4,8 +4,55 @@ use strict;
 
 package FAI;
 
-foreach my $config (%FAI::configs)
+%FAI::current_config = ();
+
+my @parted_print = split( "\n", `/sbin/parted -s /dev/hda unit TB print` );
+my $parted_fs_start = 0;
+my $parted_fs_end = 0;
+
+foreach my $line ( @parted_print )
 {
+  if( $line =~ /^Disk geometry/ )
+  {
+    next;
+  }
+  elsif( $line =~ /^Disk label/ )
+  {
+    next;
+  }
+  elsif( $line =~ /^Number/ )
+  {
+    $parted_fs_start = 0;
+    $parted_fs_end = 0;
+    my @chars = split( "", $line );
+    foreach my $char ( @chars )
+    {
+      $parted_fs_end++;
+      if( $char eq "F" )
+      {
+        $parted_fs_start = $parted_fs_end;
+      }
+      elsif( $char eq "m" && $parted_fs_start > 0 )
+      {
+        last;
+      }
+    }
+    $parted_fs_start--;
+    $parted_fs_end -= $parted_fs_start;
+  }
+  else
+  {
+    $line =~ /^.{$parted_fs_start}(.{$parted_fs_end})/;
+    my $fs = $1;
+    print $fs . "\n";
+  }
+}
+
+
+foreach my $config ( %FAI::configs )
+{
+    
+
   
 
 }
