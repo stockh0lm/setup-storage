@@ -92,10 +92,13 @@ $ENV{disklist} = "hda
 @FAI::disks = split(/\n/, $ENV{disklist});
 
 %FAI::configs = ();
+$FAI::config_pointer;
 
 $FAI::device = "";
 $FAI::partition_primary_counter = 0;
 $FAI::partition_logical_counter = 0;
+
+
 
 my $Parser = Parse::RecDescent->new(q{
     file: line(s?) /\Z/
@@ -202,40 +205,7 @@ my $Parser = Parse::RecDescent->new(q{
         {
           $FAI::configs{ $FAI::device }{ "virtual" } = 1;
         }
-    volume: type
-        {
-          my $id = -1; 
-          if( $FAI::device =~ /^PHY_/ && $item[ 1 ] eq "primary" )
-          {
-            ( $FAI::partition_primary_counter < 4 || $FAI::configs{ $FAI::device }{ "disklabel" } ne "msdos" ) or die "Too many primary partitions\n";
-            $FAI::partition_primary_counter++;
-            $id = $FAI::partition_primary_counter;
-          }
-          elsif( $FAI::device =~ /^PHY_/ && $item[ 1 ] eq "logical" && $FAI::configs{ $FAI::device }{ "disklabel" } eq "msdos" )
-          {
-            if( $FAI::partition_logical_counter == 0 )
-            {
-              ( $FAI::partition_primary_counter < 4 ) or die "Too many primary partitions\n";
-              $FAI::partition_primary_counter++;
-              # TODO create extended partition
-            }
-            $FAI::partition_logical_counter++;
-            $id = $FAI::partition_logical_counter + 4;
-          }
-          elsif( $FAI::device eq "RAID" && $item[ 1 ] =~ /^raid[0156|$/ )
-          {
-            # TODO some RAID stuff
-          }
-          elsif( $FAI::device =~ /^VG_/ && $item[ 1 ] =~ m{^[^/\s]+-[^/\s]+} )
-          {
-            # TODO LVM stuff
-          }
-          else
-          {
-            die "Type $item[ 1 ] is invalid in this context.\n";
-          }
-        }
-        mountpoint size filesystem mount_options fs_options
+    volume: type mountpoint size filesystem mount_options fs_options
         | 'vg' name size
         {
           if( ! $FAI::device =~ /^VG_/ )
@@ -246,19 +216,39 @@ my $Parser = Parse::RecDescent->new(q{
         }
     type: 'primary'
         {
-          $return = $item[ 1 ];
+          ( $FAI::device =~ /^PHY_/ ) or die "wrong partition type";
+          {
+            ( $FAI::partition_primary_counter < 4 || $FAI::configs{ $FAI::device }{ "disklabel" } ne "msdos" ) or die "Too many primary partitions\n";
+            $FAI::partition_primary_counter++;
+            $FAI::configs{ $FAI::device }{ "partitions" }{ $FAI::partition_primary_counter }{ "size" } = (
+              "extended" => 0
+            );
+            $FAI::config_pointer = $FAI::configs{ $FAI::device }{ "partitions" }{ $FAI::partition_primary_counter };
+          }
         }
         | 'logical'
         {
-          $return = $item[ 1 ];
+          ( $FAI::device =~ /^PHY_/  && $FAI::configs{ $FAI::device }{ "disklabel" } eq "msdos" ) or die "wrong partition type";
+          {
+            if( $FAI::partition_logical_counter == 0 )
+            {
+              ( $FAI::partition_primary_counter < 4 ) or die "Too many primary partitions\n";
+              $FAI::partition_primary_counter++;
+              $FAI::configs{ $FAI::device }{ "partitions" }{ $FAI::partition_primary_counter }{ "size" } = (
+                "extended" => 1
+              );
+            }
+            $FAI::partition_logical_counter++;
+            $FAI::configs{ $FAI::device }{ "partitions" }{ $FAI::partition_primary_counter + 4 }{ "size" } = (
+              "extended" => 0
+            );
+          }
         }
         | /^raid[0156]/
         {
-          $return = $item[ 1 ];
         }
         | m{^[^/\s]+-[^/\s]+}
         {
-          $return = $item[ 1 ];
         }
     mountpoint: '-'
         | 'swap'
