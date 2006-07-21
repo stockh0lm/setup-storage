@@ -3,4 +3,8 @@
 use strict;
 
 require "shdd2-parser";
+require "shdd2-sizes";
+require "shdd2-commands";
+require "shdd2-fstab";
+require "shdd2-exec";
 

@@ -1,0 +1,14 @@
+#!/usr/bin/perl -w
+
+use strict;
+
+package FAI;
+
+foreach my $config (%FAI::configs)
+{
+  
+
+}
+
+1;
+

@@ -92,10 +92,8 @@ $ENV{disklist} = "hda
 @FAI::disks = split(/\n/, $ENV{disklist});
 
 %FAI::configs = ();
-$FAI::config_pointer;
 
 $FAI::device = "";
-$FAI::partition_pointer;
 $FAI::partition_primary_counter = 0;
 $FAI::partition_logical_counter = 0;
 
@@ -140,12 +138,12 @@ my $Parser = Parse::RecDescent->new(q{
             {
               die "Duplicate configuration for disk $FAI::disks[ $1-1 ]\n";
             }
-            $FAI::configs{ $FAI::device } = (
+            $FAI::configs{ $FAI::device } = {
               "virtual" => 0,
               "disklabel" => "msdos",
               "bootable" => -1,
               "partitions" => ()
-            );
+            };
           }
           else
           {
@@ -167,21 +165,21 @@ my $Parser = Parse::RecDescent->new(q{
           {
             die "Duplicate configuration for disk $FAI::disks[ $1-1 ]\n";
           }
-          $FAI::configs{ $FAI::device } = (
+          $FAI::configs{ $FAI::device } = {
             "virtual" => 0,
             "disklabel" => "msdos",
             "bootable" => -1,
             "partitions" => ()
-          );
+          };
         }
     option: /^preserve:(\d+(,\d+)*)/
         {
           my @ids = split( ",", $1 );
           foreach my $id ( @ids )
           {
-            $FAI::configs{ $FAI::device }{ "partitions" }{ $id }{ "size" } = (
+            $FAI::configs{ $FAI::device }{ "partitions" }{ $id }{ "size" } = {
               "preserve" => 1
-            );
+            };
           }
         }
         | /^resize:(\d+(,\d+)*)/
@@ -189,9 +187,9 @@ my $Parser = Parse::RecDescent->new(q{
           my @ids = split( ",", $1 );
           foreach my $id ( @ids )
           {
-            $FAI::configs{ $FAI::device }{ "partitions" }{ $id }{ "size" } = (
+            $FAI::configs{ $FAI::device }{ "partitions" }{ $id }{ "size" } = {
               "resize" => 1
-            );
+            };
           }
         }
         | /^disklabel:(msdos|sun)/
@@ -222,9 +220,9 @@ my $Parser = Parse::RecDescent->new(q{
             ( $FAI::partition_primary_counter < 4 || $FAI::configs{ $FAI::device }{ "disklabel" } ne "msdos" ) or die "Too many primary partitions\n";
             $FAI::partition_primary_counter++;
             $FAI::partition_pointer = (\%FAI::configs)->{ $FAI::device }->{ "partitions" }->{ $FAI::partition_primary_counter };
-            $FAI::configs{ $FAI::device }{ "partitions" }{ $FAI::partition_primary_counter }{ "size" } = (
+            $FAI::configs{ $FAI::device }{ "partitions" }{ $FAI::partition_primary_counter }{ "size" } = {
               "extended" => 0
-            );
+            };
             $FAI::config_pointer = $FAI::configs{ $FAI::device }{ "partitions" }{ $FAI::partition_primary_counter };
           }
         }
@@ -236,9 +234,9 @@ my $Parser = Parse::RecDescent->new(q{
             {
               ( $FAI::partition_primary_counter < 4 ) or die "Too many primary partitions\n";
               $FAI::partition_primary_counter++;
-              $FAI::configs{ $FAI::device }{ "partitions" }{ $FAI::partition_primary_counter }{ "size" } = (
+              $FAI::configs{ $FAI::device }{ "partitions" }{ $FAI::partition_primary_counter }{ "size" } = {
                 "extended" => 1
-              );
+              };
             }
             $FAI::partition_logical_counter++;
             $FAI::partition_pointer = (\%FAI::configs)->{ $FAI::device }->{ "partitions" }->{ $FAI::partition_primary_counter+4 };
@@ -286,9 +284,9 @@ my $Parser = Parse::RecDescent->new(q{
         | /^\S+/
         {
           if ( !&FAI::in_path("$item[1]") ) 
-            {
-                 warn "unknown/invalid filesystem type '$item[1]'"
-            }
+          {
+             warn "unknown/invalid filesystem type '$item[1]'";
+          }
         }
     fs_options: /.*/
 });
