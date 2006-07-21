@@ -1,0 +1,27 @@
+#! /bin/bash
+
+# get-fai-cvs -- get fai configuration directory $FAI from a cvs repository.
+# (c) 2002-2006 Henning Glawe
+
+pushd &>/dev/null
+
+local TAG=""
+[ -n "$FAI_CVSTAG" ] && TAG="-r $FAI_CVSTAG"
+export FAI_CONFIG_AREA=$FAI_ROOT$FAI
+export FAI=$(mktemp -t -d fai-config.XXXXXX)
+    
+[ "$debug" ] && echo "\$FAI now points to $FAI"
+    
+if [ -d "$FAI_CONFIG_AREA/CVS" -a -z "$FORCE" ] ; then
+   echo "Config found at $FAI_CONFIG_AREA: Copying"
+   cp -a $FAI_CONFIG_AREA/. $FAI
+   echo "Updating CVS"
+   cd $FAI
+       cvs -q -d"$FAI_CVSROOT" up -P $TAG -d -C > $LOGDIR/cvs.log
+else 
+   echo "Checking out CVS"
+   cd /tmp
+   cvs -q -d"$FAI_CVSROOT" co -P -d $(basename "$FAI") \
+     $TAG $FAI_CVSMODULE > $LOGDIR/cvs.log
+fi
+popd &>/dev/null

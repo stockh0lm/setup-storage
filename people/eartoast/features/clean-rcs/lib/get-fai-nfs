@@ -1,0 +1,4 @@
+#!/bin/bash
+
+mount $romountopt $FAI_LOCATION $FAI &&
+echo "Configuration space $FAI mounted from $FAI_LOCATION"
