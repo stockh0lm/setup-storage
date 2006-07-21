@@ -95,6 +95,7 @@ $ENV{disklist} = "hda
 $FAI::config_pointer;
 
 $FAI::device = "";
+$FAI::partition_pointer;
 $FAI::partition_primary_counter = 0;
 $FAI::partition_logical_counter = 0;
 
@@ -220,6 +221,7 @@ my $Parser = Parse::RecDescent->new(q{
           {
             ( $FAI::partition_primary_counter < 4 || $FAI::configs{ $FAI::device }{ "disklabel" } ne "msdos" ) or die "Too many primary partitions\n";
             $FAI::partition_primary_counter++;
+            $FAI::partition_pointer = (\%h)->{ $FAI::device}->{'partitions'}->{ $FAI::partition_primary_counter };
             $FAI::configs{ $FAI::device }{ "partitions" }{ $FAI::partition_primary_counter }{ "size" } = (
               "extended" => 0
             );
@@ -239,9 +241,10 @@ my $Parser = Parse::RecDescent->new(q{
               );
             }
             $FAI::partition_logical_counter++;
-            $FAI::configs{ $FAI::device }{ "partitions" }{ $FAI::partition_primary_counter + 4 }{ "size" } = (
+            $FAI::partition_pointer = (\%h)->{ $FAI::device}->{'partitions'}->{ $FAI::partition_primary_counteri+4 };
+            $FAI::configs{ $FAI::device }{ "partitions" }{ $FAI::partition_primary_counter + 4 }{ "size" } = {
               "extended" => 0
-            );
+            };
           }
         }
         | /^raid[0156]/
