@@ -2,6 +2,7 @@
 
 use strict;
 
+
 #
 # file ::= <lines> EOF
 # 
@@ -56,7 +57,7 @@ use strict;
 # name ::= [^/[:space:]]+
 #          /* lvm volume group name */
 # 
-# size ::= [[:digit:]]+%?(-[[:digit:]]+%?)?(:resize)?
+# size ::= [[:digit:]]+%?(-([[:digit:]]+%?)?)?(:resize)?
 #          /* size in megabytes or %, possibly given as a range; physical
 #           * partitions or lvm logical volumes only */
 #          | -[[:digit:]]+%?(:resize)?
@@ -79,53 +80,244 @@ use strict;
 #
 
 use Parse::RecDescent;
-# $Parse::RecDescent::skip = '[ \t]+';
-# $Parse::RecDescent::skip = '\s*';
+
+package FAI;
+
+#REMOVE THIS
+$ENV{disklist} = "hda
+";
+################
+#
+
+@FAI::disks = split(/\n/, $ENV{disklist});
+
+%FAI::configs = ();
+
+$FAI::device = "";
+$FAI::partition_primary_counter = 0;
+$FAI::partition_logical_counter = 0;
 
 my $Parser = Parse::RecDescent->new(q{
     file: line(s?) /\Z/
     line: <skip: qr/[ \t]*/> "\\n"
         | <skip: qr/[ \t]*/> comment "\\n"
         | <skip: qr/[ \t]*/> config "\\n"
-        | <error>
-    comment: /\s*#.*/
+        #| <error>
+    comment: /^\s*#.*/
     config: 'disk_config' disk_config_arg
         | volume
     disk_config_arg: 'raid'
+        {
+          #check wether raid tools are available
+          $FAI::device = "RAID";
+        }
         | 'lvm'
+        {
+          #check wether lvm tools are available
+          $FAI::device = "VG_";
+        }
         | 'end'
-        | /disk\d+/ option(s?)
-        | /\S+/ option(s?)
-    option: /preserve:\d+(,\d+)*/
-        | /resize:\d+(,\d+)*/
-        | /disklabel:(msdos|sun)/
-        | /bootable:\d+/
+        {
+          $FAI::device = "";
+        }
+        | /^disk(\d+)/ option(s?)
+        {
+          if( scalar( @FAI::disks ) >= $1 )
+          {
+            if( $FAI::disks[ $1-1 ] =~ m{^/} )
+            {
+              $FAI::device = "PHY_" . $FAI::disks[ $1-1 ];
+            }
+            else
+            {
+              $FAI::device = "PHY_/dev/" . $FAI::disks[ $1-1 ];
+            }
+            if( defined( $FAI::configs{ $FAI::device } ) )
+            {
+              die "Duplicate configuration for disk $FAI::disks[ $1-1 ]\n";
+            }
+            $FAI::configs{ $FAI::device } = (
+              "virtual" => 0,
+              "disklabel" => "msdos",
+              "bootable" => -1,
+              "partitions" => ()
+            );
+          }
+          else
+          {
+            die "this system does not have a physical $item[1] "
+          }
+        }
+        | /^\S+/ option(s?)
+        {
+          # check for valid device name
+          if( $item[ 1 ] =~ m{^/} )
+          {
+            $FAI::device = "PHY_" . $item[ 1 ];
+          }
+          else
+          {
+            $FAI::device = "PHY_/dev/" . $item[ 1 ];
+          }
+          if( defined( $FAI::configs{ $FAI::device } ) )
+          {
+            die "Duplicate configuration for disk $FAI::disks[ $1-1 ]\n";
+          }
+          $FAI::configs{ $FAI::device } = (
+            "virtual" => 0,
+            "disklabel" => "msdos",
+            "bootable" => -1,
+            "partitions" => ()
+          );
+        }
+    option: /^preserve:(\d+(,\d+)*)/
+        {
+          my @ids = split( ",", $1 );
+          foreach my $id ( @ids )
+          {
+            $FAI::configs{ $FAI::device }{ "partitions" }{ $id }{ "size" } = (
+              "preserve" => 1
+            );
+          }
+        }
+        | /^resize:(\d+(,\d+)*)/
+        {
+          my @ids = split( ",", $1 );
+          foreach my $id ( @ids )
+          {
+            $FAI::configs{ $FAI::device }{ "partitions" }{ $id }{ "size" } = (
+              "resize" => 1
+            );
+          }
+        }
+        | /^disklabel:(msdos|sun)/
+        {
+          $FAI::configs{ $FAI::device }{ "disklabel" } = $1;
+        }
+        | /^bootable:(\d+)/
+        {
+          $FAI::configs{ $FAI::device }{ "bootable" } = $1;
+        }
         | 'virtual'
-    volume: type mountpoint size filesystem mount_options fs_options
+        {
+          $FAI::configs{ $FAI::device }{ "virtual" } = 1;
+        }
+    volume: type
+        {
+          my $id = -1; 
+          if( $FAI::device =~ /^PHY_/ && $item[ 1 ] eq "primary" )
+          {
+            ( $FAI::partition_primary_counter < 4 || $FAI::configs{ $FAI::device }{ "disklabel" } ne "msdos" ) or die "Too many primary partitions\n";
+            $FAI::partition_primary_counter++;
+            $id = $FAI::partition_primary_counter;
+          }
+          elsif( $FAI::device =~ /^PHY_/ && $item[ 1 ] eq "logical" && $FAI::configs{ $FAI::device }{ "disklabel" } eq "msdos" )
+          {
+            if( $FAI::partition_logical_counter == 0 )
+            {
+              ( $FAI::partition_primary_counter < 4 ) or die "Too many primary partitions\n";
+              $FAI::partition_primary_counter++;
+              # TODO create extended partition
+            }
+            $FAI::partition_logical_counter++;
+            $id = $FAI::partition_logical_counter + 4;
+          }
+          elsif( $FAI::device eq "RAID" && $item[ 1 ] =~ /^raid[0156|$/ )
+          {
+            # TODO some RAID stuff
+          }
+          elsif( $FAI::device =~ /^VG_/ && $item[ 1 ] =~ m{^[^/\s]+-[^/\s]+} )
+          {
+            # TODO LVM stuff
+          }
+          else
+          {
+            die "Type $item[ 1 ] is invalid in this context.\n";
+          }
+        }
+        mountpoint size filesystem mount_options fs_options
         | 'vg' name size
+        {
+          if( ! $FAI::device =~ /^VG_/ )
+          {
+            die "vg is invalid in a non LVM-context.\n";
+          }
+          # TODO create vg
+        }
     type: 'primary'
+        {
+          $return = $item[ 1 ];
+        }
         | 'logical'
-        | /raid[0156]/
-        | m{[^/\s]+-[^/\s]+}
+        {
+          $return = $item[ 1 ];
+        }
+        | /^raid[0156]/
+        {
+          $return = $item[ 1 ];
+        }
+        | m{^[^/\s]+-[^/\s]+}
+        {
+          $return = $item[ 1 ];
+        }
     mountpoint: '-'
         | 'swap'
-        | m{/\S*}
-    name: /\S+/
-    size: /\d+%?(-\d+%?)?(:resize)?/
-        | /-\d+%?(:resize)?/
-        | /preserve\d+/
-        | /[^,:\s]+(:(spare|missing))*(,[^,:\s]+(:(spare|missing))*)*/
+        | m{^/\S*}
+    name: /^\S+/
+    size: /^\d+%?(-(\d+%?)?)?(:resize)?\s+/
+        {
+           printf "matched nr.1 $item[1] \n";
+        }
+        | /^-\d+%?(:resize)?\s+/
+        {
+          printf "matched nr.2 $item[1] \n";
+        }
+        | /^preserve\d+\s+/
+        {
+          printf "matched nr.3 $item[1] \n";
+        }
+        | /^[^\d,:\s\-][^,:\s]*(:(spare|missing))*(,[^,:\s]+(:(spare|missing))*)*\s+/
+        {
+          printf "matched nr.4 $item[1] \n";
+        }
+        | <error: invalid partition size near "$text">
+       # {
+         # printf $item[1]." error \n";
+       # }
     mount_options: /\S+/
     filesystem: '-'
+        {
+           printf "Filesytem: $item[1] \n";
+        }
         | 'swap'
-        | /\S+/
-          # { if ( !in_path("mkfs.$item[1]") ) {
-                # die "unknown/invalid filesystem type '$item[1]'"
-            # }
-          # }
+        | /^\S+/
+        {
+          if ( !&FAI::in_path("$item[1]") ) 
+            {
+                 warn "unknown/invalid filesystem type '$item[1]'"
+            }
+        }
     fs_options: /.*/
 });
 
+
+
+sub in_path
+{
+  my ($filesystem) = @_;
+  
+  my @path_list = split(":", $ENV{"PATH"});
+
+  foreach my $p (@path_list)
+  {
+    if( -x $p."/mkfs.$filesystem")
+    {
+      return 1;
+    }
+  }
+  return 0;
+    
+}
 
 my $ifs = $/;
 undef $/;
