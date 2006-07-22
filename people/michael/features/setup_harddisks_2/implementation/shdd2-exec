@@ -23,7 +23,7 @@ sub execute_command
   close($stderr_fh);
   close($stdout_fh);
 
-  if( $command =~ /.*parted.*/ && $stderr_fh =~ /.*Error: Could not stat device rm - No such file or directory.*/)
+  if( $command =~ /.*parted.*/ && $stderr =~ /.*Error: Could not stat device rm - No such file or directory.*/)
   {
     return "parted_1";
   }
