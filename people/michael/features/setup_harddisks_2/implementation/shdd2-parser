@@ -313,14 +313,14 @@ $FAI::Parser = Parse::RecDescent->new(
           }
           else
           {
-            warn "partition number of to-be-preserved partition $1 changed to " .  $FAI::partition_pointer->{ "number" } . "\n";
+            die "partition number of to-be-preserved partition $1 changed to " .  $FAI::partition_pointer->{ "number" } . "\n";
           }
         }
         | /^[^\d,:\s\-][^,:\s]*(:(spare|missing))*(,[^,:\s]+(:(spare|missing))*)*\s+/
         {
           if( $FAI::device ne "RAID" || ! ( $FAI::device =~ /^VG_/ ) )
           {
-            warn "invalid within this context\n";
+            die "invalid within this context\n";
           }
           else
           {
@@ -345,7 +345,7 @@ $FAI::Parser = Parse::RecDescent->new(
         {
           if ( !&FAI::in_path("$item[1]") ) 
           {
-             warn "unknown/invalid filesystem type '$item[1]'";
+             die "unknown/invalid filesystem type $item[1]";
           }
           $FAI::partition_pointer->{ "filesystem" } = $item[ 1 ];
         }

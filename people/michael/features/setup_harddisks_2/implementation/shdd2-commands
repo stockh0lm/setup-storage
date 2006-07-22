@@ -50,7 +50,7 @@ sub build_commands
         {
           if ( !defined( $FAI::current_config{$disk}{"partitions"}{$part_id} ) )
           {
-            warn "$part_id can't be preserved, it does not exist.\n";
+            die "$part_id can't be preserved, it does not exist.\n";
           }
           else
           {
@@ -72,7 +72,7 @@ sub build_commands
       {
         if ( scalar(@to_preserve) > 0 )
         {
-          warn "Can't change disklabel, partitions are to be preserved!\n";
+          die "Can't change disklabel, partitions are to be preserved!\n";
         }
         else
         {
@@ -106,7 +106,7 @@ sub build_commands
         {
           if ( !defined( $FAI::current_config{$disk}{"partitions"}{$part_id} ) )
           {
-            warn "$part_id can't be preserved, it does not exist.\n";
+            die "$part_id can't be preserved, it does not exist.\n";
           }
           unless ( $FAI::configs{$config}{"disklabel"} eq "msdos"
             && $FAI::configs{$config}{"partitions"}{$part_id}{"size"}
@@ -123,12 +123,12 @@ sub build_commands
         {
           if ( !defined( $FAI::current_config{$disk}{"partitions"}{$part_id} ) )
           {
-            warn "$part_id can't be resized, it does not exist.\n";
+            die "$part_id can't be resized, it does not exist.\n";
           }
           elsif ( $FAI::current_config{$disk}{"partitions"}{"filesystem"} ne
             $FAI::configs{$config}{"partitions"}{$part_id}{"filesystem"} )
           {
-            warn "Filesystem change has been requested for $part_id, can't
+            die "Filesystem change has been requested for $part_id, can't
             resize\n";
           }
           my $part_size =

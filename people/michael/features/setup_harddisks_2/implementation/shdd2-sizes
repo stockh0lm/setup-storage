@@ -158,9 +158,9 @@ sub compute_sizes
           $FAI::configs{$config}{"partitions"}{$part_id}{"size"}{"extended"} ==
           1 )
         {
-          ( $extended == -1 ) or warn "more than 1 extended partition\n";
+          ( $extended == -1 ) or die "more than 1 extended partition\n";
           ( $part_id <= 4 )
-            or warn "extended partition won't be a primary one\n";
+            or die "extended partition won't be a primary one\n";
           $extended = $part_id;
           $FAI::configs{$config}{"partitions"}{$part_id}{"size"}{"eff_size"} =
             0;
@@ -212,11 +212,15 @@ sub compute_sizes
           }
           else
           {
-            warn "invalid range\n";
+            die "invalid range\n";
           }
         }
         else
         {
+          if ( !defined( $FAI::current_config{$disk}{"partitions"}{$part_id} ) )
+          {
+            die "$part_id can't be preserved, it does not exist.\n";
+          }
           $FAI::configs{$config}{"partitions"}{$part_id}{"size"}{"eff_size"} =
             $FAI::current_config{$disk}{"partitions"}{$part_id}{"count_byte"};
           $min_req_space +=
@@ -226,7 +230,7 @@ sub compute_sizes
 
       if ( $min_req_space > $FAI::current_config{$disk}{"end_byte"} )
       {
-        warn "Disk is too small - at least $min_req_space is required\n";
+        die "Disk is too small - at least $min_req_space is required\n";
       }
 
       my $redist_factor =
@@ -252,14 +256,14 @@ sub compute_sizes
           }
           else
           {
-            warn "invalid range\n";
+            die "invalid range\n";
           }
         }
       }
 
       if ( $FAI::configs{$config}{"disklabel"} ne "msdos" && $extended > -1 )
       {
-        warn "extended partitions are not supported by this disklabel\n";
+        die "extended partitions are not supported by this disklabel\n";
       }
 
       if ( $FAI::configs{$config}{"disklabel"} eq "msdos" && $extended > -1 )
@@ -278,7 +282,7 @@ sub compute_sizes
     }
     else
     {
-      warn "Internal error (invalid config entry $config).\n";
+      die "Internal error (invalid config entry $config).\n";
     }
   }
 }
