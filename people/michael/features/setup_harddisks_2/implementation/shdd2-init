@@ -16,12 +16,5 @@ $ENV{disklist} = "hda
 
 @FAI::disks = split(/\n/, $ENV{disklist});
 
-%FAI::disklabels = ();
-
-$FAI::disklabels{ "msdos" } = {
-  "has_extended" => 1,
-  "max_primary"
-};
-
 1;
 

@@ -171,9 +171,7 @@ my $Parser = Parse::RecDescent->new(q{
           my @ids = split( ",", $1 );
           foreach my $id ( @ids )
           {
-            $FAI::configs{ $FAI::device }{ "partitions" }{ $id }{ "size" } = {
-              "preserve" => 1
-            };
+            $FAI::configs{ $FAI::device }{ "partitions" }{ $id }{ "size" }{ "preserve" } = 1;
           }
         }
         | /^resize:(\d+(,\d+)*)/
@@ -181,9 +179,7 @@ my $Parser = Parse::RecDescent->new(q{
           my @ids = split( ",", $1 );
           foreach my $id ( @ids )
           {
-            $FAI::configs{ $FAI::device }{ "partitions" }{ $id }{ "size" } = {
-              "resize" => 1
-            };
+            $FAI::configs{ $FAI::device }{ "partitions" }{ $id }{ "size" }{ "resize" } = 1;
           }
         }
         | /^disklabel:(msdos|sun)/
@@ -213,11 +209,10 @@ my $Parser = Parse::RecDescent->new(q{
           {
             ( $FAI::partition_primary_counter < 4 || $FAI::configs{ $FAI::device }{ "disklabel" } ne "msdos" ) or die "Too many primary partitions\n";
             $FAI::partition_primary_counter++;
+            $FAI::configs{ $FAI::device }{ "partitions" }{ $FAI::partition_primary_counter }= {};
             $FAI::partition_pointer = (\%FAI::configs)->{ $FAI::device }->{ "partitions" }->{ $FAI::partition_primary_counter };
-            $FAI::configs{ $FAI::device }{ "partitions" }{ $FAI::partition_primary_counter }{ "size" } = {
-              "extended" => 0
-            };
-            $FAI::config_pointer = $FAI::configs{ $FAI::device }{ "partitions" }{ $FAI::partition_primary_counter };
+            $FAI::partition_pointer->{ "size" }->{ "extended" } = 0;
+            $FAI::partition_pointer->{ "number" } = $FAI::partition_primary_counter;
           }
         }
         | 'logical'
@@ -228,15 +223,13 @@ my $Parser = Parse::RecDescent->new(q{
             {
               ( $FAI::partition_primary_counter < 4 ) or die "Too many primary partitions\n";
               $FAI::partition_primary_counter++;
-              $FAI::configs{ $FAI::device }{ "partitions" }{ $FAI::partition_primary_counter }{ "size" } = {
-                "extended" => 1
-              };
+              $FAI::configs{ $FAI::device }{ "partitions" }{ $FAI::partition_primary_counter }{ "size" }{ "extended" } = 1;
             }
             $FAI::partition_logical_counter++;
-            $FAI::partition_pointer = (\%FAI::configs)->{ $FAI::device }->{ "partitions" }->{ $FAI::partition_logical_counter+4 };
-            $FAI::configs{ $FAI::device }{ "partitions" }{ $FAI::partition_logical_counter + 4 }{ "size" } = {
-              "extended" => 0
-            };
+            $FAI::configs{ $FAI::device }{ "partitions" }{ $FAI::partition_logical_counter + 4 }= {};
+            $FAI::partition_pointer = (\%FAI::configs)->{ $FAI::device }->{ "partitions" }->{ $FAI::partition_logical_counter + 4 };
+            $FAI::partition_pointer->{ "size" }->{ "extended" } = 0;
+            $FAI::partition_pointer->{ "number" } = $FAI::partition_logical_counter + 4;
           }
         }
         | /^raid[0156]/
@@ -269,20 +262,14 @@ my $Parser = Parse::RecDescent->new(q{
           {
             $range = $range . "100%";
           }
-          $FAI::partition_pointer->{ "size" } = {
-            "range" => $range
-          };
+          $FAI::partition_pointer->{ "size" }->{ "range" } = $range;
           if( defined( $4 ) || defined( $FAI::partition_pointer->{ "size" }{ "resize" } ) )
           {
-            $FAI::partition_pointer->{ "size" } = {
-              "resize" => 1
-            };
+            $FAI::partition_pointer->{ "size" }->{ "resize" } = 1;
           }
           else
           {
-            $FAI::partition_pointer->{ "size" } = {
-              "resize" => 0
-            };
+            $FAI::partition_pointer->{ "size" }->{ "resize" } = 0;
           }
         }
         | /^(-\d+%?)(:resize)?\s+/
@@ -292,50 +279,60 @@ my $Parser = Parse::RecDescent->new(q{
           };
           if( defined( $2 ) || defined( $FAI::partition_pointer->{ "size" }{ "resize" } ) )
           {
-            $FAI::partition_pointer->{ "size" } = {
-              "resize" => 1
-            };
+            $FAI::partition_pointer->{ "size" }->{ "resize" } = 1;
           }
           else
           {
-            $FAI::partition_pointer->{ "size" } = {
-              "resize" => 0
-            };
+            $FAI::partition_pointer->{ "size" }->{ "resize" } = 0;
           }
         }
         | /^preserve(\d+)\s+/
         {
-          $FAI::partition_pointer->{ "size" } = $item[ 1 ];
+          if( $1 == $FAI::partition_pointer->{ "number" } )
+          {
+            $FAI::partition_pointer->{ "size" }->{ "preserve" } = 1;
+          }
+          else
+          {
+            warn "partition number of to-be-preserved partition $1 changed to " .  $FAI::partition_pointer->{ "number" } . "\n";
+          }
         }
         | /^[^\d,:\s\-][^,:\s]*(:(spare|missing))*(,[^,:\s]+(:(spare|missing))*)*\s+/
         {
-          printf "matched nr.4 $item[1] \n";
+          if( $FAI::device ne "RAID" )
+          {
+            warn "invalid within this context\n";
+          }
+          else
+          {
+            $FAI::partition_pointer->{ "size" }->{ "range" } = -1;
+            $FAI::partition_pointer->{ "size" }->{ "devices" } = $item[ 0 ];
+          }
         }
         | <error: invalid partition size near "$text">
-       # {
-         # printf $item[1]." error \n";
-       # }
     mount_options: /\S+/
+        {
+          $FAI::partition_pointer->{ "mount_options" } = $item[ 1 ];
+        }
     filesystem: '-'
         {
-           printf "Filesytem: $item[1] \n";
+          $FAI::partition_pointer->{ "filesystem" } = $item[ 1 ];
         }
         | 'swap'
+        {
+          $FAI::partition_pointer->{ "filesystem" } = $item[ 1 ];
+        }
         | /^\S+/
         {
           if ( !&FAI::in_path("$item[1]") ) 
           {
              warn "unknown/invalid filesystem type '$item[1]'";
           }
+          $FAI::partition_pointer->{ "filesystem" } = $item[ 1 ];
         }
     fs_options: /.*/
 });
 
-
-#foreach my $key ( %FAI::configs)
-#{
-#  printf "$key \n";
-#}
 
 sub in_path
 {
@@ -409,7 +406,7 @@ print "Input was:\n" . $input;
 
 defined $Parser->file( $input ) or die "Syntax error\n";
 
-#&print_hash(\%FAI::configs);
+&print_hash(\%FAI::configs);
 
 
 1;

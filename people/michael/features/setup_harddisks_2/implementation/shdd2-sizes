@@ -135,25 +135,26 @@ foreach my $disk ( @FAI::disks )
 
 foreach my $config ( keys %FAI::configs )
 {
-   if( $config eq "RAID" || $config =~ /^VG_/ )
-   {
-     next;
-   }
-   elsif( $config =~ /^PHY_(.*)$/ )
-   {
-     foreach my $part_id ( sort keys %{ $FAI::configs{ $config }{ "partitions" } } )
-     {
-       # my $part_size = $FAI::configs{ $config }{ "partitions" }{ $part_id }{
-       # "size" }
+  if( $config eq "RAID" || $config =~ /^VG_/ )
+  {
+    next;
+  }
+  elsif( $config =~ /^PHY_(.*)$/ )
+  {
+    foreach my $part_id ( sort keys %{ $FAI::configs{ $config }{ "partitions" } } )
+    {
+      # my $part_size = $FAI::configs{ $config }{ "partitions" }{ $part_id }{
+      # "size" }
 
-       print "$part_id of $config configured\n";
-     }
-     # compute size of extended later on
-   }
-   else
-   {
-     warn "Internal error (invalid config entry $config).\n";
-   }
+      print "$part_id of $config configured for a size of " . 
+        $FAI::configs{ $config }{ "partitions" }{ $part_id }{ "size" }{ "range" }. "\n";
+      }
+      # compute size of extended later on
+      }
+      else
+      {
+      warn "Internal error (invalid config entry $config).\n";
+      }
 }
 
 1;
