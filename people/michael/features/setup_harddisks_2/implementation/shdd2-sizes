@@ -66,6 +66,20 @@ foreach my $disk ( @FAI::disks )
       }
     }
   }
+
+
+
+  @parted_print = split( "\n", `/sbin/parted -s /dev/hda unit B print` );
+  {
+    foreach my $line ( @parted_print )
+    {
+
+      if( $line =~ /^\d+\s+(\d+),(\d+),(\d+)\s+(\d+),(\d+),(\d+)/i )
+      {
+        printf $1." ".$2." ".$3." ".$4." ".$5." ".$6."\n";
+      }
+    }
+  }
 }
 
 
