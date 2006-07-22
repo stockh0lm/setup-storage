@@ -59,7 +59,9 @@ foreach my $disk ( @FAI::disks )
       my $id = $1;
       $line =~ /^.{$parted_fs_start}(.{$parted_fs_end})/;
       my $fs = $1;
-      print $id . ": " . $fs . "\n";
+      $FAI::current_config{ $disk }{ "partitions" }{ $id } = {
+        "filesystem" = $fs
+      };
     }
   }
 
