@@ -4,5 +4,21 @@ use strict;
 
 package FAI;
 
+foreach my $config ( keys %FAI::configs )
+{
+  if ( $config eq "RAID" || $config =~ /^VG_/ )
+  {
+
+    # compute the sizes of lvms
+    next;
+  }
+  elsif ( $config =~ /^PHY_(.*)$/ )
+  {
+    foreach my $part_id ( sort keys %{ $FAI::configs{$config}{"partitions"} } )
+    {
+    }
+  }
+}
+
 1;
 

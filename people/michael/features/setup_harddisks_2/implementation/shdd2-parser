@@ -91,7 +91,7 @@ $FAI::partition_primary_counter = 0;
 $FAI::partition_logical_counter = 0;
 
 my $Parser = Parse::RecDescent->new(
-    q{
+  q{
     file: line(s?) /\Z/
     line: <skip: qr/[ \t]*/> "\\n"
         | <skip: qr/[ \t]*/> comment "\\n"
@@ -352,23 +352,21 @@ my $Parser = Parse::RecDescent->new(
 
 sub print_hash
 {
-    my ( $hash_ref, $k ) = @_;
-    $k = $k . ">";
-    foreach my $key ( keys %$hash_ref )
+  my ( $hash_ref, $k ) = @_;
+  $k = $k . ">";
+  foreach my $key ( keys %$hash_ref )
+  {
+    if ( ref( $hash_ref->{$key} ) )
     {
-        if ( ref( $hash_ref->{$key} ) )
-        {
-            print "$k Schluessel: " . $key . " Wert: " . "Hash" . "\n";
-            &print_hash( $hash_ref->{$key}, $k );
-        }
-        else
-        {
-            print "$k Schluessel: " . $key
-              . " Wert: "
-              . $hash_ref->{$key} . "\n";
-        }
-
+      print "$k Schluessel: " . $key . " Wert: " . "Hash" . "\n";
+      &print_hash( $hash_ref->{$key}, $k );
     }
+    else
+    {
+      print "$k Schluessel: " . $key . " Wert: " . $hash_ref->{$key} . "\n";
+    }
+
+  }
 }
 
 my $ifs = $/;
@@ -383,7 +381,7 @@ defined $Parser->file($input) or die "Syntax error\n";
 my @fstab = &FAI::generate_fstab( \%FAI::configs );
 foreach my $line (@fstab)
 {
-    printf $line. "\n";
+  printf $line. "\n";
 }
 
 1;
