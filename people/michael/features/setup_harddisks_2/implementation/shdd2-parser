@@ -83,14 +83,6 @@ use Parse::RecDescent;
 
 package FAI;
 
-#REMOVE THIS
-$ENV{disklist} = "hda
-";
-################
-#
-
-@FAI::disks = split(/\n/, $ENV{disklist});
-
 %FAI::configs = ();
 
 $FAI::device = "";
@@ -254,20 +246,66 @@ my $Parser = Parse::RecDescent->new(q{
         {
         }
     mountpoint: '-'
+        {
+          $FAI::partition_pointer->{ "mountpoint" } = "-";
+        }
         | 'swap'
+        {
+          $FAI::partition_pointer->{ "mountpoint" } = "swap";
+        }
         | m{^/\S*}
+        {
+          $FAI::partition_pointer->{ "mountpoint" } = $item[ 1 ];
+        }
     name: /^\S+/
-    size: /^\d+%?(-(\d+%?)?)?(:resize)?\s+/
+    size: /^(\d+%?(-(\d+%?)?)?)(:resize)?\s+/
         {
-           printf "matched nr.1 $item[1] \n";
+          my $range = $1;
+          if( ! defined( $2 ) )
+          {
+            $range = $range . "-" . $1;
+          }
+          elsif( ! defined( $3 ) )
+          {
+            $range = $range . "100%";
+          }
+          $FAI::partition_pointer->{ "size" } = {
+            "range" => $range
+          };
+          if( defined( $4 ) || defined( $FAI::partition_pointer->{ "size" }{ "resize" } ) )
+          {
+            $FAI::partition_pointer->{ "size" } = {
+              "resize" => 1
+            };
+          }
+          else
+          {
+            $FAI::partition_pointer->{ "size" } = {
+              "resize" => 0
+            };
+          }
         }
-        | /^-\d+%?(:resize)?\s+/
+        | /^(-\d+%?)(:resize)?\s+/
         {
-          printf "matched nr.2 $item[1] \n";
+          $FAI::partition_pointer->{ "size" } = {
+            "range" => "0" . $1
+          };
+          if( defined( $2 ) || defined( $FAI::partition_pointer->{ "size" }{ "resize" } ) )
+          {
+            $FAI::partition_pointer->{ "size" } = {
+              "resize" => 1
+            };
+          }
+          else
+          {
+            $FAI::partition_pointer->{ "size" } = {
+              "resize" => 0
+            };
+          }
         }
-        | /^preserve\d+\s+/
+        | /^preserve(\d+)\s+/
         {
-          printf "matched nr.3 $item[1] \n";
+          $FAI::partition_pointer->{ "size" } = $item[ 1 ];
         }
         | /^[^\d,:\s\-][^,:\s]*(:(spare|missing))*(,[^,:\s]+(:(spare|missing))*)*\s+/
         {

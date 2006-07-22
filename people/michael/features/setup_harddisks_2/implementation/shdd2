@@ -2,6 +2,7 @@
 
 use strict;
 
+require "shdd2-init";
 require "shdd2-parser";
 require "shdd2-sizes";
 require "shdd2-commands";

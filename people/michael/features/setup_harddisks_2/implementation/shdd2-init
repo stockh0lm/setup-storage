@@ -1,0 +1,27 @@
+#!/usr/bin/perl -w
+
+use strict;
+
+package FAI;
+
+# getopt processing
+
+#REMOVE THIS
+# use a predefined list?
+
+$ENV{disklist} = "hda
+";
+################
+#
+
+@FAI::disks = split(/\n/, $ENV{disklist});
+
+%FAI::disklabels = ();
+
+$FAI::disklabels{ "msdos" } = {
+  "has_extended" => 1,
+  "max_primary"
+};
+
+1;
+
