@@ -76,9 +76,9 @@ foreach my $disk ( @FAI::disks )
     foreach my $line ( @parted_print )
     {
 
-      if( $line =~ /^\d+\s+(\d+),(\d+),(\d+)\s+(\d+),(\d+),(\d+)/i )
+      if( $line =~ /^(\d+)\s+(\d+),(\d+),(\d+)\s+(\d+),(\d+),(\d+)/i )
       {
-        printf $1." ".$2." ".$3." ".$4." ".$5." ".$6."\n";
+        printf $1." ".$2." ".$3." ".$4." ".$5." ".$6." "."$7"."\n";
       }
     }
   }
