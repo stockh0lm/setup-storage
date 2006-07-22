@@ -74,11 +74,5 @@ sub generate_fstab
   }
 }
 
-my @fstab = &FAI::generate_fstab( \%FAI::configs );
-foreach my $line (@fstab)
-{
-  printf $line. "\n";
-}
-
 1;
 

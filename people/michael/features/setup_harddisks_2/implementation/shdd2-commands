@@ -4,101 +4,175 @@ use strict;
 
 package FAI;
 
-@FAI::commands = ();
-
-$FAI::parted_binary = "/sbin/parted -s";
-
-foreach my $config ( keys %FAI::configs )
+sub build_commands
 {
-  if ( $config eq "RAID" || $config =~ /^VG_/ )
+
+  #TODO: remove
+  $FAI::current_config{"/dev/hda"}{"disklabel"} = "msdos";
+
+  foreach my $config ( keys %FAI::configs )
   {
-
-    # compute the sizes of lvms
-    next;
-  }
-  elsif ( $config =~ /^PHY_(.*)$/ )
-  {
-    my $disk        = $1;
-    my @to_preserve = ();
-    my $extended    = -1;
-
-    my $target_label = $FAI::configs{$config}{'disklabel'};
-    my $source_label = $FAI::current_config{$disk}{'disklabel'};
-
-    foreach
-      my $part_id ( sort keys %{ $FAI::current_config{$disk}{"partitions"} } )
+    if ( $config eq "RAID" || $config =~ /^VG_/ )
     {
-      if ( $FAI::current_config{$disk}{"disklabel"} eq "msdos"
-        && $FAI::current_config{$disk}{$part_id}{"is_extended"} == 1 )
-      {
-        $extended = $part_id;
-      }
+
+      # compute the sizes of lvms
+      next;
     }
-
-    foreach my $part_id ( sort keys %{ $FAI::configs{$config}{"partitions"} } )
+    elsif ( $config =~ /^PHY_(.*)$/ )
     {
+      my $disk        = $1;
+      my @to_preserve = ();
+      my $extended    = -1;
 
-      if (
-        $FAI::configs{$config}{"partitions"}{$part_id}{"size"}{"preserve"} == 1
-        || $FAI::configs{$config}{"partitions"}{$part_id}{"size"}{"resize"} ==
-        1 )
-      {
-        if ( !defined( $FAI::current_config{$disk}{"partitions"}{$part_id} ) )
-        {
-          warn "$part_id can't be preserved, it does not exist.\n";
-        }
-        else
-        {
-          push @to_preserve, $part_id;
-          if ( $extended > -1
-            && $part_id > 4
-            && $FAI::current_config{$disk}{"disklabel"} eq "msdos" )
-          {
-            push @to_preserve, $extended;
-            $extended = -1;
-          }
-        }
-      }
+      my $target_label = $FAI::configs{$config}{'disklabel'};
+      my $source_label = $FAI::current_config{$disk}{'disklabel'};
 
-    }
-    @to_preserve = sort { $a <=> $b } @to_preserve;
-
-    if ( $target_label ne $source_label )
-    {
-      if ( scalar(@to_preserve) > 0 )
-      {
-        warn "Can't change disklabel, partitions are to be preserved!\n";
-      }
-      else
-      {
-        push @FAI::commands, "$FAI::parted_binary $disk mklabel $target_label";
-      }
-    }
-    else
-    {
       foreach
         my $part_id ( sort keys %{ $FAI::current_config{$disk}{"partitions"} } )
       {
-        if ( $to_preserve[0] == $part_id )
+        if ( $FAI::current_config{$disk}{"disklabel"} eq "msdos"
+          && $FAI::current_config{$disk}{"partitions"}{$part_id}
+          {"is_extended"} == 1 )
         {
-          shift @to_preserve;
-          next;
+          $extended = $part_id;
         }
-        push @FAI::commands, "$FAI::parted_binary $disk rm $part_id";
       }
-    }
 
-    foreach my $cmd (@FAI::commands)
-    {
-      print $cmd . "\n";
-    }
+      foreach
+        my $part_id ( sort keys %{ $FAI::configs{$config}{"partitions"} } )
+      {
 
-    foreach
-      my $part_id ( sort keys %{ $FAI::current_config{$disk}{"partitions"} } )
-    {
-    }
-    foreach my $part_id ( sort keys %{ $FAI::configs{$config}{"partitions"} } )
-    {
+        if (
+          $FAI::configs{$config}{"partitions"}{$part_id}{"size"}{"preserve"} ==
+          1
+          || $FAI::configs{$config}{"partitions"}{$part_id}{"size"}{"resize"} ==
+          1 )
+        {
+          if ( !defined( $FAI::current_config{$disk}{"partitions"}{$part_id} ) )
+          {
+            warn "$part_id can't be preserved, it does not exist.\n";
+          }
+          else
+          {
+            push @to_preserve, $part_id;
+            if ( $extended > -1
+              && $part_id > 4
+              && $FAI::current_config{$disk}{"disklabel"} eq "msdos" )
+            {
+              push @to_preserve, $extended;
+              $extended = -1;
+            }
+          }
+        }
+
+      }
+      @to_preserve = sort { $a <=> $b } @to_preserve;
+
+      if ( $target_label ne $source_label )
+      {
+        if ( scalar(@to_preserve) > 0 )
+        {
+          warn "Can't change disklabel, partitions are to be preserved!\n";
+        }
+        else
+        {
+          push @FAI::commands,
+            "$FAI::parted_binary $disk mklabel $target_label";
+        }
+      }
+      else
+      {
+        foreach my $part_id (
+          sort keys %{ $FAI::current_config{$disk}{"partitions"} } )
+        {
+          if ( $to_preserve[0] == $part_id )
+          {
+            shift @to_preserve;
+            next;
+          }
+          push @FAI::commands, "$FAI::parted_binary $disk rm $part_id";
+        }
+      }
+
+      my $next_start = 0;
+
+      foreach
+        my $part_id ( sort keys %{ $FAI::configs{$config}{"partitions"} } )
+      {
+        print "testing $part_id\n";
+        if (
+          $FAI::configs{$config}{"partitions"}{$part_id}{"size"}{"preserve"} ==
+          1 )
+        {
+          if ( !defined( $FAI::current_config{$disk}{"partitions"}{$part_id} ) )
+          {
+            warn "$part_id can't be preserved, it does not exist.\n";
+          }
+          unless ( $FAI::configs{$config}{"disklabel"} eq "msdos"
+            && $FAI::configs{$config}{"partitions"}{$part_id}{"size"}
+            {"extended"} == 1 )
+          {
+            $next_start =
+              $FAI::current_config{$disk}{"partitions"}{$part_id}{"end_byte"} +
+              1;
+          }
+        }
+        elsif (
+          $FAI::configs{$config}{"partitions"}{$part_id}{"size"}{"resize"} ==
+          1 )
+        {
+          if ( !defined( $FAI::current_config{$disk}{"partitions"}{$part_id} ) )
+          {
+            warn "$part_id can't be resized, it does not exist.\n";
+          }
+          elsif ( $FAI::current_config{$disk}{"partitions"}{"filesystem"} ne
+            $FAI::configs{$config}{"partitions"}{$part_id}{"filesystem"} )
+          {
+            warn "Filesystem change has been requested for $part_id, can't
+            resize\n";
+          }
+          my $part_size =
+            $FAI::configs{$config}{"partitions"}{"size"}{"eff_size"} +
+            $next_start - 1;
+          push @FAI::commands,
+            "$FAI::parted_binary $disk resize $part_id $next_start" . "B "
+            . $part_size . "B";
+          unless ( $FAI::configs{$config}{"disklabel"} eq "msdos"
+            && $FAI::configs{$config}{"partitions"}{$part_id}{"size"}
+            {"extended"} == 1 )
+          {
+            $next_start = $part_size + 1;
+          }
+        }
+        else
+        {
+          my $part_type = "primary";
+          if ( $FAI::configs{$config}{"disklabel"} eq "msdos" )
+          {
+            if ( $FAI::configs{$config}{"partitions"}{$part_id}{"size"}
+              {"extended"} == 1 )
+            {
+              $part_type = "extended";
+            }
+            elsif ( $part_id > 4 )
+            {
+              $part_type = "logical";
+            }
+          }
+          my $part_size =
+            $FAI::configs{$config}{"partitions"}{$part_id}{"size"}{"eff_size"} +
+            $next_start - 1;
+          push @FAI::commands,
+            "$FAI::parted_binary $disk mkpart $part_type $next_start" . "B "
+            . $part_size . "B";
+          unless ( $FAI::configs{$config}{"disklabel"} eq "msdos"
+            && $FAI::configs{$config}{"partitions"}{$part_id}{"size"}
+            {"extended"} == 1 )
+          {
+            $next_start = $part_size + 1;
+          }
+        }
+      }
     }
   }
 }

@@ -16,5 +16,13 @@ $ENV{disklist} = "hda
 
 @FAI::disks = split( /\n/, $ENV{disklist} );
 
+%FAI::configs = ();
+
+%FAI::current_config = ();
+
+@FAI::commands = ();
+
+$FAI::parted_binary = "/sbin/parted -s";
+
 1;
 

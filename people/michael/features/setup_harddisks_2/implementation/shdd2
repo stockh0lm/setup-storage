@@ -2,6 +2,8 @@
 
 use strict;
 
+package FAI;
+
 require "shdd2-lib";
 require "shdd2-init";
 require "shdd2-parser";
@@ -9,4 +11,25 @@ require "shdd2-sizes";
 require "shdd2-commands";
 require "shdd2-fstab";
 require "shdd2-exec";
+
+&FAI::run_parser;
+
+&FAI::get_current_disks;
+
+&FAI::compute_sizes;
+
+&FAI::print_hash( \%FAI::configs );
+
+&FAI::build_commands;
+
+foreach my $cmd (@FAI::commands)
+{
+  print $cmd . "\n";
+}
+
+my @fstab = &FAI::generate_fstab( \%FAI::configs );
+foreach my $line (@fstab)
+{
+  printf $line. "\n";
+}
 

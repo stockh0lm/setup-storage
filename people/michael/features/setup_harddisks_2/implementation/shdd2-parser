@@ -2,8 +2,6 @@
 
 use strict;
 
-require "shdd2-fstab";
-
 #
 # file ::= <lines> EOF
 #
@@ -84,13 +82,11 @@ use Parse::RecDescent;
 
 package FAI;
 
-%FAI::configs = ();
-
 $FAI::device                    = "";
 $FAI::partition_primary_counter = 0;
 $FAI::partition_logical_counter = 0;
 
-my $Parser = Parse::RecDescent->new(
+$FAI::Parser = Parse::RecDescent->new(
   q{
     file: line(s?) /\Z/
     line: <skip: qr/[ \t]*/> "\\n"
@@ -134,7 +130,7 @@ my $Parser = Parse::RecDescent->new(
               "virtual" => 0,
               "disklabel" => "msdos",
               "bootable" => -1,
-              "partitions" => ()
+              "partitions" => {}
             };
           }
           else
@@ -202,11 +198,14 @@ my $Parser = Parse::RecDescent->new(
           {
             ( $FAI::partition_primary_counter < 4 || $FAI::configs{ $FAI::device }{ "disklabel" } ne "msdos" ) or die "Too many primary partitions\n";
             $FAI::partition_primary_counter++;
-            $FAI::configs{ $FAI::device }{ "partitions" }{ $FAI::partition_primary_counter }= {};
+            if( ! defined( $FAI::configs{ $FAI::device }{ "partitions" }{ $FAI::partition_primary_counter } ) )
+            {
+              $FAI::configs{ $FAI::device }{ "partitions" }{ $FAI::partition_primary_counter }= {};
+            }
             $FAI::partition_pointer = (\%FAI::configs)->{ $FAI::device }->{ "partitions" }->{ $FAI::partition_primary_counter };
             $FAI::partition_pointer->{ "size" }->{ "extended" } = 0;
             $FAI::partition_pointer->{ "number" } = $FAI::partition_primary_counter;
-            if( ! defined( $FAI::partition_pointer->{ "size" }{ "preserve" } ) )
+            if( ! defined( $FAI::partition_pointer->{ "size" }->{ "preserve" } ) )
             {
               $FAI::partition_pointer->{ "size" }->{ "preserve" } = 0;
             }
@@ -231,11 +230,14 @@ my $Parser = Parse::RecDescent->new(
               }
             }
             $FAI::partition_logical_counter++;
-            $FAI::configs{ $FAI::device }{ "partitions" }{ $FAI::partition_logical_counter + 4 }= {};
+            if( ! defined( $FAI::configs{ $FAI::device }{ "partitions" }{ $FAI::partition_logical_counter + 4 } ) )
+            {
+              $FAI::configs{ $FAI::device }{ "partitions" }{ $FAI::partition_logical_counter + 4 }= {};
+            }
             $FAI::partition_pointer = (\%FAI::configs)->{ $FAI::device }->{ "partitions" }->{ $FAI::partition_logical_counter + 4 };
             $FAI::partition_pointer->{ "size" }->{ "extended" } = 0;
             $FAI::partition_pointer->{ "number" } = $FAI::partition_logical_counter + 4;
-            if( ! defined( $FAI::partition_pointer->{ "size" }{ "preserve" } ) )
+            if( ! defined( $FAI::partition_pointer->{ "size" }->{ "preserve" } ) )
             {
               $FAI::partition_pointer->{ "size" }->{ "preserve" } = 0;
             }
@@ -294,7 +296,7 @@ my $Parser = Parse::RecDescent->new(
           $FAI::partition_pointer->{ "size" } = {
             "range" => "0" . $1
           };
-          if( defined( $2 ) || defined( $FAI::partition_pointer->{ "size" }{ "resize" } ) )
+          if( defined( $2 ) || defined( $FAI::partition_pointer->{ "size" }->{ "resize" } ) )
           {
             $FAI::partition_pointer->{ "size" }->{ "resize" } = 1;
           }
@@ -354,14 +356,17 @@ my $Parser = Parse::RecDescent->new(
 }
 );
 
-my $ifs = $/;
-undef $/;
-my $input = <STDIN>;
-$/ = $ifs;
+sub run_parser
+{
+  my $ifs = $/;
+  undef $/;
+  my $input = <STDIN>;
+  $/ = $ifs;
 
-print "Input was:\n" . $input;
+  print "Input was:\n" . $input;
 
-defined $Parser->file($input) or die "Syntax error\n";
+  defined $FAI::Parser->file($input) or die "Syntax error\n";
+}
 
 1;
 
