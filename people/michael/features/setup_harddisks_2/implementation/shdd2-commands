@@ -4,6 +4,10 @@ use strict;
 
 package FAI;
 
+@FAI::commands = ();
+
+$FAI::parted_binary = "/sbin/parted -s";
+
 foreach my $config ( keys %FAI::configs )
 {
   if ( $config eq "RAID" || $config =~ /^VG_/ )
@@ -14,6 +18,85 @@ foreach my $config ( keys %FAI::configs )
   }
   elsif ( $config =~ /^PHY_(.*)$/ )
   {
+    my $disk        = $1;
+    my @to_preserve = ();
+    my $extended    = -1;
+
+    my $target_label = $FAI::configs{$config}{'disklabel'};
+    my $source_label = $FAI::current_config{$disk}{'disklabel'};
+
+    foreach
+      my $part_id ( sort keys %{ $FAI::current_config{$disk}{"partitions"} } )
+    {
+      if ( $FAI::current_config{$disk}{"disklabel"} eq "msdos"
+        && $FAI::current_config{$disk}{$part_id}{"is_extended"} == 1 )
+      {
+        $extended = $part_id;
+      }
+    }
+
+    foreach my $part_id ( sort keys %{ $FAI::configs{$config}{"partitions"} } )
+    {
+
+      if (
+        $FAI::configs{$config}{"partitions"}{$part_id}{"size"}{"preserve"} == 1
+        || $FAI::configs{$config}{"partitions"}{$part_id}{"size"}{"resize"} ==
+        1 )
+      {
+        if ( !defined( $FAI::current_config{$disk}{"partitions"}{$part_id} ) )
+        {
+          warn "$part_id can't be preserved, it does not exist.\n";
+        }
+        else
+        {
+          push @to_preserve, $part_id;
+          if ( $extended > -1
+            && $part_id > 4
+            && $FAI::current_config{$disk}{"disklabel"} eq "msdos" )
+          {
+            push @to_preserve, $extended;
+            $extended = -1;
+          }
+        }
+      }
+
+    }
+    @to_preserve = sort { $a <=> $b } @to_preserve;
+
+    if ( $target_label ne $source_label )
+    {
+      if ( scalar(@to_preserve) > 0 )
+      {
+        warn "Can't change disklabel, partitions are to be preserved!\n";
+      }
+      else
+      {
+        push @FAI::commands, "$FAI::parted_binary $disk mklabel $target_label";
+      }
+    }
+    else
+    {
+      foreach
+        my $part_id ( sort keys %{ $FAI::current_config{$disk}{"partitions"} } )
+      {
+        if ( $to_preserve[0] == $part_id )
+        {
+          shift @to_preserve;
+          next;
+        }
+        push @FAI::commands, "$FAI::parted_binary $disk rm $part_id";
+      }
+    }
+
+    foreach my $cmd (@FAI::commands)
+    {
+      print $cmd . "\n";
+    }
+
+    foreach
+      my $part_id ( sort keys %{ $FAI::current_config{$disk}{"partitions"} } )
+    {
+    }
     foreach my $part_id ( sort keys %{ $FAI::configs{$config}{"partitions"} } )
     {
     }

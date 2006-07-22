@@ -65,12 +65,35 @@ foreach my $disk (@FAI::disks)
   {
     foreach my $line (@parted_print)
     {
-      if ( $line =~ /^(\d+)*\s+(\d+)B\s+(\d+)B\s+(\d+)B/i )
+      if ( $FAI::current_config{$disk}{"disklabel"} eq "msdos" )
       {
+        if ( $line =~
+          /^(\d+)*\s+(\d+)B\s+(\d+)B\s+(\d+)B\s+(primary|logical|extended)/i )
+        {
 
-        $FAI::current_config{$disk}{"partitions"}{$1}{"begin_byte"} = $2;
-        $FAI::current_config{$disk}{"partitions"}{$1}{"end_byte"}   = $3;
-        $FAI::current_config{$disk}{"partitions"}{$1}{"count_byte"} = $4;
+          $FAI::current_config{$disk}{"partitions"}{$1}{"begin_byte"} = $2;
+          $FAI::current_config{$disk}{"partitions"}{$1}{"end_byte"}   = $3;
+          $FAI::current_config{$disk}{"partitions"}{$1}{"count_byte"} = $4;
+          if ( $5 eq "extended" )
+          {
+            $FAI::current_config{$disk}{"partitions"}{$1}{"is_extended"} = 1;
+          }
+          else
+          {
+            $FAI::current_config{$disk}{"partitions"}{$1}{"is_extended"} = 0;
+          }
+        }
+      }
+      else
+      {
+        if ( $line =~ /^(\d+)*\s+(\d+)B\s+(\d+)B\s+(\d+)B/i )
+        {
+
+          $FAI::current_config{$disk}{"partitions"}{$1}{"begin_byte"}  = $2;
+          $FAI::current_config{$disk}{"partitions"}{$1}{"end_byte"}    = $3;
+          $FAI::current_config{$disk}{"partitions"}{$1}{"count_byte"}  = $4;
+          $FAI::current_config{$disk}{"partitions"}{$1}{"is_extended"} = 0;
+        }
       }
 
       if ( $line =~ /^Disk geometry for.*(\d+)B - (\d+)B/i )

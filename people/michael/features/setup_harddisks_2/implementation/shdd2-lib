@@ -20,5 +20,24 @@ sub in_path
   return 0;
 }
 
+sub print_hash
+{
+  my ( $hash_ref, $k ) = @_;
+  $k = $k . ">";
+  foreach my $key ( keys %$hash_ref )
+  {
+    if ( ref( $hash_ref->{$key} ) )
+    {
+      print "$k Schluessel: " . $key . " Wert: " . "Hash" . "\n";
+      &print_hash( $hash_ref->{$key}, $k );
+    }
+    else
+    {
+      print "$k Schluessel: " . $key . " Wert: " . $hash_ref->{$key} . "\n";
+    }
+
+  }
+}
+
 1;
 
