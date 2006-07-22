@@ -12,6 +12,9 @@ foreach my $disk ( @FAI::disks )
   {
     $disk = "/dev/" . $disk;
   }
+  $FAI::current_config{ $disk } = {
+    "partitions" = {}
+  };
   
   my @parted_print = split( "\n", `/sbin/parted -s $disk unit TB print` );
   my $parted_fs_start = 0;
@@ -23,8 +26,11 @@ foreach my $disk ( @FAI::disks )
     {
       next;
     }
-    elsif( $line =~ /^Disk label/ )
+    elsif( $line =~ /^Disk label type: (.*)$/ )
     {
+      $FAI::current_config{ $disk } = {
+        "disklabel" = $1
+      };
       next;
     }
     elsif( $line =~ /^Number/ )
