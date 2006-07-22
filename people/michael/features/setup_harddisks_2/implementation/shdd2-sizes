@@ -74,17 +74,17 @@ foreach my $disk ( @FAI::disks )
       {
 
         $FAI::current_config{ $disk }{ "partitions" }{ $1 } = {
-          "begin_byte" => $2;
-          "end_byte" => $3;
-          "count_byte" => $4;
+          "begin_byte" => $2,
+          "end_byte" => $3,
+          "count_byte" => $4
         };
       }
 
       if( $line =~ /^Disk geometry for.*(\d+)B - (\d+)B/i )
       {
         $FAI::current_config{ $disk } = {
-          "begin_byte" => $1;
-          "end_byte" => $2;
+          "begin_byte" => $1,
+          "end_byte" => $2
         }        
       }
 
@@ -106,12 +106,12 @@ foreach my $disk ( @FAI::disks )
       if( $line =~ /^(\d+)\s+(\d+),(\d+),(\d+)\s+(\d+),(\d+),(\d+)/i )
       {
         $FAI::current_config{ $disk }{ "partitions" }{ $1 } = {
-          "begin_cylinder" => $2;
-          "begin_head" => $3;
-          "begin_sector" => $4;
-          "end_cylinder" => $5;
-          "end_head" => $6;
-          "end_sector" => $7;
+          "begin_cylinder" => $2,
+          "begin_head" => $3,
+          "begin_sector" => $4,
+          "end_cylinder" => $5,
+          "end_head" => $6,
+          "end_sector" => $7
         };
       
       }
@@ -120,13 +120,14 @@ foreach my $disk ( @FAI::disks )
       {
         
         $FAI::current_config{ $disk } = {
-          "begin_cylinder" => $1;
-          "begin_head" => $2;
-          "begin_sector" => $3;
-          "end_cylinder" => $4;
-          "end_head" => $5;
-          "end_sector" => $6;
-        }
+          "begin_cylinder" => $1,
+          "begin_head" => $2,
+          "begin_sector" => $3,
+          "end_cylinder" => $4,
+          "end_head" => $5,
+          "end_sector" => $6
+        };
+      }
     }
   }
 }
