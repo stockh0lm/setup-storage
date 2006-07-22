@@ -141,20 +141,24 @@ foreach my $config ( keys %FAI::configs )
   }
   elsif( $config =~ /^PHY_(.*)$/ )
   {
+    my $extended = -1;
     foreach my $part_id ( sort keys %{ $FAI::configs{ $config }{ "partitions" } } )
     {
-      # my $part_size = $FAI::configs{ $config }{ "partitions" }{ $part_id }{
-      # "size" }
-
-      print "$part_id of $config configured for a size of " . 
-        $FAI::configs{ $config }{ "partitions" }{ $part_id }{ "size" }{ "range" }. "\n";
+      if( $FAI::configs{ $config }{ "partitions" }{ $part_id }{ "size" }{ "extended" } == 1 )
+      {
+      }
+      elsif( $FAI::configs{ $config }{ "partitions" }{ $part_id }{ "size" }{ "preserve" } == 0 )
+      {
+        my $part_size = $FAI::configs{ $config }{ "partitions" }{ $part_id }{
+        "size" }{ "range" };
       }
       # compute size of extended later on
-      }
-      else
-      {
-      warn "Internal error (invalid config entry $config).\n";
-      }
+    }
+  }
+  else
+  {
+    warn "Internal error (invalid config entry $config).\n";
+  }
 }
 
 1;
