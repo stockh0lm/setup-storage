@@ -360,7 +360,7 @@ sub print_hash
     printf "$k Schluessel: ". $key." Wert: ".$hash_ref->{$key}."\n";
     if (ref($hash_ref->{$key}))
     {
-      &print_hash_rec($hash_ref->{$key}, $k);
+      &print_hash($hash_ref->{$key}, $k);
     }
 
   }
