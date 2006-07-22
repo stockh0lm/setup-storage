@@ -6,18 +6,18 @@ package FAI;
 
 sub in_path
 {
-  my ($filesystem) = @_;
+    my ($filesystem) = @_;
 
-  my @path_list = split(":", $ENV{"PATH"});
+    my @path_list = split( ":", $ENV{"PATH"} );
 
-  foreach my $p (@path_list)
-  {
-    if( -x $p."/mkfs.$filesystem")
+    foreach my $p (@path_list)
     {
-      return 1;
+        if ( -x $p . "/mkfs.$filesystem" )
+        {
+            return 1;
+        }
     }
-  }
-  return 0;
+    return 0;
 }
 
 1;

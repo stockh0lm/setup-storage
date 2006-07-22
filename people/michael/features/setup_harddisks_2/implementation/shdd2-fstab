@@ -4,80 +4,75 @@ use strict;
 
 package FAI;
 
-
-
 #call this function only with one parameter (generate_fstab($hash_ref)). The rest is used for recursion
 sub generate_fstab
 {
-  my ($hash_ref, $modus, $device, $listref, $call_count) = @_;
+    my ( $hash_ref, $modus, $device, $listref, $call_count ) = @_;
 
-  if(!$listref)
-  {
-    my @newlist = ();
-    $listref = \@newlist;
-  }
-
-  if(!$call_count)
-  {
-    $call_count = 1; 
-  }
-  else
-  {
-    $call_count++;
-  }
-
-  foreach my $key (keys %$hash_ref)
-  {
-
-    if (ref($hash_ref->{$key}) && $key  =~ /^PHY_(.*)$/  )
+    if ( !$listref )
     {
-      $modus = "PHY";
-      $device = $1;
+        my @newlist = ();
+        $listref = \@newlist;
     }
 
+    if ( !$call_count )
+    {
+        $call_count = 1;
+    }
+    else
+    {
+        $call_count++;
+    }
 
-    if (ref($hash_ref->{$key}) && $key eq "partitions")
+    foreach my $key ( keys %$hash_ref )
     {
 
-      foreach my $partition (keys %{$hash_ref->{$key}})
-      {
-        my $p_ref = $hash_ref->{$key}->{$partition};
-        if(!$p_ref->{'size'}->{'extended'})
+        if ( ref( $hash_ref->{$key} ) && $key =~ /^PHY_(.*)$/ )
         {
-          my @fstab_line=();
-          push @fstab_line, $device.$partition;
-          push @fstab_line, $p_ref->{'mountpoint'};
-          push @fstab_line, $p_ref->{'filesystem'};
-          push @fstab_line, $p_ref->{'mount_options'};
-          push @fstab_line, 0;
-          if($p_ref->{'mountpoint'} eq "/root")
-          {
-            push @fstab_line, 1;
-          }
-          else
-          {
-            push @fstab_line, 2;         
-          }
-          push @$listref, join("\t", @fstab_line);
+            $modus  = "PHY";
+            $device = $1;
         }
 
-      }
+        if ( ref( $hash_ref->{$key} ) && $key eq "partitions" )
+        {
+
+            foreach my $partition ( keys %{ $hash_ref->{$key} } )
+            {
+                my $p_ref = $hash_ref->{$key}->{$partition};
+                if ( !$p_ref->{'size'}->{'extended'} )
+                {
+                    my @fstab_line = ();
+                    push @fstab_line, $device . $partition;
+                    push @fstab_line, $p_ref->{'mountpoint'};
+                    push @fstab_line, $p_ref->{'filesystem'};
+                    push @fstab_line, $p_ref->{'mount_options'};
+                    push @fstab_line, 0;
+                    if ( $p_ref->{'mountpoint'} eq "/root" )
+                    {
+                        push @fstab_line, 1;
+                    }
+                    else
+                    {
+                        push @fstab_line, 2;
+                    }
+                    push @$listref, join( "\t", @fstab_line );
+                }
+
+            }
+
+        }
+        if ( ref( $hash_ref->{$key} ) )
+        {
+            &generate_fstab( $hash_ref->{$key}, $modus, $device, $listref,
+                $call_count );
+        }
 
     }
-    if (ref($hash_ref->{$key}))
+    if ( $call_count eq 1 )
     {
-      &generate_fstab($hash_ref->{$key},$modus,$device,$listref,$call_count);
+        return @$listref;
     }
-
-  }
-  if($call_count eq 1)
-  {
-    return @$listref; 
-  }
 }
-
-
-
 
 1;
 

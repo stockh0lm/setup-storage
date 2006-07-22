@@ -6,14 +6,14 @@ require "shdd2-fstab";
 
 #
 # file ::= <lines> EOF
-# 
+#
 # lines ::= EOL
 #           /* empty lines or whitespace only */
 #           | <comment> EOL
 #           | <config> EOL
-# 
+#
 # comment ::= #.*
-# 
+#
 # config ::= disk_config lvm
 #            | disk_config raid
 #            | disk_config end
@@ -22,7 +22,7 @@ require "shdd2-fstab";
 #            /* fully qualified device-path or short form, like hda, whereby full
 #             * path is assumed to be /dev/hda */
 #            | <volume>
-# 
+#
 # option ::= /* empty */
 #            | preserve:[[:digit:]]+(,[[:digit:]]+)*
 #            /* preserve partitions */
@@ -34,11 +34,11 @@ require "shdd2-fstab";
 #            /* mark a partition bootable, default is / */
 #            | virtual
 #            /* do not assume the disk to be a physical device, use with xen */
-# 
+#
 # volume ::= <type> <mountpoint> <size> <filesystem> <mount_options> <fs_options>
 #            | vg <name> <size>
 #            /* lvm vg */
-# 
+#
 # type ::= primary
 #          /* for physical disks only */
 #          | logical
@@ -47,35 +47,35 @@ require "shdd2-fstab";
 #          /* raid level */
 #          | [^/[:space:]]+-[^/[:space:]]+
 #          /* lvm logical volume: vg name and lv name*/
-# 
+#
 # mountpoint ::= -
 #                /* do not mount */
 #                | swap
 #                /* swap space */
 #                | /[^[:space:]]*
 #                /* fully qualified path */
-# 
+#
 # name ::= [^/[:space:]]+
 #          /* lvm volume group name */
-# 
+#
 # size ::= [[:digit:]]+%?(-([[:digit:]]+%?)?)?(:resize)?
 #          /* size in megabytes or %, possibly given as a range; physical
 #           * partitions or lvm logical volumes only */
 #          | -[[:digit:]]+%?(:resize)?
-#          /* size in megabytes or % given as upper limit; physical partitions 
+#          /* size in megabytes or % given as upper limit; physical partitions
 #           * or lvm logical volumes only */
 #          | preserve[[:digit:]]+
 #          /* do not modify this partition */
 #          | [^,:[:space:]]+(:(spare|missing))*(,[^,:[:space:]]+(:(spare|missing))*)*
 #          /* devices and options for a raid or lvm vg */
-#     
+#
 # mount_options ::= [^[:space:]]+
-# 
+#
 # filesystem ::= -
 #                | swap
 #                | [^[:space:]]
 #                /* mkfs.xxx must exist */
-# 
+#
 # fs_options ::= .*
 #                /* options appended to mkfs.xxx call */
 #
@@ -86,13 +86,12 @@ package FAI;
 
 %FAI::configs = ();
 
-$FAI::device = "";
+$FAI::device                    = "";
 $FAI::partition_primary_counter = 0;
 $FAI::partition_logical_counter = 0;
 
-
-
-my $Parser = Parse::RecDescent->new(q{
+my $Parser = Parse::RecDescent->new(
+    q{
     file: line(s?) /\Z/
     line: <skip: qr/[ \t]*/> "\\n"
         | <skip: qr/[ \t]*/> comment "\\n"
@@ -348,28 +347,29 @@ my $Parser = Parse::RecDescent->new(q{
         {
           $FAI::partition_pointer->{ "fs_options" } = $item[ 1 ];
         }
-});
-
+}
+);
 
 sub print_hash
 {
-  my ($hash_ref, $k) = @_;
-  $k=$k.">";
-  foreach my $key (keys %$hash_ref)
-  {
-    if (ref($hash_ref->{$key}))
+    my ( $hash_ref, $k ) = @_;
+    $k = $k . ">";
+    foreach my $key ( keys %$hash_ref )
     {
-      print "$k Schluessel: ". $key." Wert: "."Hash" ."\n";
-      &print_hash($hash_ref->{$key}, $k);
-    }
-    else
-    {
-      print "$k Schluessel: ". $key." Wert: ".$hash_ref->{$key}."\n";
-    }
+        if ( ref( $hash_ref->{$key} ) )
+        {
+            print "$k Schluessel: " . $key . " Wert: " . "Hash" . "\n";
+            &print_hash( $hash_ref->{$key}, $k );
+        }
+        else
+        {
+            print "$k Schluessel: " . $key
+              . " Wert: "
+              . $hash_ref->{$key} . "\n";
+        }
 
-  }
+    }
 }
-
 
 my $ifs = $/;
 undef $/;
@@ -378,12 +378,12 @@ $/ = $ifs;
 
 print "Input was:\n" . $input;
 
-defined $Parser->file( $input ) or die "Syntax error\n";
+defined $Parser->file($input) or die "Syntax error\n";
 
-my @fstab = &FAI::generate_fstab(\%FAI::configs);
+my @fstab = &FAI::generate_fstab( \%FAI::configs );
 foreach my $line (@fstab)
 {
-  printf $line."\n";
+    printf $line. "\n";
 }
 
 1;

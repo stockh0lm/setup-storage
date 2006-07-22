@@ -8,230 +8,267 @@ package FAI;
 
 %FAI::current_config = ();
 
-foreach my $disk ( @FAI::disks )
+foreach my $disk (@FAI::disks)
 {
-  if( ! ( $disk =~ m{^/} ) )
-  {
-    $disk = "/dev/" . $disk;
-  }
-  $FAI::current_config{ $disk }{ "partitions" } = {};
-  
-  my @parted_print = split( "\n", `/sbin/parted -s $disk unit TB print` );
-  my $parted_fs_start = 0;
-  my $parted_fs_end = 0;
+    if ( !( $disk =~ m{^/} ) )
+    {
+        $disk = "/dev/" . $disk;
+    }
+    $FAI::current_config{$disk}{"partitions"} = {};
 
-  foreach my $line ( @parted_print )
-  {
-    if( $line =~ /^Disk geometry/ )
+    my @parted_print    = split( "\n", `/sbin/parted -s $disk unit TB print` );
+    my $parted_fs_start = 0;
+    my $parted_fs_end   = 0;
+
+    foreach my $line (@parted_print)
     {
-      next;
-    }
-    elsif( $line =~ /^Disk label type: (.*)$/ )
-    {
-      $FAI::current_config{ $disk }{ "disklabel" } = $1;
-      next;
-    }
-    elsif( $line =~ /^Number/ )
-    {
-      $parted_fs_start = 0;
-      $parted_fs_end = 0;
-      my @chars = split( "", $line );
-      foreach my $char ( @chars )
-      {
-        $parted_fs_end++;
-        if( $char eq "F" )
+        if ( $line =~ /^Disk geometry/ )
         {
-          $parted_fs_start = $parted_fs_end;
+            next;
         }
-        elsif( $char eq "m" && $parted_fs_start > 0 )
+        elsif ( $line =~ /^Disk label type: (.*)$/ )
         {
-          last;
+            $FAI::current_config{$disk}{"disklabel"} = $1;
+            next;
         }
-      }
-      $parted_fs_start--;
-      $parted_fs_end -= $parted_fs_start;
+        elsif ( $line =~ /^Number/ )
+        {
+            $parted_fs_start = 0;
+            $parted_fs_end   = 0;
+            my @chars = split( "", $line );
+            foreach my $char (@chars)
+            {
+                $parted_fs_end++;
+                if ( $char eq "F" )
+                {
+                    $parted_fs_start = $parted_fs_end;
+                }
+                elsif ( $char eq "m" && $parted_fs_start > 0 )
+                {
+                    last;
+                }
+            }
+            $parted_fs_start--;
+            $parted_fs_end -= $parted_fs_start;
+        }
+        else
+        {
+            $line =~ /^(\d+)/;
+            my $id = $1;
+            $line =~ /^.{$parted_fs_start}(.{$parted_fs_end})/;
+            my $fs = $1;
+            $FAI::current_config{$disk}{"partitions"}{$id}{"filesystem"} = $fs;
+        }
     }
-    else
+
+    @parted_print = split( "\n", `/sbin/parted -s $disk unit B print` );
     {
-      $line =~ /^(\d+)/;
-      my $id = $1;
-      $line =~ /^.{$parted_fs_start}(.{$parted_fs_end})/;
-      my $fs = $1;
-      $FAI::current_config{ $disk }{ "partitions" }{ $id }{ "filesystem" } = $fs;
+        foreach my $line (@parted_print)
+        {
+            if ( $line =~ /^(\d+)*\s+(\d+)B\s+(\d+)B\s+(\d+)B/i )
+            {
+
+                $FAI::current_config{$disk}{"partitions"}{$1}{"begin_byte"} =
+                  $2;
+                $FAI::current_config{$disk}{"partitions"}{$1}{"end_byte"} = $3;
+                $FAI::current_config{$disk}{"partitions"}{$1}{"count_byte"} =
+                  $4;
+            }
+
+            if ( $line =~ /^Disk geometry for.*(\d+)B - (\d+)B/i )
+            {
+                $FAI::current_config{$disk}{"begin_byte"} = $1;
+                $FAI::current_config{$disk}{"end_byte"}   = $2;
+            }
+        }
     }
-  }
 
-
-  @parted_print = split( "\n", `/sbin/parted -s $disk unit B print` );
-  {
-    foreach my $line ( @parted_print )
+    @parted_print = split( "\n", `/sbin/parted -s $disk unit chs print` );
     {
-      if( $line =~ /^(\d+)*\s+(\d+)B\s+(\d+)B\s+(\d+)B/i )
-      {
+        foreach my $line (@parted_print)
+        {
 
-        $FAI::current_config{ $disk }{ "partitions" }{ $1 }{ "begin_byte" } = $2;
-        $FAI::current_config{ $disk }{ "partitions" }{ $1 }{ "end_byte" } = $3;
-        $FAI::current_config{ $disk }{ "partitions" }{ $1 }{ "count_byte" } = $4;
-      }
+            if ( $line =~ /^(\d+)\s+(\d+),(\d+),(\d+)\s+(\d+),(\d+),(\d+)/i )
+            {
+                $FAI::current_config{$disk}{"partitions"}{$1}
+                  {"begin_cylinder"} = $2;
+                $FAI::current_config{$disk}{"partitions"}{$1}{"begin_head"} =
+                  $3;
+                $FAI::current_config{$disk}{"partitions"}{$1}{"begin_sector"} =
+                  $4;
+                $FAI::current_config{$disk}{"partitions"}{$1}{"end_cylinder"} =
+                  $5;
+                $FAI::current_config{$disk}{"partitions"}{$1}{"end_head"} = $6;
+                $FAI::current_config{$disk}{"partitions"}{$1}{"end_sector"} =
+                  $7;
+            }
 
-      if( $line =~ /^Disk geometry for.*(\d+)B - (\d+)B/i )
-      {
-        $FAI::current_config{ $disk }{ "begin_byte" } = $1;
-        $FAI::current_config{ $disk }{ "end_byte" } = $2;
-      }
+            if ( $line =~
+                /^Disk geometry for.*(\d+),(\d+),(\d+) - (\d+),(\d+),(\d+)/i )
+            {
+                $FAI::current_config{$disk}{"begin_cylinder"} = $1;
+                $FAI::current_config{$disk}{"begin_head"}     = $2;
+                $FAI::current_config{$disk}{"begin_sector"}   = $3;
+                $FAI::current_config{$disk}{"end_cylinder"}   = $4;
+                $FAI::current_config{$disk}{"end_head"}       = $5;
+                $FAI::current_config{$disk}{"end_sector"}     = $6;
+            }
+        }
     }
-  }
-
-
-
-  @parted_print = split( "\n", `/sbin/parted -s $disk unit chs print` );
-  {
-    foreach my $line ( @parted_print )
-    {
-
-      if( $line =~ /^(\d+)\s+(\d+),(\d+),(\d+)\s+(\d+),(\d+),(\d+)/i )
-      {
-        $FAI::current_config{ $disk }{ "partitions" }{ $1 }{ "begin_cylinder" } = $2;
-        $FAI::current_config{ $disk }{ "partitions" }{ $1 }{ "begin_head" } = $3;
-        $FAI::current_config{ $disk }{ "partitions" }{ $1 }{ "begin_sector" } = $4;
-        $FAI::current_config{ $disk }{ "partitions" }{ $1 }{ "end_cylinder" } = $5;
-        $FAI::current_config{ $disk }{ "partitions" }{ $1 }{ "end_head" } = $6;
-        $FAI::current_config{ $disk }{ "partitions" }{ $1 }{ "end_sector" } = $7;
-      }
-
-      if( $line =~ /^Disk geometry for.*(\d+),(\d+),(\d+) - (\d+),(\d+),(\d+)/i )
-      {
-        $FAI::current_config{ $disk }{ "begin_cylinder" } = $1;
-        $FAI::current_config{ $disk }{ "begin_head" } = $2;
-        $FAI::current_config{ $disk }{ "begin_sector" } = $3;
-        $FAI::current_config{ $disk }{ "end_cylinder" } = $4;
-        $FAI::current_config{ $disk }{ "end_head" } = $5;
-        $FAI::current_config{ $disk }{ "end_sector" } = $6;
-      }
-    }
-  }
 }
 
 # &print_hash( \%FAI::current_config );
 
 foreach my $config ( keys %FAI::configs )
 {
-  if( $config eq "RAID" || $config =~ /^VG_/ )
-  {
-    # compute the sizes of lvms
-    next;
-  }
-  elsif( $config =~ /^PHY_(.*)$/ )
-  {
-    my $extended = -1;
-    my $disk = $1;
-    my $redist_space = 0;
-    my $min_req_space = 0;
-    
-    foreach my $part_id ( sort keys %{ $FAI::configs{ $config }{ "partitions" } } )
+    if ( $config eq "RAID" || $config =~ /^VG_/ )
     {
-      if( $FAI::configs{ $config }{ "partitions" }{ $part_id }{ "size" }{ "extended" } == 1 )
-      {
-        ( $extended == -1 ) or warn "more than 1 extended partition\n";
-        ( $part_id <= 4 ) or warn "extended partition won't be a primary one\n";
-        $extended = $part_id;
-        $FAI::configs{ $config }{ "partitions" }{ $part_id }{ "size" }{ "eff_size" } = 0;
-      }
-      elsif( $FAI::configs{ $config }{ "partitions" }{ $part_id }{ "size" }{ "preserve" } == 0 )
-      {
-        if( $FAI::configs{ $config }{ "partitions" }{ $part_id }{ "size" }{ "range" } =~ /^(\d+%?)-(\d+%?)$/ )
-        {
-          my $start = $1;
-          my $end = $2;
-          if( $start =~ /^(\d+)%$/ )
-          {
-            $start = POSIX::floor( $FAI::current_config{ $disk }{ "end_byte" } * $1 / 100 );
-          }
-          else
-          {
-            $start = $start * 1024.0 * 1024.0;
-          }
-          if( $end =~ /^(\d+)%$/ )
-          {
-            $end = POSIX::ceil( $FAI::current_config{ $disk }{ "end_byte" } * $1 / 100 );
-          }
-          else
-          {
-            $end = $end * 1024.0 * 1024.0;
-          }
-          $FAI::configs{ $config }{ "partitions" }{ $part_id }{ "size" }{ "range" } = $start . "-" . $end;
-          if( $end == $start )
-          {
-            $FAI::configs{ $config }{ "partitions" }{ $part_id }{ "size" }{ "eff_size" } = $start;
-          }
-          else
-          {
-            $FAI::configs{ $config }{ "partitions" }{ $part_id }{ "size" }{ "eff_size" } = -1;
-            $redist_space += $end - $start;
-          }
-          $min_req_space += $start;
-        }
-        else
-        {
-          warn "invalid range\n";
-        }
-      }
-      else
-      {
-        $FAI::configs{ $config }{ "partitions" }{ $part_id }{ "size" }{ "eff_size" } =
-          $FAI::current_config{ $disk }{ "partitions" }{ $part_id }{ "count_byte" };
-        $min_req_space += $FAI::configs{ $config }{ "partitions" }{ $part_id }{ "size" }{ "eff_size" };
-      }
-    }
 
-    if( $min_req_space > $FAI::current_config{ $disk }{ "end_byte" } )
-    {
-      warn "Disk is too small - at least $min_req_space is required\n";
+        # compute the sizes of lvms
+        next;
     }
+    elsif ( $config =~ /^PHY_(.*)$/ )
+    {
+        my $extended      = -1;
+        my $disk          = $1;
+        my $redist_space  = 0;
+        my $min_req_space = 0;
 
-    my $redist_factor = ( $FAI::current_config{ $disk }{ "end_byte" } - $min_req_space ) / $redist_space;
-    print "redist factor is $redist_factor\n";
-    
-    foreach my $part_id ( sort keys %{ $FAI::configs{ $config }{ "partitions" } } )
-    {
-      if( $FAI::configs{ $config }{ "partitions" }{ $part_id }{ "size" }{ "eff_size" } == -1 )
-      {
-        if( $FAI::configs{ $config }{ "partitions" }{ $part_id }{ "size" }{ "range" } =~ /^(\d+%?)-(\d+%?)$/ )
+        foreach
+          my $part_id ( sort keys %{ $FAI::configs{$config}{"partitions"} } )
         {
-          my $start = $1;
-          my $end = $2;
-          $FAI::configs{ $config }{ "partitions" }{ $part_id }{ "size" }{ "eff_size" } = POSIX::floor( $start + ( ( $end - $start ) * $redist_factor ) );
+            if ( $FAI::configs{$config}{"partitions"}{$part_id}{"size"}
+                {"extended"} == 1 )
+            {
+                ( $extended == -1 ) or warn "more than 1 extended partition\n";
+                ( $part_id <= 4 )
+                  or warn "extended partition won't be a primary one\n";
+                $extended = $part_id;
+                $FAI::configs{$config}{"partitions"}{$part_id}{"size"}
+                  {"eff_size"} = 0;
+            }
+            elsif ( $FAI::configs{$config}{"partitions"}{$part_id}{"size"}
+                {"preserve"} == 0 )
+            {
+                if ( $FAI::configs{$config}{"partitions"}{$part_id}{"size"}
+                    {"range"} =~ /^(\d+%?)-(\d+%?)$/ )
+                {
+                    my $start = $1;
+                    my $end   = $2;
+                    if ( $start =~ /^(\d+)%$/ )
+                    {
+                        $start =
+                          POSIX::floor(
+                            $FAI::current_config{$disk}{"end_byte"} * $1 /
+                              100 );
+                    }
+                    else
+                    {
+                        $start = $start * 1024.0 * 1024.0;
+                    }
+                    if ( $end =~ /^(\d+)%$/ )
+                    {
+                        $end =
+                          POSIX::ceil(
+                            $FAI::current_config{$disk}{"end_byte"} * $1 /
+                              100 );
+                    }
+                    else
+                    {
+                        $end = $end * 1024.0 * 1024.0;
+                    }
+                    $FAI::configs{$config}{"partitions"}{$part_id}{"size"}
+                      {"range"} = $start . "-" . $end;
+                    if ( $end == $start )
+                    {
+                        $FAI::configs{$config}{"partitions"}{$part_id}{"size"}
+                          {"eff_size"} = $start;
+                    }
+                    else
+                    {
+                        $FAI::configs{$config}{"partitions"}{$part_id}{"size"}
+                          {"eff_size"} = -1;
+                        $redist_space += $end - $start;
+                    }
+                    $min_req_space += $start;
+                }
+                else
+                {
+                    warn "invalid range\n";
+                }
+            }
+            else
+            {
+                $FAI::configs{$config}{"partitions"}{$part_id}{"size"}
+                  {"eff_size"} =
+                  $FAI::current_config{$disk}{"partitions"}{$part_id}
+                  {"count_byte"};
+                $min_req_space +=
+                  $FAI::configs{$config}{"partitions"}{$part_id}{"size"}
+                  {"eff_size"};
+            }
         }
-        else
-        {
-          warn "invalid range\n";
-        }
-      }
-    }
 
-    if( $FAI::configs{ $config }{ "disklabel" } ne "msdos" && $extended > -1 )
-    {
-      warn "extended partitions are not supported by this disklabel\n";
+        if ( $min_req_space > $FAI::current_config{$disk}{"end_byte"} )
+        {
+            warn "Disk is too small - at least $min_req_space is required\n";
+        }
+
+        my $redist_factor =
+          ( $FAI::current_config{$disk}{"end_byte"} - $min_req_space ) /
+          $redist_space;
+        print "redist factor is $redist_factor\n";
+
+        foreach
+          my $part_id ( sort keys %{ $FAI::configs{$config}{"partitions"} } )
+        {
+            if ( $FAI::configs{$config}{"partitions"}{$part_id}{"size"}
+                {"eff_size"} == -1 )
+            {
+                if ( $FAI::configs{$config}{"partitions"}{$part_id}{"size"}
+                    {"range"} =~ /^(\d+%?)-(\d+%?)$/ )
+                {
+                    my $start = $1;
+                    my $end   = $2;
+                    $FAI::configs{$config}{"partitions"}{$part_id}{"size"}
+                      {"eff_size"} =
+                      POSIX::floor(
+                        $start + ( ( $end - $start ) * $redist_factor ) );
+                }
+                else
+                {
+                    warn "invalid range\n";
+                }
+            }
+        }
+
+        if ( $FAI::configs{$config}{"disklabel"} ne "msdos" && $extended > -1 )
+        {
+            warn "extended partitions are not supported by this disklabel\n";
+        }
+
+        if ( $FAI::configs{$config}{"disklabel"} eq "msdos" && $extended > -1 )
+        {
+            my $extended_size = 0;
+            foreach my $part_id (
+                sort keys %{ $FAI::configs{$config}{"partitions"} } )
+            {
+                next if ( $part_id <= 4 );
+                $extended_size +=
+                  $FAI::configs{$config}{"partitions"}{$part_id}{"size"}
+                  {"eff_size"};
+            }
+            $FAI::configs{$config}{"partitions"}{$extended}{"size"}
+              {"eff_size"} = $extended_size;
+        }
     }
-    
-    if( $FAI::configs{ $config }{ "disklabel" } eq "msdos" && $extended > -1 )
+    else
     {
-      my $extended_size = 0;
-      foreach my $part_id ( sort keys %{ $FAI::configs{ $config }{ "partitions" } } )
-      {
-        next if( $part_id <= 4 );
-        $extended_size += $FAI::configs{ $config }{ "partitions" }{ $part_id }{ "size" }{ "eff_size" };
-      }
-      $FAI::configs{ $config }{ "partitions" }{ $extended }{ "size" }{ "eff_size" } = $extended_size;
+        warn "Internal error (invalid config entry $config).\n";
     }
-  }
-  else
-  {
-    warn "Internal error (invalid config entry $config).\n";
-  }
 }
 
-&print_hash(\%FAI::configs);
+&print_hash( \%FAI::configs );
 
 1;
 

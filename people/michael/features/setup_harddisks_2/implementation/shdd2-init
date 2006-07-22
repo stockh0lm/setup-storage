@@ -14,7 +14,7 @@ $ENV{disklist} = "hda
 ################
 #
 
-@FAI::disks = split(/\n/, $ENV{disklist});
+@FAI::disks = split( /\n/, $ENV{disklist} );
 
 1;
 
