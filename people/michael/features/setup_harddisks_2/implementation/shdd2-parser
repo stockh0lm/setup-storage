@@ -223,7 +223,11 @@ my $Parser = Parse::RecDescent->new(
               $FAI::configs{ $FAI::device }{ "partitions" }{ $FAI::partition_primary_counter }{ "size" }{ "extended" } = 1;
               if( ! defined( $FAI::configs{ $FAI::device }{ "partitions" }{ $FAI::partition_primary_counter }{ "size" }{ "preserve" } ) )
               {
-                $FAI::configs{ $FAI::device }{ "partitions" }{ $FAI::partition_primary_counter }{ "preserve" } = 0;
+                $FAI::configs{ $FAI::device }{ "partitions" }{ $FAI::partition_primary_counter }{ "size" }{ "preserve" } = 0;
+              }
+              if( ! defined( $FAI::configs{ $FAI::device }{ "partitions" }{ $FAI::partition_primary_counter }{ "size" }{ "resize" } ) )
+              {
+                $FAI::configs{ $FAI::device }{ "partitions" }{ $FAI::partition_primary_counter }{ "size" }{ "resize" } = 0;
               }
             }
             $FAI::partition_logical_counter++;
