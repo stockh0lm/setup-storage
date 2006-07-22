@@ -332,6 +332,10 @@ my $Parser = Parse::RecDescent->new(q{
 });
 
 
+#foreach my $key ( %FAI::configs)
+#{
+#  printf "$key \n";
+#}
 
 sub in_path
 {
@@ -350,6 +354,52 @@ sub in_path
     
 }
 
+
+sub print_hash
+{
+  my ($hash_ref_ref) = @_;
+
+
+  my %hash_ref = %$hash_ref_ref;
+  printf "----\n";
+  print (keys %hash_ref, "\n"); 
+  foreach my $key ( keys %hash_ref)  # Cycle through all key
+  {
+    print $hash_ref{$key}."\n";
+
+    foreach my $key2 (keys %{$hash_ref{$key}})
+    {
+
+
+      printf "Schluessel: ". $key2." Wert: ".$hash_ref{$key}{$key2}."\n"; 
+      if($key2 eq "partitions")
+      {
+        foreach my $key3 (keys %{$hash_ref{$key}{$key2}})
+        {
+          printf "--> Schluessel: ". $key3." Wert: ".$hash_ref{$key}{$key2}{$key3}."\n";
+          foreach my $key4 (keys %{$hash_ref{$key}{$key2}{$key3}})
+          {
+            printf "---> Schluessel: ". $key4." Wert: ".$hash_ref{$key}{$key2}{$key3}{$key4}."\n";
+            if($key4 eq "size")
+            {
+              foreach my $key5 (keys %{$hash_ref{$key}{$key2}{$key3}{$key4}})
+              {
+                printf "----> Schluessel: ". $key5." Wert: ".$hash_ref{$key}{$key2}{$key3}{$key4}{$key5}."\n";     
+              }
+            }
+
+          }
+
+
+        }
+      }
+
+    }
+
+  }
+  printf "----\n";
+}
+
 my $ifs = $/;
 undef $/;
 my $input = <STDIN>;
@@ -358,6 +408,9 @@ $/ = $ifs;
 print "Input was:\n" . $input;
 
 defined $Parser->file( $input ) or die "Syntax error\n";
+
+#&print_hash(\%FAI::configs);
+
 
 1;
 
