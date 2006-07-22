@@ -13,7 +13,7 @@ foreach my $disk ( @FAI::disks )
     $disk = "/dev/" . $disk;
   }
   $FAI::current_config{ $disk } = {
-    "partitions" = {}
+    "partitions" => {}
   };
   
   my @parted_print = split( "\n", `/sbin/parted -s $disk unit TB print` );
@@ -29,7 +29,7 @@ foreach my $disk ( @FAI::disks )
     elsif( $line =~ /^Disk label type: (.*)$/ )
     {
       $FAI::current_config{ $disk } = {
-        "disklabel" = $1
+        "disklabel" => $1
       };
       next;
     }
@@ -60,7 +60,7 @@ foreach my $disk ( @FAI::disks )
       $line =~ /^.{$parted_fs_start}(.{$parted_fs_end})/;
       my $fs = $1;
       $FAI::current_config{ $disk }{ "partitions" }{ $id } = {
-        "filesystem" = $fs
+        "filesystem" => $fs
       };
     }
   }
@@ -108,12 +108,23 @@ foreach my $disk ( @FAI::disks )
 }
 
 
-foreach my $config ( %FAI::configs )
+foreach my $config ( keys %FAI::configs )
 {
-    
-
-  
-
+   if( $config eq "RAID" || $config =~ /^VG_/ )
+   {
+     next;
+   }
+   elsif( $config =~ /^PHY_(.*)$/ )
+   {
+     foreach my $part_id ( keys $FAI::configs{ $config }{ "partitions" } )
+     {
+       print "$part_id configured\n";
+     }
+   }
+   else
+   {
+     die "Internal error (invalid config entry).\n";
+   }
 }
 
 1;
