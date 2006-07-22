@@ -74,6 +74,16 @@ foreach my $disk ( @FAI::disks )
       {
         printf $1." ".$2." ".$3." ".$4."\n";
       }
+  
+      if( $line =~ /^Disk geometry for.*(\d+)B - (\d+)B/i )
+      {
+        printf $1." ".$2."\n";
+      }
+
+      if( $line =~ /^Disk label type:\s*(\w*)\s*/i )
+      {
+        printf $1;
+      }
     }
   }
 
@@ -87,6 +97,11 @@ foreach my $disk ( @FAI::disks )
       if( $line =~ /^(\d+)\s+(\d+),(\d+),(\d+)\s+(\d+),(\d+),(\d+)/i )
       {
         printf $1." ".$2." ".$3." ".$4." ".$5." ".$6." "."$7"."\n";
+      }
+
+      if( $line =~ /^Disk geometry for.*(\d+),(\d+),(\d+) - (\d+),(\d+),(\d+)/i )
+      {
+        printf $1." ".$2." ".$3." ".$4." ".$5." ".$6."\n";
       }
     }
   }
