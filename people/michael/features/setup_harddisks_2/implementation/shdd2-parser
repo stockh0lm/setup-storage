@@ -2,6 +2,7 @@
 
 use strict;
 
+require "shdd2-fstab";
 
 #
 # file ::= <lines> EOF
@@ -393,6 +394,11 @@ print "Input was:\n" . $input;
 defined $Parser->file( $input ) or die "Syntax error\n";
 
 &print_hash(\%FAI::configs);
+my @fstab = &FAI::generate_fstab(\%FAI::configs);
+foreach my $line (@fstab)
+{
+  printf $line."\n";
+}
 
 
 1;
