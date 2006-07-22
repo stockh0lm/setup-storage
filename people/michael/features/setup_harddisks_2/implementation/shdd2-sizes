@@ -8,7 +8,12 @@ package FAI;
 
 foreach my $disk ( @FAI::disks )
 {
-  my @parted_print = split( "\n", `/sbin/parted -s /dev/hda unit TB print` );
+  if( ! ( $disk =~ m{^/} ) )
+  {
+    $disk = "/dev/" . $disk;
+  }
+  
+  my @parted_print = split( "\n", `/sbin/parted -s $disk unit TB print` );
   my $parted_fs_start = 0;
   my $parted_fs_end = 0;
 
@@ -50,13 +55,10 @@ foreach my $disk ( @FAI::disks )
       my $fs = $1;
       print $id . ": " . $fs . "\n";
     }
-
-
-    
   }
 
 
-  @parted_print = split( "\n", `/sbin/parted -s /dev/hda unit B print` );
+  @parted_print = split( "\n", `/sbin/parted -s $disk unit B print` );
   {
     foreach my $line ( @parted_print )
     {
@@ -69,7 +71,7 @@ foreach my $disk ( @FAI::disks )
 
 
 
-  @parted_print = split( "\n", `/sbin/parted -s /dev/hda unit B print` );
+  @parted_print = split( "\n", `/sbin/parted -s $disk unit chs print` );
   {
     foreach my $line ( @parted_print )
     {
