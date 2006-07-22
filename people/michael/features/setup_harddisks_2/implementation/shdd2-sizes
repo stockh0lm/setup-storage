@@ -140,14 +140,14 @@ foreach my $config ( keys %FAI::configs )
    }
    elsif( $config =~ /^PHY_(.*)$/ )
    {
-     foreach my $part_id ( keys $FAI::configs{ $config }{ "partitions" } )
+     foreach my $part_id ( keys %{ $FAI::configs{ $config }{ "partitions" } } )
      {
-       print "$part_id configured\n";
+       print "$part_id of $config configured\n";
      }
    }
    else
    {
-     die "Internal error (invalid config entry).\n";
+     warn "Internal error (invalid config entry $config).\n";
    }
 }
 
