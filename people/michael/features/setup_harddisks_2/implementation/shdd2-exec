@@ -7,27 +7,78 @@ package FAI;
 
 %FAI::ErrorHash = (
 "parted_1" => "Parted produced error. Couldn't remove Partition", 
+"parted_2" => "Could not read disk label."
 );
 
-#my $error = &execute_command("parted rm 9 -s");
+#my @stdout = ();
+#my $ewr;
+#my $error = &execute_command("cat --help", $ewr ,\@stdout);
+
+
+#foreach my $line (@stdout)
+#{
+#  printf $line."\n";
+#}
 
 
 sub execute_command
-{
-  my ($command) = @_;
+{ 
+  my ($command, $stdout_ref, $stderr_ref) = @_;
+
+  my @stderr = ();
+  my @stdout = ();
+  my $stderr_line = "";
+  my $stdout_line = "";
+
+ 
   (my $stderr_fh, my $stderr_filename) = File::Temp::tempfile();
   (my $stdout_fh, my $stdout_filename) = File::Temp::tempfile();
   `$command 1> $stdout_filename 2> $stderr_filename` ;
-  my $stderr =  <$stderr_fh>;
-  my $stdout = <$stdout_fh>;
+
+  while(<$stderr_fh>)
+  {
+    push @stderr, $_;
+  }
+
+  while(<$stdout_fh>)
+  {
+    push @stdout, $_; 
+  }
+
   close($stderr_fh);
   close($stdout_fh);
 
-  if( $command =~ /.*parted.*/ && $stderr =~ /.*Error: Could not stat device rm - No such file or directory.*/)
+
+  if(scalar(@stderr)>0)
+  {
+    $stderr_line = $stderr[0];
+  }
+
+  if(scalar(@stdout)>0)
+  {
+    $stdout_line = $stdout[0];
+  }
+  
+  @$stdout_ref = @stdout; 
+  @$stderr_ref = @stderr; 
+
+  foreach my $line (@$stderr_ref)
+  {
+    printf $line."\n";
+  }
+
+if ( $command =~ /.*parted.*/ && $stderr_line =~ /.*Error: Could not stat device rm - No such file or directory.*/)
   {
     return "parted_1";
   }
+
+  if( $command =~ /.*parted.*/ && $stderr_line =~ /.*Error: Unable to open \/dev\/sdd - unrecognised disk label.*/)
+  {
+    return "parted_2";
+  }
+
 }
+
 
 
 1;
