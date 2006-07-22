@@ -16,7 +16,31 @@ sub get_current_disks
     }
     $FAI::current_config{$disk}{"partitions"} = {};
 
-    my @parted_print    = split( "\n", `/sbin/parted -s $disk unit TB print` );
+    my @parted_print = ();
+    
+    while(1)
+    {
+      my $error = &FAI::execute_command("/sbin/parted -s $disk unit TB print", \@parted_std_out, 0);
+
+      if ($error eq "parted_2")
+      {
+        $error = &FAI::execute_command("/sbin/parted -s $disk mklabel msdos"); 
+        next;
+      }
+
+      if ($error eq "parted_3")
+      {
+        die $FAI::ErrorHash{"parted_3"};
+      }
+
+      if ($error eq "parted_1")
+      {
+        die $FAI::ErrorHash{"parted_1"};
+      }
+
+      last;
+    }
+
     my $parted_fs_start = 0;
     my $parted_fs_end   = 0;
 

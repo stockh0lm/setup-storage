@@ -7,7 +7,8 @@ package FAI;
 
 %FAI::ErrorHash = (
 "parted_1" => "Parted produced error. Couldn't remove Partition", 
-"parted_2" => "Could not read disk label."
+"parted_2" => "Parted produced error. Could not read disk label."
+"parted_3" => "Parted produced error. Could not open disk."
 );
 
 #my @stdout = ();
@@ -72,11 +73,15 @@ if ( $command =~ /.*parted.*/ && $stderr_line =~ /.*Error: Could not stat device
     return "parted_1";
   }
 
-  if( $command =~ /.*parted.*/ && $stderr_line =~ /.*Error: Unable to open \/dev\/sdd - unrecognised disk label.*/)
+  if( $command =~ /.*parted.*/ && $stderr_line =~ /.*Error: Unable to open .* - unrecognised disk label.*/)
   {
     return "parted_2";
   }
 
+  if( $command =~ /.*parted.*/ && $stderr_line =~ /.*Error: Could not stat device .* - No such file or directory.*/)
+  {
+    return "parted_3";
+  }
 }
 
 
