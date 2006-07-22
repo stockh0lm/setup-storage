@@ -371,12 +371,12 @@ sub print_hash
   {
     if (ref($hash_ref->{$key}))
     {
-      printf "$k Schluessel: ". $key." Wert: "."Hash" ."\n";
+      print "$k Schluessel: ". $key." Wert: "."Hash" ."\n";
       &print_hash($hash_ref->{$key}, $k);
     }
     else
     {
-      printf "$k Schluessel: ". $key." Wert: ".$hash_ref->{$key}."\n";
+      print "$k Schluessel: ". $key." Wert: ".$hash_ref->{$key}."\n";
     }
 
   }
