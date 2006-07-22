@@ -357,10 +357,14 @@ sub print_hash
   $k=$k.">";
   foreach my $key (keys %$hash_ref)
   {
-    printf "$k Schluessel: ". $key." Wert: ".$hash_ref->{$key}."\n";
     if (ref($hash_ref->{$key}))
     {
+      printf "$k Schluessel: ". $key." Wert: "."Hash" ."\n";
       &print_hash($hash_ref->{$key}, $k);
+    }
+    else
+    {
+      printf "$k Schluessel: ". $key." Wert: ".$hash_ref->{$key}."\n";
     }
 
   }
