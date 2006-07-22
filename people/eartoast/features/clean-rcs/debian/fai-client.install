@@ -3,8 +3,7 @@ usr/lib/fai/check_status
 usr/lib/fai/fai-savelog
 usr/lib/fai/fai-savelog-ftp
 usr/lib/fai/get-boot-info
-usr/lib/fai/get-fai-cvs
-usr/lib/fai/get-fai-nfs
+usr/lib/fai/get-config-dir*
 usr/lib/fai/disk-info
 usr/lib/fai/list_disks
 usr/lib/fai/subroutines
