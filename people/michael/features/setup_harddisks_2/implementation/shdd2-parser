@@ -103,12 +103,12 @@ my $Parser = Parse::RecDescent->new(q{
         | volume
     disk_config_arg: 'raid'
         {
-          #check wether raid tools are available
+          #TODO: check, whether raid tools are available
           $FAI::device = "RAID";
         }
         | 'lvm'
         {
-          #check wether lvm tools are available
+          #TODO: check, whether lvm tools are available
           $FAI::device = "VG_";
         }
         | 'end'
@@ -146,7 +146,7 @@ my $Parser = Parse::RecDescent->new(q{
         option(s?)
         | /^\S+/
         {
-          # check for valid device name
+          # TODO check for valid device name
           if( $item[ 1 ] =~ m{^/} )
           {
             $FAI::device = "PHY_" . $item[ 1 ];
@@ -183,7 +183,7 @@ my $Parser = Parse::RecDescent->new(q{
             $FAI::configs{ $FAI::device }{ "partitions" }{ $id }{ "size" }{ "resize" } = 1;
           }
         }
-        | /^disklabel:(msdos|sun)/
+        | /^disklabel:(msdos|sun|gpt|mac)/
         {
           $FAI::configs{ $FAI::device }{ "disklabel" } = $1;
         }
@@ -197,13 +197,6 @@ my $Parser = Parse::RecDescent->new(q{
         }
     volume: type mountpoint size filesystem mount_options fs_options
         | 'vg' name size
-        {
-          if( ! $FAI::device =~ /^VG_/ )
-          {
-            die "vg is invalid in a non LVM-context.\n";
-          }
-          # TODO create vg
-        }
     type: 'primary'
         {
           ( $FAI::device =~ /^PHY_/ ) or die "wrong partition type";
@@ -264,6 +257,14 @@ my $Parser = Parse::RecDescent->new(q{
           $FAI::partition_pointer->{ "mountpoint" } = $item[ 1 ];
         }
     name: /^\S+/
+        {
+          if( ! $FAI::device =~ /^VG_/ )
+          {
+            die "vg is invalid in a non LVM-context.\n";
+          }
+          $FAI::device = "VG_" . $item[ 1 ];
+          $FAI::partition_pointer = (\%FAI::configs)->{ $FAI::device };
+        }
     size: /^(\d+%?(-(\d+%?)?)?)(:resize)?\s+/
         {
           my $range = $1;
@@ -312,14 +313,14 @@ my $Parser = Parse::RecDescent->new(q{
         }
         | /^[^\d,:\s\-][^,:\s]*(:(spare|missing))*(,[^,:\s]+(:(spare|missing))*)*\s+/
         {
-          if( $FAI::device ne "RAID" )
+          if( $FAI::device ne "RAID" || ! ( $FAI::device =~ /^VG_/ ) )
           {
             warn "invalid within this context\n";
           }
           else
           {
-            $FAI::partition_pointer->{ "size" }->{ "range" } = -1;
-            $FAI::partition_pointer->{ "size" }->{ "devices" } = $item[ 0 ];
+            $FAI::partition_pointer->{ "devices" } = $item[ 0 ];
+            # TODO parse and check for validity
           }
         }
         | <error: invalid partition size near "$text">
@@ -344,25 +345,11 @@ my $Parser = Parse::RecDescent->new(q{
           $FAI::partition_pointer->{ "filesystem" } = $item[ 1 ];
         }
     fs_options: /.*/
+        {
+          $FAI::partition_pointer->{ "fs_options" } = $item[ 1 ];
+        }
 });
 
-
-sub in_path
-{
-  my ($filesystem) = @_;
-  
-  my @path_list = split(":", $ENV{"PATH"});
-
-  foreach my $p (@path_list)
-  {
-    if( -x $p."/mkfs.$filesystem")
-    {
-      return 1;
-    }
-  }
-  return 0;
-    
-}
 
 sub print_hash
 {
@@ -393,13 +380,11 @@ print "Input was:\n" . $input;
 
 defined $Parser->file( $input ) or die "Syntax error\n";
 
-&print_hash(\%FAI::configs);
 my @fstab = &FAI::generate_fstab(\%FAI::configs);
 foreach my $line (@fstab)
 {
   printf $line."\n";
 }
-
 
 1;
 
