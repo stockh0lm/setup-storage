@@ -351,51 +351,21 @@ sub in_path
     
 }
 
-
 sub print_hash
 {
-  my ($hash_ref_ref) = @_;
-
-
-  my %hash_ref = %$hash_ref_ref;
-  printf "----\n";
-  print (keys %hash_ref, "\n"); 
-  foreach my $key ( keys %hash_ref)  # Cycle through all key
+  my ($hash_ref, $k) = @_;
+  $k=$k.">";
+  foreach my $key (keys %$hash_ref)
   {
-    print $hash_ref{$key}."\n";
-
-    foreach my $key2 (keys %{$hash_ref{$key}})
+    printf "$k Schluessel: ". $key." Wert: ".$hash_ref->{$key}."\n";
+    if (ref($hash_ref->{$key}))
     {
-
-
-      printf "Schluessel: ". $key2." Wert: ".$hash_ref{$key}{$key2}."\n"; 
-      if($key2 eq "partitions")
-      {
-        foreach my $key3 (keys %{$hash_ref{$key}{$key2}})
-        {
-          printf "--> Schluessel: ". $key3." Wert: ".$hash_ref{$key}{$key2}{$key3}."\n";
-          foreach my $key4 (keys %{$hash_ref{$key}{$key2}{$key3}})
-          {
-            printf "---> Schluessel: ". $key4." Wert: ".$hash_ref{$key}{$key2}{$key3}{$key4}."\n";
-            if($key4 eq "size")
-            {
-              foreach my $key5 (keys %{$hash_ref{$key}{$key2}{$key3}{$key4}})
-              {
-                printf "----> Schluessel: ". $key5." Wert: ".$hash_ref{$key}{$key2}{$key3}{$key4}{$key5}."\n";     
-              }
-            }
-
-          }
-
-
-        }
-      }
-
+      &print_hash_rec($hash_ref->{$key}, $k);
     }
 
   }
-  printf "----\n";
 }
+
 
 my $ifs = $/;
 undef $/;
