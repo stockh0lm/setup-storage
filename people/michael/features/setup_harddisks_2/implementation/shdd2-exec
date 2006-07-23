@@ -54,12 +54,32 @@ sub get_error_message
 
 sub get_error
 {
-  my ($error,$field) = @_;
+  my ( $error, $field ) = @_;
   my @treffer = grep { $_->{error} eq "$error" } @$FAI::error_codes;
   foreach my $m (@treffer)    #returns the first found error message.
   {
     return "$m->{$field}";
   }
+}
+
+sub execute_command_std       #execute command with standard error handling
+{
+  my ( $command, $stdout_ref, $stderr_ref ) = @_;
+  my $err = &execute_command( $command, $stdout_ref, $stderr_ref );
+  my $response = &get_error( $err, "response" );
+  my $message  = &get_error( $err, "message" );
+
+  if ( $response eq "die" )
+  {
+    die $message;
+  }
+
+  if ( $response eq "warn" )
+  {
+    warn $message;
+  }
+
+  return $err;
 }
 
 sub execute_command
@@ -123,7 +143,7 @@ sub execute_command
       )
     {
 
-    return $err->{'error'};
+      return $err->{'error'};
     }
   }
 
