@@ -237,7 +237,7 @@ sub init_part_config
     # no further checks for the disk label being msdos have to be performed in
     # this branch, it has been ensured above
 
-# find the index of the new partition, initialise it to the highest current index
+    # find the index of the new partition, initialise it to the highest current index
     foreach
       my $part_id ( sort keys %{ $FAI::configs{$FAI::device}{"partitions"} } )
     {
@@ -347,13 +347,18 @@ $::RD_HINT = 1;
 $FAI::Parser = Parse::RecDescent->new(
   q{
     file: line(s?) /\Z/
+        {
+        }
+
     line: <skip: qr/[ \t]*/> "\\n"
         | <skip: qr/[ \t]*/> comment "\\n"
         | <skip: qr/[ \t]*/> config "\\n"
-        #| <error>
+
     comment: /^\s*#.*/
+
     config: 'disk_config' disk_config_arg
         | volume
+
     disk_config_arg: 'raid'
         {
           # check, whether raid tools are available
@@ -387,6 +392,7 @@ $FAI::Parser = Parse::RecDescent->new(
           &FAI::init_disk_config( $item[ 1 ] );
         }
         option(s?)
+
     option: /^preserve:(\d+(,\d+)*)/
         {
           # set the preserve flag for all ids
@@ -420,6 +426,7 @@ $FAI::Parser = Parse::RecDescent->new(
           # TODO not yet implemented
           $FAI::configs{ $FAI::device }{ "virtual" } = 1;
         }
+
     volume: 'vg' name devices
         | /^raid([0156])\s+/
         {
@@ -439,6 +446,7 @@ $FAI::Parser = Parse::RecDescent->new(
         }
         mountpoint devices filesystem mount_options fs_options
         | type mountpoint size filesystem mount_options fs_options
+
     type: 'primary'
         {
           # initialise a primary partition
@@ -465,6 +473,7 @@ $FAI::Parser = Parse::RecDescent->new(
           # the reference is used by all further processing of this config line
           $FAI::partition_pointer = ( \%FAI::configs )->{$FAI::device}->{"volumes"}->{$2};
         }
+
     mountpoint: '-'
         {
           # this partition should not be mounted
@@ -480,6 +489,7 @@ $FAI::Parser = Parse::RecDescent->new(
           # set the mount point
           $FAI::partition_pointer->{ "mountpoint" } = $item[ 1 ];
         }
+
     name: m{^([^/\s\-]+)\s+}
         {
           # make sure this line is part of an LVM configuration
@@ -495,6 +505,7 @@ $FAI::Parser = Parse::RecDescent->new(
           # initialise the list of physical devices
           $FAI::configs{$FAI::device}{"devices"} = ();
         }
+
     size: /^(\d+%?(-(\d+%?)?)?)(:resize)?\s+/
         {
           # complete the size specification to be a range in all cases
@@ -535,6 +546,7 @@ $FAI::Parser = Parse::RecDescent->new(
           }
         }
         | <error: invalid partition size near "$text">
+
     devices: /^([^\d,:\s\-][^,:\s]*(:(spare|missing))*(,[^,:\s]+(:(spare|missing))*)*)\s+/
         {
           # split the device list by ,
@@ -575,10 +587,12 @@ $FAI::Parser = Parse::RecDescent->new(
           }
         }
         | <error: invalid device spec "$text">
+
     mount_options: /\S+/
         {
           $FAI::partition_pointer->{ "mount_options" } = $item[ 1 ];
         }
+
     filesystem: '-'
         {
           $FAI::partition_pointer->{ "filesystem" } = $item[ 1 ];
@@ -592,6 +606,7 @@ $FAI::Parser = Parse::RecDescent->new(
           ( &FAI::in_path("mkfs.$item[1]") == 1 ) or die "unknown/invalid filesystem type $item[1]";
           $FAI::partition_pointer->{ "filesystem" } = $item[ 1 ];
         }
+
     fs_options: /.*/
         {
           $FAI::partition_pointer->{ "fs_options" } = $item[ 1 ];
@@ -599,15 +614,23 @@ $FAI::Parser = Parse::RecDescent->new(
 }
 );
 
+################################################################################
+#
+# @brief Parse the data from <STDIN> using @ref $FAI::Parser
+#
+################################################################################
 sub run_parser
 {
+  # read <STDIN> to a single string (not a list), thus $/ has to be unset
   my $ifs = $/;
   undef $/;
   my $input = <STDIN>;
   $/ = $ifs;
 
+  # print the contents of <STDIN> for debugging purposes
   ( $FAI::debug > 0 ) and print "Input was:\n" . $input;
 
+  # attempt to parse $input - any error will lead to termination
   defined $FAI::Parser->file($input) or die "Syntax error\n";
 }
 

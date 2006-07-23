@@ -10,7 +10,7 @@
 # WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
 # General Public License for more details.
-# 
+#
 # A copy of the GNU General Public License is available as
 # `/usr/share/common-licences/GPL' in the Debian GNU/Linux distribution
 # or on the World Wide Web at http://www.gnu.org/copyleft/gpl.html. You
@@ -25,8 +25,8 @@ use strict;
 # @file shdd2
 #
 # @brief The main function of setup harddisks 2 - the tool to configure the
-# partitioning from within FAI. 
-# 
+# partitioning from within FAI.
+#
 # This is an implementation from scratch to properly support LVM and RAID. The
 # input format is documented in @ref shdd2-parser
 #
@@ -67,11 +67,13 @@ require "shdd2-exec";
 foreach my $cmd (@FAI::commands)
 {
   print $cmd . "\n";
+
   # &FAI::execute_command($cmd);
 }
 
 # generate the proposed fstab contents
 my @fstab = &FAI::generate_fstab( \%FAI::configs );
+
 # TODO - debugging only; print fstab
 foreach my $line (@fstab)
 {
