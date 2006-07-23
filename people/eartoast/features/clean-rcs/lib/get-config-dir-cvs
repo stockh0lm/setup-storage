@@ -5,7 +5,7 @@
 
 pushd &>/dev/null
 
-# matched string: "cvs+ssh://user@blah/blubb/lalala module=tag"
+# matched string: "cvs[+ssh]://user@host/path/to/cvsroot module[=tag]"
 PROTOCOL=$(expr match "$FAI_CONFIG_SRC" '\(.*\)://.*')
 CVS_PATH=$(expr match "$FAI_CONFIG_SRC" '.*://\(\S\+\)\s\+.*')
 CVS_MODULE=$(expr match "$FAI_CONFIG_SRC" '.*://.*\s\+\([^=]*\).*')
@@ -27,18 +27,14 @@ esac
 		
 [ -n "$CVS_TAG" ] && TAG="-r $CVS_TAG"
 
-FAI_CONFIG_AREA=$FAI_ROOT/var/lib/fai/config
-    
-if [ -d "$FAI_CONFIG_AREA/CVS" ] ; then
-   echo "Config found at $FAI_CONFIG_AREA: Copying"
-   cp -a $FAI_CONFIG_AREA/. $FAI
-   echo "Updating CVS"
+if [ -d "$FAI/CVS" ] ; then
+   echo "Updating CVS in $FAI"
    cd $FAI
-   cvs -q up -P $CVS_TAG -d -C > $LOGDIR/getconf.log
+   cvs -q up -P $TAG -d -C > $LOGDIR/getconf.log
 else 
    echo "Checking out CVS"
-   cd /tmp
+   cd $(dirname "$FAI")
    cvs -q co -P -d $(basename "$FAI") \
-     $CVS_TAG $CVS_MODULE > $LOGDIR/getconf.log
+     $TAG $CVS_MODULE > $LOGDIR/getconf.log
 fi
 popd &>/dev/null
