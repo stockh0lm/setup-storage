@@ -99,7 +99,6 @@ sub build_commands
       foreach
         my $part_id ( sort keys %{ $FAI::configs{$config}{"partitions"} } )
       {
-        print "testing $part_id\n";
         if (
           $FAI::configs{$config}{"partitions"}{$part_id}{"size"}{"preserve"} ==
           1 )

@@ -17,23 +17,24 @@ sub get_current_disks
     $FAI::current_config{$disk}{"partitions"} = {};
 
     my @parted_print = ();
-    
-    while(1)
-    {
-      my $error = &FAI::execute_command("/sbin/parted -s $disk unit TB print", \@parted_std_out, 0);
 
-      if ($error eq "parted_2")
+    while (1)
+    {
+      my $error = &FAI::execute_command( "/sbin/parted -s $disk unit TB print",
+        \@parted_std_out, 0 );
+
+      if ( $error eq "parted_2" )
       {
-        $error = &FAI::execute_command("/sbin/parted -s $disk mklabel msdos"); 
+        $error = &FAI::execute_command("/sbin/parted -s $disk mklabel msdos");
         next;
       }
 
-      if ($error eq "parted_3")
+      if ( $error eq "parted_3" )
       {
         die $FAI::ErrorHash{"parted_3"};
       }
 
-      if ($error eq "parted_1")
+      if ( $error eq "parted_1" )
       {
         die $FAI::ErrorHash{"parted_1"};
       }
@@ -170,10 +171,14 @@ sub compute_sizes
     }
     elsif ( $config =~ /^PHY_(.*)$/ )
     {
-      my $extended      = -1;
-      my $disk          = $1;
-      my $redist_space  = 0;
-      my $min_req_space = 0;
+      my $extended            = -1;
+      my $disk                = $1;
+      my $redist_space        = 0;
+      my $min_req_space       = 0;
+      my $min_req_total_space = 0;
+      my @redist_list         = ();
+      my $redist_factor       = 0;
+      my $range_start         = 0;
 
       foreach
         my $part_id ( sort keys %{ $FAI::configs{$config}{"partitions"} } )
@@ -184,7 +189,7 @@ sub compute_sizes
         {
           ( $extended == -1 ) or die "more than 1 extended partition\n";
           ( $part_id <= 4 )
-            or die "extended partition won't be a primary one\n";
+            or die "extended partition wouldn't be a primary one\n";
           $extended = $part_id;
           $FAI::configs{$config}{"partitions"}{$part_id}{"size"}{"eff_size"} =
             0;
@@ -232,7 +237,8 @@ sub compute_sizes
                 {"eff_size"} = -1;
               $redist_space += $end - $start;
             }
-            $min_req_space += $start;
+            $min_req_space       += $start;
+            $min_req_total_space += $start;
           }
           else
           {
@@ -247,28 +253,60 @@ sub compute_sizes
           }
           $FAI::configs{$config}{"partitions"}{$part_id}{"size"}{"eff_size"} =
             $FAI::current_config{$disk}{"partitions"}{$part_id}{"count_byte"};
-          $min_req_space +=
+          $min_req_total_space +=
             $FAI::configs{$config}{"partitions"}{$part_id}{"size"}{"eff_size"};
+
+          if ( scalar(@redist_list) > 0 )
+          {
+            my $redist_factor =
+              ( $FAI::current_config{$disk}{"partitions"}{$part_id}
+                {"begin_byte"} - 1 - $range_start - $min_req_space ) /
+              $redist_space;
+            print "redist factor is $redist_factor\n";
+
+            foreach my $part_id (@redist_list)
+            {
+              ( $FAI::configs{$config}{"partitions"}{$part_id}{"size"}
+                  {"eff_size"} == -1 )
+                or die "internal error\n";
+              if ( $FAI::configs{$config}{"partitions"}{$part_id}{"size"}
+                {"range"} =~ /^(\d+%?)-(\d+%?)$/ )
+              {
+                my $start = $1;
+                my $end   = $2;
+                $FAI::configs{$config}{"partitions"}{$part_id}{"size"}
+                  {"eff_size"} =
+                  POSIX::floor(
+                  $start + ( ( $end - $start ) * $redist_factor ) );
+              }
+              else
+              {
+                die "invalid range\n";
+              }
+            }
+          }
+
+          @redist_list = ();
+          $range_start =
+            $FAI::current_config{$disk}{"partitions"}{$part_id}{"end_byte"} + 1;
+          $redist_space  = 0;
+          $min_req_space = 0;
+
         }
       }
 
-      if ( $min_req_space > $FAI::current_config{$disk}{"end_byte"} )
+      if ( scalar(@redist_list) > 0 )
       {
-        die "Disk is too small - at least $min_req_space is required\n";
-      }
+        my $redist_factor =
+          ( $FAI::current_config{$disk}{"end_byte"} - 1 - $range_start -
+            $min_req_space ) / $redist_space;
+        print "redist factor is $redist_factor\n";
 
-      my $redist_factor =
-        ( $FAI::current_config{$disk}{"end_byte"} - $min_req_space ) /
-        $redist_space;
-      print "redist factor is $redist_factor\n";
-
-      foreach
-        my $part_id ( sort keys %{ $FAI::configs{$config}{"partitions"} } )
-      {
-        if (
-          $FAI::configs{$config}{"partitions"}{$part_id}{"size"}{"eff_size"} ==
-          -1 )
+        foreach my $part_id (@redist_list)
         {
+          ( $FAI::configs{$config}{"partitions"}{$part_id}{"size"}
+              {"eff_size"} == -1 )
+            or die "internal error\n";
           if (
             $FAI::configs{$config}{"partitions"}{$part_id}{"size"}{"range"} =~
             /^(\d+%?)-(\d+%?)$/ )
@@ -283,6 +321,11 @@ sub compute_sizes
             die "invalid range\n";
           }
         }
+      }
+
+      if ( $min_req_total_space > $FAI::current_config{$disk}{"end_byte"} )
+      {
+        die "Disk is too small - at least $min_req_space is required\n";
       }
 
       if ( $FAI::configs{$config}{"disklabel"} ne "msdos" && $extended > -1 )

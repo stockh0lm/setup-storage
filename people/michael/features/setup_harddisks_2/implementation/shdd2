@@ -25,7 +25,7 @@ require "shdd2-exec";
 foreach my $cmd (@FAI::commands)
 {
   print $cmd . "\n";
-  &FAI::execute_command($cmd);
+  # &FAI::execute_command($cmd);
 }
 
 my @fstab = &FAI::generate_fstab( \%FAI::configs );

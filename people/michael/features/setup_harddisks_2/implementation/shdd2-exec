@@ -6,85 +6,85 @@ use File::Temp;
 package FAI;
 
 %FAI::ErrorHash = (
-"parted_1" => "Parted produced error. Couldn't remove Partition", 
-"parted_2" => "Parted produced error. Could not read disk label."
-"parted_3" => "Parted produced error. Could not open disk."
+  "parted_1" => "Parted produced error. Couldn't remove Partition",
+  "parted_2" => "Parted produced error. Could not read disk label.",
+  "parted_3" => "Parted produced error. Could not open disk."
 );
 
 #my @stdout = ();
 #my $ewr;
 #my $error = &execute_command("cat --help", $ewr ,\@stdout);
 
-
 #foreach my $line (@stdout)
 #{
 #  printf $line."\n";
 #}
 
-
 sub execute_command
-{ 
-  my ($command, $stdout_ref, $stderr_ref) = @_;
+{
+  my ( $command, $stdout_ref, $stderr_ref ) = @_;
 
-  my @stderr = ();
-  my @stdout = ();
+  my @stderr      = ();
+  my @stdout      = ();
   my $stderr_line = "";
   my $stdout_line = "";
 
- 
-  (my $stderr_fh, my $stderr_filename) = File::Temp::tempfile();
-  (my $stdout_fh, my $stdout_filename) = File::Temp::tempfile();
-  `$command 1> $stdout_filename 2> $stderr_filename` ;
+  ( my $stderr_fh, my $stderr_filename ) = File::Temp::tempfile();
+  ( my $stdout_fh, my $stdout_filename ) = File::Temp::tempfile();
+  `$command 1> $stdout_filename 2> $stderr_filename`;
 
-  while(<$stderr_fh>)
+  while (<$stderr_fh>)
   {
     push @stderr, $_;
   }
 
-  while(<$stdout_fh>)
+  while (<$stdout_fh>)
   {
-    push @stdout, $_; 
+    push @stdout, $_;
   }
 
   close($stderr_fh);
   close($stdout_fh);
 
-
-  if(scalar(@stderr)>0)
+  if ( scalar(@stderr) > 0 )
   {
     $stderr_line = $stderr[0];
   }
 
-  if(scalar(@stdout)>0)
+  if ( scalar(@stdout) > 0 )
   {
     $stdout_line = $stdout[0];
   }
-  
-  @$stdout_ref = @stdout; 
-  @$stderr_ref = @stderr; 
+
+  @$stdout_ref = @stdout;
+  @$stderr_ref = @stderr;
 
   foreach my $line (@$stderr_ref)
   {
-    printf $line."\n";
+    printf $line. "\n";
   }
 
-if ( $command =~ /.*parted.*/ && $stderr_line =~ /.*Error: Could not stat device rm - No such file or directory.*/)
+  if ( $command =~ /.*parted.*/
+    && $stderr_line =~
+    /.*Error: Could not stat device rm - No such file or directory.*/ )
   {
     return "parted_1";
   }
 
-  if( $command =~ /.*parted.*/ && $stderr_line =~ /.*Error: Unable to open .* - unrecognised disk label.*/)
+  if ( $command =~ /.*parted.*/
+    && $stderr_line =~
+    /.*Error: Unable to open .* - unrecognised disk label.*/ )
   {
     return "parted_2";
   }
 
-  if( $command =~ /.*parted.*/ && $stderr_line =~ /.*Error: Could not stat device .* - No such file or directory.*/)
+  if ( $command =~ /.*parted.*/
+    && $stderr_line =~
+    /.*Error: Could not stat device .* - No such file or directory.*/ )
   {
     return "parted_3";
   }
 }
-
-
 
 1;
 
