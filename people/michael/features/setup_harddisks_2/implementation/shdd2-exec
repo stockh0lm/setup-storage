@@ -24,7 +24,7 @@ use strict;
 #
 # @file shdd2-exec
 #
-# @brief functions to execute bash commands
+# @brief functions to execute system commands
 #
 # $Id$
 #

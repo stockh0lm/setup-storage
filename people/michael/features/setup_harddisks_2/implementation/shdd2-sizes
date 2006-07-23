@@ -24,7 +24,8 @@ use strict;
 #
 # @file shdd2-sizes
 #
-# @brief TODO
+# @brief A set of functions to obtain the current partition table and to 
+# compute the size of the partitions to be created
 #
 # $Id$
 #
@@ -37,6 +38,11 @@ use POSIX qw(ceil floor);
 
 package FAI;
 
+################################################################################
+#
+# @brief TODO
+#
+################################################################################
 sub get_current_disks
 {
   foreach my $disk (@FAI::disks)
@@ -213,6 +219,11 @@ sub get_current_disks
   }
 }
 
+################################################################################
+#
+# @brief TODO
+#
+################################################################################
 sub compute_sizes
 {
   foreach my $config ( keys %FAI::configs )
