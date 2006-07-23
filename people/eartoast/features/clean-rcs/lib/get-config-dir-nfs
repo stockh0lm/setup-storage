@@ -1,4 +1,8 @@
 #!/bin/bash
+# (c) 2006 Henning Glawe
 
-mount $romountopt $FAI_LOCATION $FAI &&
+SERVER=$(expr match "$FAI_CONFIG_SRC" '.*://\([^/]*\)/.*')
+NFSPATH=$(expr match "$FAI_CONFIG_SRC" '.*://[^/]*\(/.*\)')
+
+mount $romountopt $SERVER:$NFSPATH $FAI &&
 echo "Configuration space $FAI mounted from $FAI_LOCATION"

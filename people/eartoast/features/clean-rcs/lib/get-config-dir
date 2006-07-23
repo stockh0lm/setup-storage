@@ -1,4 +1,5 @@
 #!/bin/bash
+# (c) 2006 Henning Glawe
 
 # get /fai directory, using the method specified in $FAI_CONFIG_METHOD
 
@@ -10,10 +11,13 @@ if [ -n "$fl_wait" ]; then
 	sleep 50000
 fi
 
-if [ -z "$FAI_CONFIG_METHOD" ]; then
+if [ -z "$FAI_CONFIG_SRC" ]; then
 	sndmon "TASKERROR get_fai_dir 21"
-	die "Error: Provide the method to obtain the fai config storage in \$FAI_CONFIG_METHOD"
+	die "Error: Provide the URL to obtain the fai config storage in \$FAI_CONFIG_SRC"
 fi
+
+# HG: extract major method to get the config dir
+FAI_CONFIG_METHOD=$(expr match "$FAI_CONFIG_SRC" '\([^+]*\).*://.*')
 
 # HG: run get-fai-$blah script if it exists
 if which get-config-dir-$FAI_CONFIG_METHOD &>/dev/null ; then
