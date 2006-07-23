@@ -5,20 +5,48 @@ use File::Temp;
 
 package FAI;
 
-%FAI::ErrorHash = (
-  "parted_1" => "Parted produced error. Couldn't remove Partition",
-  "parted_2" => "Parted produced error. Could not read disk label.",
-  "parted_3" => "Parted produced error. Could not open disk."
-);
+$FAI::error_codes = [
+  {
+    error        => "parted_1",
+    message      => "Parted produced error. Couldn't remove Partition",
+    stderr_regex =>
+      ".*Error: Could not stat device rm - No such file or directory.*",
+    stdout_regex => "",
+    program      => "parted",
+  },
+  {
+    error        => "parted_2",
+    message      => "Parted produced error. Could not read disk label.",
+    stderr_regex => ".*Error: Unable to open .* - unrecognised disk label.*",
+    stdout_regex => "",
+    program      => "parted",
+  },
+  {
+    error        => "parted_3",
+    message      => "Parted produced error. Could not open disk",
+    stderr_regex =>
+      ".*Error: Could not stat device .* - No such file or directory.*",
+    stdout_regex => "",
+    program      => "parted",
+  },
+  {
+    error        => "port_1",
+    message      => "test_error",
+    stderr_regex => ".*Error: .* Port test not found.*",
+    stdout_regex => "",
+    program      => "port",
+  },
+];
 
-#my @stdout = ();
-#my $ewr;
-#my $error = &execute_command("cat --help", $ewr ,\@stdout);
-
-#foreach my $line (@stdout)
-#{
-#  printf $line."\n";
-#}
+sub get_error_message
+{
+  my ($error) = @_;
+  my @treffer = grep { $_->{error} eq "$error" } @$FAI::error_codes;
+  foreach my $m (@treffer)    #returns the first found error message.
+  {
+    return "$m->{'message'}";
+  }
+}
 
 sub execute_command
 {
@@ -28,20 +56,23 @@ sub execute_command
   my @stdout      = ();
   my $stderr_line = "";
   my $stdout_line = "";
+  my $run         = $ENV{"NO_DRY_RUN"};
 
   ( my $stderr_fh, my $stderr_filename ) = File::Temp::tempfile();
   ( my $stdout_fh, my $stdout_filename ) = File::Temp::tempfile();
-  `$command 1> $stdout_filename 2> $stderr_filename`;
 
-  while (<$stderr_fh>)
+  if ( $run == 1 )
   {
-    push @stderr, $_;
+    `$command 1> $stdout_filename 2> $stderr_filename`;
+  }
+  else
+  {
+    printf
+"would run command $command, to run in NO_DRY_MODE, please set environment variable NO_DRY_RUN to 1";
   }
 
-  while (<$stdout_fh>)
-  {
-    push @stdout, $_;
-  }
+  @stderr = <$stderr_fh>;
+  @stdout = <$stdout_fh>;
 
   close($stderr_fh);
   close($stdout_fh);
@@ -56,34 +87,32 @@ sub execute_command
     $stdout_line = $stdout[0];
   }
 
-  @$stdout_ref = @stdout;
-  @$stderr_ref = @stderr;
-
-  foreach my $line (@$stderr_ref)
+  if ( 'ARRAY' eq ref($stdout_ref) )
   {
-    printf $line. "\n";
+    @$stdout_ref = @stdout;
   }
 
-  if ( $command =~ /.*parted.*/
-    && $stderr_line =~
-    /.*Error: Could not stat device rm - No such file or directory.*/ )
+  if ( 'ARRAY' eq ref($stderr_ref) )
   {
-    return "parted_1";
+    @$stderr_ref = @stderr;
   }
 
-  if ( $command =~ /.*parted.*/
-    && $stderr_line =~
-    /.*Error: Unable to open .* - unrecognised disk label.*/ )
+  foreach my $err (@$FAI::error_codes)
   {
-    return "parted_2";
+    if (
+      (
+        $err->{'stdout_regex'} eq "" || $stdout_line =~ /$err->{'stdout_regex'}/
+      )
+      && ( $err->{'stderr_regex'} eq ""
+        || $stderr_line =~ /$err->{'stderr_regex'}/ )
+      && ( $err->{'program'} eq "" || $command =~ /.*$err->{'program'}.*/ )
+      )
+    {
+
+    return $err->{'error'};
+    }
   }
 
-  if ( $command =~ /.*parted.*/
-    && $stderr_line =~
-    /.*Error: Could not stat device .* - No such file or directory.*/ )
-  {
-    return "parted_3";
-  }
 }
 
 1;
