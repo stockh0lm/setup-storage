@@ -348,6 +348,7 @@ $FAI::Parser = Parse::RecDescent->new(
   q{
     file: line(s?) /\Z/
         {
+          $return = 1;
         }
 
     line: <skip: qr/[ \t]*/> "\\n"

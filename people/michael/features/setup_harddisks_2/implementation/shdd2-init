@@ -88,15 +88,15 @@ $ENV{disklist} = "hda
 
 ################################################################################
 #
-# @brief A map of commands 
+# @brief A map of commands
 #
 # TODO check for availability, exact version?
 #
 ################################################################################
-%FAI::system_commands = {
-  mdadm => "/sbin/mdadm",
-  parted => "/sbin/parted -s"
-};
+%FAI::system_commands = (
+  "mdadm"  => "/sbin/mdadm",
+  "parted" => "/sbin/parted -s"
+);
 
 1;
 

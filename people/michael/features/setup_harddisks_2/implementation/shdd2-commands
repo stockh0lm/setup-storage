@@ -195,7 +195,7 @@ sub build_commands
             $FAI::configs{$config}{"partitions"}{$part_id}{"size"}{"eff_size"} +
             $next_start - 1;
           push @FAI::commands,
-            "$FAI::system_commands{'parted'} $disk mkpart $part_type $next_start"
+"$FAI::system_commands{'parted'} $disk mkpart $part_type $next_start"
             . "B "
             . $part_size . "B";
           unless ( $FAI::configs{$config}{"disklabel"} eq "msdos"
