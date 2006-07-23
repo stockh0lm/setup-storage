@@ -22,7 +22,7 @@ sub get_current_disks
     {
       $ENV{"NO_DRY_RUN"} = "1";
       my $error =
-        &FAI::execute_command( "$FAI::parted_binary $disk unit TB print",
+        &FAI::execute_command( "$FAI::parted_binary $disk unit TiB print",
         \@parted_print, 0 );
       $ENV{"NO_DRY_RUN"} = "";
 
@@ -55,12 +55,15 @@ sub get_current_disks
 
     foreach my $line (@parted_print)
     {
-      print "$line";
-      if ( $line =~ /^Disk geometry/ )
+      ( $FAI::debug > 0 ) and print "$line";
+      if ( $line =~ /^Disk /
+        || $line =~ /^\s*$/
+        || $line =~ /^WARNING: You are not superuser/
+        || $line =~ /^Sector / )
       {
         next;
       }
-      elsif ( $line =~ /^Disk label type: (.*)$/ )
+      elsif ( $line =~ /^Partition Table: (.*)$/ )
       {
         $FAI::current_config{$disk}{"disklabel"} = $1;
         next;
@@ -106,7 +109,8 @@ sub get_current_disks
       if ( $FAI::current_config{$disk}{"disklabel"} eq "msdos" )
       {
         if ( $line =~
-          /^(\d+)*\s+(\d+)B\s+(\d+)B\s+(\d+)B\s+(primary|logical|extended)/i )
+          /^\s*(\d+)*\s+(\d+)B\s+(\d+)B\s+(\d+)B\s+(primary|logical|extended)/i
+          )
         {
 
           $FAI::current_config{$disk}{"partitions"}{$1}{"begin_byte"} = $2;
@@ -124,7 +128,7 @@ sub get_current_disks
       }
       else
       {
-        if ( $line =~ /^(\d+)*\s+(\d+)B\s+(\d+)B\s+(\d+)B/i )
+        if ( $line =~ /^\s*(\d+)*\s+(\d+)B\s+(\d+)B\s+(\d+)B/i )
         {
 
           $FAI::current_config{$disk}{"partitions"}{$1}{"begin_byte"}  = $2;
@@ -134,10 +138,10 @@ sub get_current_disks
         }
       }
 
-      if ( $line =~ /^Disk geometry for.*(\d+)B - (\d+)B/i )
+      if ( $line =~ /^Disk .*: (\d+)B$/i )
       {
-        $FAI::current_config{$disk}{"begin_byte"} = $1;
-        $FAI::current_config{$disk}{"end_byte"}   = $2;
+        $FAI::current_config{$disk}{"begin_byte"} = 0;
+        $FAI::current_config{$disk}{"end_byte"}   = $1;
       }
     }
 
@@ -150,7 +154,7 @@ sub get_current_disks
     foreach my $line (@parted_print)
     {
 
-      if ( $line =~ /^(\d+)\s+(\d+),(\d+),(\d+)\s+(\d+),(\d+),(\d+)/i )
+      if ( $line =~ /^\s*(\d+)\s+(\d+),(\d+),(\d+)\s+(\d+),(\d+),(\d+)/i )
       {
         $FAI::current_config{$disk}{"partitions"}{$1}{"begin_cylinder"} = $2;
         $FAI::current_config{$disk}{"partitions"}{$1}{"begin_head"}     = $3;
@@ -160,15 +164,14 @@ sub get_current_disks
         $FAI::current_config{$disk}{"partitions"}{$1}{"end_sector"}     = $7;
       }
 
-      if (
-        $line =~ /^Disk geometry for.*(\d+),(\d+),(\d+) - (\d+),(\d+),(\d+)/i )
+      if ( $line =~ /^Disk .*: (\d+),(\d+),(\d+)$/i )
       {
-        $FAI::current_config{$disk}{"begin_cylinder"} = $1;
-        $FAI::current_config{$disk}{"begin_head"}     = $2;
-        $FAI::current_config{$disk}{"begin_sector"}   = $3;
-        $FAI::current_config{$disk}{"end_cylinder"}   = $4;
-        $FAI::current_config{$disk}{"end_head"}       = $5;
-        $FAI::current_config{$disk}{"end_sector"}     = $6;
+        $FAI::current_config{$disk}{"begin_cylinder"} = 0;
+        $FAI::current_config{$disk}{"begin_head"}     = 0;
+        $FAI::current_config{$disk}{"begin_sector"}   = 0;
+        $FAI::current_config{$disk}{"end_cylinder"}   = $1;
+        $FAI::current_config{$disk}{"end_head"}       = $2;
+        $FAI::current_config{$disk}{"end_sector"}     = $3;
       }
     }
 
