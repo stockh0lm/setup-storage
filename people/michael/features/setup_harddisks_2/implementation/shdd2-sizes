@@ -20,23 +20,26 @@ sub get_current_disks
 
     while (1)
     {
-      my $error = &FAI::execute_command( "/sbin/parted -s $disk unit TB print",
-        \@parted_std_out, 0 );
+      my $error = &FAI::execute_command( "$FAI::parted_binary $disk unit TB print",
+        \@parted_print, 0 );
 
-      if ( $error eq "parted_2" )
+      if ( $error eq "parted_2" ) #this error happens when the disk has no disk label. then, parted provides no information about the disk
       {
-        $error = &FAI::execute_command("/sbin/parted -s $disk mklabel msdos");
+        $error = &FAI::execute_command("$FAI::parted_binary $disk mklabel msdos");
         next;
       }
 
-      if ( $error eq "parted_3" )
+      if ($error ne "")
       {
-        die $FAI::ErrorHash{"parted_3"};
-      }
-
-      if ( $error eq "parted_1" )
-      {
-        die $FAI::ErrorHash{"parted_1"};
+        my $response = &FAI::get_error($error, "response");
+        if( $response eq "die")
+        {
+          die &FAI::get_error($error, "message");         
+        }
+        if( $response eq "warn")
+        {
+          warn &FAI::get_error($error, "message");         
+        }
       }
 
       last;
@@ -86,7 +89,7 @@ sub get_current_disks
       }
     }
 
-    @parted_print = split( "\n", `/sbin/parted -s $disk unit B print` );
+    @parted_print = split( "\n", `$FAI::parted_binary $disk unit B print` );
     {
       foreach my $line (@parted_print)
       {
@@ -129,7 +132,7 @@ sub get_current_disks
       }
     }
 
-    @parted_print = split( "\n", `/sbin/parted -s $disk unit chs print` );
+    @parted_print = split( "\n", `$FAI::parted_binary $disk unit chs print` );
     {
       foreach my $line (@parted_print)
       {

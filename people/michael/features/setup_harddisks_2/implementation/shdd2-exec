@@ -13,6 +13,7 @@ $FAI::error_codes = [
       ".*Error: Could not stat device rm - No such file or directory.*",
     stdout_regex => "",
     program      => "parted",
+    response     => "die",
   },
   {
     error        => "parted_2",
@@ -20,6 +21,7 @@ $FAI::error_codes = [
     stderr_regex => ".*Error: Unable to open .* - unrecognised disk label.*",
     stdout_regex => "",
     program      => "parted",
+    response     => "die",
   },
   {
     error        => "parted_3",
@@ -28,6 +30,7 @@ $FAI::error_codes = [
       ".*Error: Could not stat device .* - No such file or directory.*",
     stdout_regex => "",
     program      => "parted",
+    response     => "die"
   },
   {
     error        => "port_1",
@@ -35,6 +38,7 @@ $FAI::error_codes = [
     stderr_regex => ".*Error: .* Port test not found.*",
     stdout_regex => "",
     program      => "port",
+    response     => "die"
   },
 ];
 
@@ -45,6 +49,16 @@ sub get_error_message
   foreach my $m (@treffer)    #returns the first found error message.
   {
     return "$m->{'message'}";
+  }
+}
+
+sub get_error
+{
+  my ($error,$field) = @_;
+  my @treffer = grep { $_->{error} eq "$error" } @$FAI::error_codes;
+  foreach my $m (@treffer)    #returns the first found error message.
+  {
+    return "$m->{$field}";
   }
 }
 
