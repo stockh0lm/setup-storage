@@ -20,9 +20,11 @@ sub get_current_disks
 
     while (1)
     {
+      $ENV{"NO_DRY_RUN"} = "1";
       my $error =
         &FAI::execute_command( "$FAI::parted_binary $disk unit TB print",
         \@parted_print, 0 );
+      $ENV{"NO_DRY_RUN"} = "";
 
       if ( $error eq "parted_2"
         ) #this error happens when the disk has no disk label. then, parted provides no information about the disk
@@ -53,6 +55,7 @@ sub get_current_disks
 
     foreach my $line (@parted_print)
     {
+      print "$line";
       if ( $line =~ /^Disk geometry/ )
       {
         next;
@@ -92,9 +95,11 @@ sub get_current_disks
       }
     }
 
+    $ENV{"NO_DRY_RUN"} = "1";
     @parted_print = ();
     &FAI::execute_command_std( "$FAI::parted_binary $disk unit B print",
       \@parted_print, 0 );
+    $ENV{"NO_DRY_RUN"} = "";
 
     foreach my $line (@parted_print)
     {
@@ -136,9 +141,11 @@ sub get_current_disks
       }
     }
 
+    $ENV{"NO_DRY_RUN"} = "1";
     @parted_print = ();
     &FAI::execute_command_std( "$FAI::parted_binary $disk unit chs print",
       \@parted_print, 0 );
+    $ENV{"NO_DRY_RUN"} = "";
 
     foreach my $line (@parted_print)
     {

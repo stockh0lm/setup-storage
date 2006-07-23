@@ -350,7 +350,7 @@ $FAI::Parser = Parse::RecDescent->new(
           }
           else
           {
-            die "partition number of to-be-preserved partition $1 changed to $FAI::partition_pointer->{ "number" }\n";
+            die "partition number of to-be-preserved partition $1 changed to $FAI::partition_pointer->{number}\n";
           }
         }
         | /^[^\d,:\s\-][^,:\s]*(:(spare|missing))*(,[^,:\s]+(:(spare|missing))*)*\s+/
@@ -400,7 +400,7 @@ sub run_parser
   my $input = <STDIN>;
   $/ = $ifs;
 
-  ( $debug > 0 ) and print "Input was:\n" . $input;
+  ( $FAI::debug > 0 ) and print "Input was:\n" . $input;
 
   defined $FAI::Parser->file($input) or die "Syntax error\n";
 }

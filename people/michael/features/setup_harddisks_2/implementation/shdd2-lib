@@ -19,7 +19,7 @@ sub in_path
 
 sub print_hash
 {
-  ( $debug > 0 ) or return 0;
+  ( $FAI::debug > 0 ) or return 0;
 
   my ( $hash_ref, $k ) = @_;
   $k = "$k>";

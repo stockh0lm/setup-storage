@@ -66,7 +66,7 @@ sub execute_command_std       #execute command with standard error handling
 {
   my ( $command, $stdout_ref, $stderr_ref ) = @_;
   my $err = &execute_command( $command, $stdout_ref, $stderr_ref );
-  unless( $err eq "")
+  unless ( $err eq "" )
   {
     my $response = &get_error( $err, "response" );
     my $message  = &get_error( $err, "message" );
@@ -94,7 +94,11 @@ sub execute_command
   my @stdout      = ();
   my $stderr_line = "";
   my $stdout_line = "";
-  my $run         = $ENV{"NO_DRY_RUN"};
+  my $run         = 0;
+  if ( defined( $ENV{"NO_DRY_RUN"} ) && !( $ENV{"NO_DRY_RUN"} =~ /^\s*$/ ) )
+  {
+    $run = 1;
+  }
 
   ( my $stderr_fh, my $stderr_filename ) = File::Temp::tempfile();
   ( my $stdout_fh, my $stdout_filename ) = File::Temp::tempfile();

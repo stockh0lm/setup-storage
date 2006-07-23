@@ -4,6 +4,8 @@ use strict;
 
 package FAI;
 
+$FAI::debug = 1;
+
 # getopt processing
 
 #REMOVE THIS
