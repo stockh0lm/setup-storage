@@ -86,6 +86,134 @@ $FAI::device                    = "";
 $FAI::partition_primary_counter = 0;
 $FAI::partition_logical_counter = 0;
 
+sub init_disk_config
+{
+  my ($disk) = @_;
+
+  if ( $disk =~ /^\d+$/ )
+  {
+    if ( $FAI::disks >= $disk )
+    {
+      $disk = $FAI::disks[ $disk - 1 ];
+    }
+    else
+    {
+      die "this system does not have a physical disk $disk\n";
+    }
+  }
+
+  unless ( $disk =~ m{^/} )
+  {
+    $disk = "/dev/" . $disk;
+  }
+  ( -b $disk ) or die "$disk is not a valid device name\n";
+
+  $FAI::device = "PHY_" . $disk;
+
+  if ( defined( $FAI::configs{$FAI::device} ) )
+  {
+    die "Duplicate configuration for disk $FAI::disks[ $1-1 ]\n";
+  }
+  $FAI::configs{$FAI::device} = {
+    "virtual"    => 0,
+    "disklabel"  => "msdos",
+    "bootable"   => -1,
+    "partitions" => {}
+  };
+}
+
+sub init_part_config
+{
+  my ($type) = @_;
+
+  if ( $type eq "primary" )
+  {
+    ( $FAI::device =~ /^PHY_/ ) or die "wrong partition type";
+    (      $FAI::partition_primary_counter < 4
+        || $FAI::configs{$FAI::device}{"disklabel"} ne "msdos" )
+      or die "Too many primary partitions\n";
+    $FAI::partition_primary_counter++;
+    unless (
+      defined(
+        $FAI::configs{$FAI::device}{"partitions"}
+          {$FAI::partition_primary_counter}
+      )
+      )
+    {
+      $FAI::configs{$FAI::device}{"partitions"}
+        {$FAI::partition_primary_counter} = {};
+    }
+    $FAI::partition_pointer =
+      ( \%FAI::configs )->{$FAI::device}->{"partitions"}
+      ->{$FAI::partition_primary_counter};
+    $FAI::partition_pointer->{"number"} = $FAI::partition_primary_counter;
+  }
+  elsif ( $type eq "logical" )
+  {
+    (      $FAI::device =~ /^PHY_/
+        && $FAI::configs{$FAI::device}{"disklabel"} eq "msdos" )
+      or die "wrong partition type";
+    {
+      if ( $FAI::partition_logical_counter == 0 )
+      {
+        ( $FAI::partition_primary_counter < 4 )
+          or die "Too many primary partitions\n";
+        $FAI::partition_primary_counter++;
+        $FAI::configs{$FAI::device}{"partitions"}
+          {$FAI::partition_primary_counter}{"size"}{"extended"} = 1;
+        unless (
+          defined(
+            $FAI::configs{$FAI::device}{"partitions"}
+              {$FAI::partition_primary_counter}{"size"}{"preserve"}
+          )
+          )
+        {
+          $FAI::configs{$FAI::device}{"partitions"}
+            {$FAI::partition_primary_counter}{"size"}{"preserve"} = 0;
+        }
+        unless (
+          defined(
+            $FAI::configs{$FAI::device}{"partitions"}
+              {$FAI::partition_primary_counter}{"size"}{"resize"}
+          )
+          )
+        {
+          $FAI::configs{$FAI::device}{"partitions"}
+            {$FAI::partition_primary_counter}{"size"}{"resize"} = 0;
+        }
+      }
+      $FAI::partition_logical_counter++;
+      unless (
+        defined(
+          $FAI::configs{$FAI::device}{"partitions"}
+            { $FAI::partition_logical_counter + 4 }
+        )
+        )
+      {
+        $FAI::configs{$FAI::device}{"partitions"}
+          { $FAI::partition_logical_counter + 4 } = {};
+      }
+      $FAI::partition_pointer =
+        ( \%FAI::configs )->{$FAI::device}->{"partitions"}
+        ->{ $FAI::partition_logical_counter + 4 };
+      $FAI::partition_pointer->{"number"} = $FAI::partition_logical_counter + 4;
+    }
+  }
+  else
+  {
+    die "internal parser error\n";
+  }
+  $FAI::partition_pointer->{"size"}->{"extended"} = 0;
+  unless ( defined( $FAI::partition_pointer->{"size"}->{"preserve"} ) )
+  {
+    $FAI::partition_pointer->{"size"}->{"preserve"} = 0;
+  }
+  unless ( defined( $FAI::partition_pointer->{"size"}->{"resize"} ) )
+  {
+    $FAI::partition_pointer->{"size"}->{"resize"} = 0;
+  }
+}
+
 $FAI::Parser = Parse::RecDescent->new(
   q{
     file: line(s?) /\Z/
@@ -112,54 +240,12 @@ $FAI::Parser = Parse::RecDescent->new(
         }
         | /^disk(\d+)/
         {
-          if( scalar( @FAI::disks ) >= $1 )
-          {
-            if( $FAI::disks[ $1-1 ] =~ m{^/} )
-            {
-              $FAI::device = "PHY_" . $FAI::disks[ $1-1 ];
-            }
-            else
-            {
-              $FAI::device = "PHY_/dev/" . $FAI::disks[ $1-1 ];
-            }
-            if( defined( $FAI::configs{ $FAI::device } ) )
-            {
-              die "Duplicate configuration for disk $FAI::disks[ $1-1 ]\n";
-            }
-            $FAI::configs{ $FAI::device } = {
-              "virtual" => 0,
-              "disklabel" => "msdos",
-              "bootable" => -1,
-              "partitions" => {}
-            };
-          }
-          else
-          {
-            die "this system does not have a physical $item[1] "
-          }
+          &FAI::init_disk_config( $1 );
         }
         option(s?)
         | /^\S+/
         {
-          # TODO check for valid device name
-          if( $item[ 1 ] =~ m{^/} )
-          {
-            $FAI::device = "PHY_" . $item[ 1 ];
-          }
-          else
-          {
-            $FAI::device = "PHY_/dev/" . $item[ 1 ];
-          }
-          if( defined( $FAI::configs{ $FAI::device } ) )
-          {
-            die "Duplicate configuration for disk $FAI::disks[ $1-1 ]\n";
-          }
-          $FAI::configs{ $FAI::device } = {
-            "virtual" => 0,
-            "disklabel" => "msdos",
-            "bootable" => -1,
-            "partitions" => {}
-          };
+          &FAI::init_disk_config( $item[ 1 ] );
         }
         option(s?)
     option: /^preserve:(\d+(,\d+)*)/
@@ -194,60 +280,19 @@ $FAI::Parser = Parse::RecDescent->new(
         | 'vg' name size
     type: 'primary'
         {
-          ( $FAI::device =~ /^PHY_/ ) or die "wrong partition type";
-          {
-            ( $FAI::partition_primary_counter < 4 || $FAI::configs{ $FAI::device }{ "disklabel" } ne "msdos" ) or die "Too many primary partitions\n";
-            $FAI::partition_primary_counter++;
-            if( ! defined( $FAI::configs{ $FAI::device }{ "partitions" }{ $FAI::partition_primary_counter } ) )
-            {
-              $FAI::configs{ $FAI::device }{ "partitions" }{ $FAI::partition_primary_counter }= {};
-            }
-            $FAI::partition_pointer = (\%FAI::configs)->{ $FAI::device }->{ "partitions" }->{ $FAI::partition_primary_counter };
-            $FAI::partition_pointer->{ "size" }->{ "extended" } = 0;
-            $FAI::partition_pointer->{ "number" } = $FAI::partition_primary_counter;
-            if( ! defined( $FAI::partition_pointer->{ "size" }->{ "preserve" } ) )
-            {
-              $FAI::partition_pointer->{ "size" }->{ "preserve" } = 0;
-            }
-          }
+          &FAI::init_part_config( $item[ 1 ] );
         }
         | 'logical'
         {
-          ( $FAI::device =~ /^PHY_/  && $FAI::configs{ $FAI::device }{ "disklabel" } eq "msdos" ) or die "wrong partition type";
-          {
-            if( $FAI::partition_logical_counter == 0 )
-            {
-              ( $FAI::partition_primary_counter < 4 ) or die "Too many primary partitions\n";
-              $FAI::partition_primary_counter++;
-              $FAI::configs{ $FAI::device }{ "partitions" }{ $FAI::partition_primary_counter }{ "size" }{ "extended" } = 1;
-              if( ! defined( $FAI::configs{ $FAI::device }{ "partitions" }{ $FAI::partition_primary_counter }{ "size" }{ "preserve" } ) )
-              {
-                $FAI::configs{ $FAI::device }{ "partitions" }{ $FAI::partition_primary_counter }{ "size" }{ "preserve" } = 0;
-              }
-              if( ! defined( $FAI::configs{ $FAI::device }{ "partitions" }{ $FAI::partition_primary_counter }{ "size" }{ "resize" } ) )
-              {
-                $FAI::configs{ $FAI::device }{ "partitions" }{ $FAI::partition_primary_counter }{ "size" }{ "resize" } = 0;
-              }
-            }
-            $FAI::partition_logical_counter++;
-            if( ! defined( $FAI::configs{ $FAI::device }{ "partitions" }{ $FAI::partition_logical_counter + 4 } ) )
-            {
-              $FAI::configs{ $FAI::device }{ "partitions" }{ $FAI::partition_logical_counter + 4 }= {};
-            }
-            $FAI::partition_pointer = (\%FAI::configs)->{ $FAI::device }->{ "partitions" }->{ $FAI::partition_logical_counter + 4 };
-            $FAI::partition_pointer->{ "size" }->{ "extended" } = 0;
-            $FAI::partition_pointer->{ "number" } = $FAI::partition_logical_counter + 4;
-            if( ! defined( $FAI::partition_pointer->{ "size" }->{ "preserve" } ) )
-            {
-              $FAI::partition_pointer->{ "size" }->{ "preserve" } = 0;
-            }
-          }
+          &FAI::init_part_config( $item[ 1 ] );
         }
         | /^raid[0156]/
         {
+          # TODO
         }
         | m{^[^/\s]+-[^/\s]+}
         {
+          # TODO
         }
     mountpoint: '-'
         {
@@ -282,13 +327,9 @@ $FAI::Parser = Parse::RecDescent->new(
             $range = $range . "100%";
           }
           $FAI::partition_pointer->{ "size" }->{ "range" } = $range;
-          if( defined( $4 ) || defined( $FAI::partition_pointer->{ "size" }{ "resize" } ) )
+          if( defined( $4 ) )
           {
             $FAI::partition_pointer->{ "size" }->{ "resize" } = 1;
-          }
-          else
-          {
-            $FAI::partition_pointer->{ "size" }->{ "resize" } = 0;
           }
         }
         | /^(-\d+%?)(:resize)?\s+/
@@ -296,13 +337,9 @@ $FAI::Parser = Parse::RecDescent->new(
           $FAI::partition_pointer->{ "size" } = {
             "range" => "0" . $1
           };
-          if( defined( $2 ) || defined( $FAI::partition_pointer->{ "size" }->{ "resize" } ) )
+          if( defined( $2 ) ) 
           {
             $FAI::partition_pointer->{ "size" }->{ "resize" } = 1;
-          }
-          else
-          {
-            $FAI::partition_pointer->{ "size" }->{ "resize" } = 0;
           }
         }
         | /^preserve(\d+)\s+/
@@ -313,7 +350,7 @@ $FAI::Parser = Parse::RecDescent->new(
           }
           else
           {
-            die "partition number of to-be-preserved partition $1 changed to " .  $FAI::partition_pointer->{ "number" } . "\n";
+            die "partition number of to-be-preserved partition $1 changed to $FAI::partition_pointer->{ "number" }\n";
           }
         }
         | /^[^\d,:\s\-][^,:\s]*(:(spare|missing))*(,[^,:\s]+(:(spare|missing))*)*\s+/
@@ -343,7 +380,7 @@ $FAI::Parser = Parse::RecDescent->new(
         }
         | /^\S+/
         {
-          if ( !&FAI::in_path("$item[1]") ) 
+          unless ( &FAI::in_path("$item[1]") == 0 ) 
           {
              die "unknown/invalid filesystem type $item[1]";
           }
@@ -363,7 +400,7 @@ sub run_parser
   my $input = <STDIN>;
   $/ = $ifs;
 
-  print "Input was:\n" . $input;
+  ( $debug > 0 ) and print "Input was:\n" . $input;
 
   defined $FAI::Parser->file($input) or die "Syntax error\n";
 }

@@ -4,6 +4,8 @@ use strict;
 
 package FAI;
 
+my $debug = 1;
+
 require "shdd2-lib";
 require "shdd2-init";
 require "shdd2-parser";

@@ -12,30 +12,29 @@ sub in_path
 
   foreach my $p (@path_list)
   {
-    if ( -x $p . "/mkfs.$filesystem" )
-    {
-      return 1;
-    }
+    ( -x "$p/mkfs.$filesystem" ) and return 0;
   }
-  return 0;
+  return 1;
 }
 
 sub print_hash
 {
+  ( $debug > 0 ) or return 0;
+
   my ( $hash_ref, $k ) = @_;
-  $k = $k . ">";
+  $k = "$k>";
+
   foreach my $key ( keys %$hash_ref )
   {
     if ( ref( $hash_ref->{$key} ) )
     {
-      print "$k Schluessel: " . $key . " Wert: " . "Hash" . "\n";
+      print "$k KEY: $key VAL: hash\n";
       &print_hash( $hash_ref->{$key}, $k );
     }
     else
     {
-      print "$k Schluessel: " . $key . " Wert: " . $hash_ref->{$key} . "\n";
+      print "$k KEY: $key VAL: $hash_ref->{$key}\n";
     }
-
   }
 }
 
