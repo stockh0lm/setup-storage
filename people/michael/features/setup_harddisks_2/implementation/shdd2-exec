@@ -1,10 +1,36 @@
 #!/usr/bin/perl -w
 
 use strict;
+
+################################################################################
+#
+# @file shdd2-exec
+#
+# @brief functions to execute bash commands
+#
+# $Id$
+#
+# @author Christian Kern, Michael Tautschnig
+# @date Sun Jul 23 16:09:36 CEST 2006
+#
+################################################################################
+
 use File::Temp;
 
 package FAI;
 
+################################################################################
+#
+# @brief hash, defined: errors, descriptions, actions on error
+#
+# @scalar error error
+# @scalar message our errormessage
+# @scalar stderr_regex regex to recognize the error message on stderr output of the bash
+# @scalar stdout_regex regex to recognize the error message on stdout output of the bash
+# @scalar program the program this error message can come from
+# @scalar response default action on this error.
+#
+################################################################################
 $FAI::error_codes = [
   {
     error        => "parted_1",
@@ -42,6 +68,15 @@ $FAI::error_codes = [
   },
 ];
 
+################################################################################
+#
+# @brief returns the error message associated with an error
+#
+# @param error identifier of an error
+#
+# @return our interpretation of the error as string
+#
+################################################################################
 sub get_error_message
 {
   my ($error) = @_;
@@ -52,6 +87,16 @@ sub get_error_message
   }
 }
 
+################################################################################
+#
+# @brief gets any part of the error struct associated with an error
+#
+# @param error identifier of an error
+# @param field field of the error struct as string, example: "stderr_regex"
+#
+# @return the associated value
+#
+################################################################################
 sub get_error
 {
   my ( $error, $field ) = @_;
@@ -61,8 +106,24 @@ sub get_error
     return "$m->{$field}";
   }
 }
-
-sub execute_command_std       #execute command with standard error handling
+################################################################################
+#
+# @brief execute a /bin/bash command, given as string. also catch stderr and
+# stdout, to be passed to the caller function, and also used for error
+# recognition. This execute function does execute the in the error struct
+# defined action, when an error occurs.
+#
+# @param command bash command to be executed as string
+# @reference stdout_ref reference to a list, that should contain the standard
+# output of the bash command
+#
+# @reference stderr_ref reference to a list, that should contain the standard
+# errer output of the bash command
+#
+# @return the identifier of the error
+#
+################################################################################
+sub execute_command_std    #execute command with standard error handling
 {
   my ( $command, $stdout_ref, $stderr_ref ) = @_;
   my $err = &execute_command( $command, $stdout_ref, $stderr_ref );
@@ -86,6 +147,22 @@ sub execute_command_std       #execute command with standard error handling
   return "";
 }
 
+################################################################################
+#
+# @brief execute a /bin/bash command, given as string. also catch stderr and
+# stdout, to be passed to the caller function, and also used for error
+# recognition. This caller function must handle the error.
+#
+# @param command bash command to be executed as string
+# @reference stdout_ref reference to a list, that should contain the standard
+# output of the bash command
+#
+# @reference stderr_ref reference to a list, that should contain the standard
+# errer output of the bash command
+#
+# @return the identifier of the error
+#
+################################################################################
 sub execute_command
 {
   my ( $command, $stdout_ref, $stderr_ref ) = @_;
@@ -100,11 +177,15 @@ sub execute_command
     $run = 1;
   }
 
+  #make tempfile, get perl filehandle and filename of the file
   ( my $stderr_fh, my $stderr_filename ) = File::Temp::tempfile();
   ( my $stdout_fh, my $stdout_filename ) = File::Temp::tempfile();
 
+  # do only execute the given command, when in no_dry_mode
   if ( $run == 1 )
   {
+
+    # execute the bash command, write stderr and stdout into the testfiles
     `$command 1> $stdout_filename 2> $stderr_filename`;
   }
   else
@@ -113,32 +194,39 @@ sub execute_command
 "would run command $command, to run in NO_DRY_MODE, please set environment variable NO_DRY_RUN to 1 \n";
   }
 
+  # read the tempfile into lists, each element of the list one line
   @stderr = <$stderr_fh>;
   @stdout = <$stdout_fh>;
 
+  #when closing the files, the tempfiles are removed too
   close($stderr_fh);
   close($stdout_fh);
 
+  #if the stderr contains information, get the first line for error recognition
   if ( scalar(@stderr) > 0 )
   {
     $stderr_line = $stderr[0];
   }
 
+  #see last comment
   if ( scalar(@stdout) > 0 )
   {
     $stdout_line = $stdout[0];
   }
 
+  #if an array is passed to the function, it is filled with the stdout
   if ( 'ARRAY' eq ref($stdout_ref) )
   {
     @$stdout_ref = @stdout;
   }
 
+  #see above
   if ( 'ARRAY' eq ref($stderr_ref) )
   {
     @$stderr_ref = @stderr;
   }
 
+  #get the error, eventually happened
   foreach my $err (@$FAI::error_codes)
   {
     if (

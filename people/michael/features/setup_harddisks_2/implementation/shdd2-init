@@ -2,29 +2,84 @@
 
 use strict;
 
+################################################################################
+#
+# @file shdd2-init
+#
+# @brief Initialize all variables and acquire the set of disks of the system.
+#
+# $Id$
+#
+# @author Christian Kern, Michael Tautschnig
+# @date Sun Jul 23 16:09:36 CEST 2006
+#
+################################################################################
+
 package FAI;
 
+################################################################################
+#
+# @brief Enable debugging by setting $FAI::debug to a value greater than 0
+#
+################################################################################
 $FAI::debug = 1;
 
-# getopt processing
-
-#REMOVE THIS
-# use a predefined list?
-
+# TODO - REMOVE THIS
 $ENV{disklist} = "hda
 ";
-################
-#
 
+################################################################################
+#
+# @brief The lists of disks of the system
+#
+################################################################################
 @FAI::disks = split( /\n/, $ENV{disklist} );
 
+################################################################################
+#the hash, where we write the disc config we want to have
+#
+# @brief The hash of all configurations specified in the disk_config file
+#
+# The structure is as follows:
+# VG_<NAME>
+#   TODO
+# PHY_<DEVICE>
+#   TODO
+# RAID
+#   TODO
+#
+################################################################################
 %FAI::configs = ();
 
+################################################################################
+#the hash, with information about the actual disc config
+#
+# @brief The current disk configuration
+#
+# The structure is as follows:
+# <DEVICE>
+#   TODO
+#
+################################################################################
 %FAI::current_config = ();
 
+################################################################################
+#list of commands
+#
+# @brief The list of commands to be executed
+#
+################################################################################
 @FAI::commands = ();
 
+################################################################################
+#
+# @brief The parted command to be run
+#
+################################################################################
 $FAI::parted_binary = "/sbin/parted -s";
+
+#list of bash commands
+%FAI::bash_commands = ( parted => "/sbin/parted -s", );
 
 1;
 

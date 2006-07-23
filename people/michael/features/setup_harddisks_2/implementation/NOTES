@@ -4,5 +4,9 @@ auto mode
 
 query commands
 
+allow for some arbitrary predefined list instead of $ENV{disklist}
+
 split into functions, size computation must be fixed
+
+getopt processing
 

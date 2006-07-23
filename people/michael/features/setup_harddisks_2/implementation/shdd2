@@ -2,35 +2,61 @@
 
 use strict;
 
+################################################################################
+#
+# @file shdd2
+#
+# @brief The main function of setup harddisks 2 - the tool to configure the
+# partitioning from within FAI. 
+# 
+# This is an implementation from scratch to properly support LVM and RAID. The
+# input format is documented in @ref shdd2-parser
+#
+# $Id$
+#
+# @author Christian Kern, Michael Tautschnig
+# @date Sun Jul 23 16:09:36 CEST 2006
+#
+################################################################################
+
 package FAI;
 
-require "shdd2-lib";
+# include all subparts
 require "shdd2-init";
+require "shdd2-lib";
 require "shdd2-parser";
 require "shdd2-sizes";
 require "shdd2-commands";
 require "shdd2-fstab";
 require "shdd2-exec";
 
+# start the parsing - thereby $FAI::configs is filled
 &FAI::run_parser;
 
+# read the sizes and partition tables of all disks listed in $FAI::disks
 &FAI::get_current_disks;
 
+# compute the new partition sizes
 &FAI::compute_sizes;
 
+# TODO - debugging only: print the current contents of $FAI::configs
 &FAI::print_hash( \%FAI::configs );
 
+# generate the command script
 &FAI::build_commands;
 
+# TODO - debugging only: print the command script
 foreach my $cmd (@FAI::commands)
 {
   print $cmd . "\n";
   # &FAI::execute_command($cmd);
 }
 
+# generate the proposed fstab contents
 my @fstab = &FAI::generate_fstab( \%FAI::configs );
+# TODO - debugging only; print fstab
 foreach my $line (@fstab)
 {
-  printf $line. "\n";
+  printf "$line\n";
 }
 

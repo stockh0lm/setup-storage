@@ -2,40 +2,81 @@
 
 use strict;
 
+################################################################################
+#
+# @file shdd2-fstab
+#
+# @brief TODO
+#
+# $Id$
+#
+# @author Christian Kern, Michael Tautschnig
+# @date Sun Jul 23 16:09:36 CEST 2006
+#
+################################################################################
+
 package FAI;
 
-#call this function only with one parameter (generate_fstab($hash_ref)). The rest is used for recursion
+################################################################################
+#
+# @brief this function generates the fstab file from our representation of the
+# partitions to be created. Call this function only with one parameter,
+# the rest is used for recursion.
+#
+# @reference hash_ref to our representation of the partitions to be created
+# @param modus help variable for the recursion. holds the value wheter we are
+# opertationing in physical partition, lvm or raid mode
+#
+# @param device help variable, holds the actual device
+#
+# @reference listref help variable, holding the reference to the list which
+# contains the lines of the fstab file to be generated
+#
+# @param call_count holds the actual recursion depth
+#
+# @return 0
+#
+################################################################################
 sub generate_fstab
 {
   my ( $hash_ref, $modus, $device, $listref, $call_count ) = @_;
 
+  #first check if we have already a list, when not, create one
   if ( !$listref )
   {
     my @newlist = ();
     $listref = \@newlist;
   }
 
+#check if call_count is set, if not, the function is called the first time, set it
   if ( !$call_count )
   {
     $call_count = 1;
   }
   else
   {
+
+    #if we go deaper, increment it
     $call_count++;
   }
 
+  # go through all drives, lvms, raids
   foreach my $key ( keys %$hash_ref )
   {
 
     if ( ref( $hash_ref->{$key} ) && $key =~ /^PHY_(.*)$/ )
     {
+
+      #set the modus to physical drive partition
       $modus  = "PHY";
       $device = $1;
     }
 
+    # check if we are at the important place for the fstab file
     if ( ref( $hash_ref->{$key} ) && $key eq "partitions" )
     {
 
+# every partition means one line in fstab, let's get the information about each one
       foreach my $partition ( keys %{ $hash_ref->{$key} } )
       {
         my $p_ref = $hash_ref->{$key}->{$partition};
@@ -55,6 +96,8 @@ sub generate_fstab
           {
             push @fstab_line, 2;
           }
+
+#lets join the columns of one line with tabs, and the push it to our fstab line array
           push @$listref, join( "\t", @fstab_line );
         }
 
@@ -70,6 +113,8 @@ sub generate_fstab
   }
   if ( $call_count eq 1 )
   {
+
+    #if we are at highes level, lets return the listref
     return @$listref;
   }
 }

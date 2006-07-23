@@ -2,6 +2,19 @@
 
 use strict;
 
+################################################################################
+#
+# @file shdd2-sizes
+#
+# @brief TODO
+#
+# $Id$
+#
+# @author Christian Kern, Michael Tautschnig
+# @date Sun Jul 23 16:09:36 CEST 2006
+#
+################################################################################
+
 use POSIX qw(ceil floor);
 
 package FAI;
@@ -22,7 +35,8 @@ sub get_current_disks
     {
       $ENV{"NO_DRY_RUN"} = "1";
       my $error =
-        &FAI::execute_command( "$FAI::parted_binary $disk unit TiB print",
+        &FAI::execute_command(
+        "$FAI::bash_commands{'parted'}} $disk unit TiB print",
         \@parted_print, 0 );
       $ENV{"NO_DRY_RUN"} = "";
 
@@ -30,7 +44,8 @@ sub get_current_disks
         ) #this error happens when the disk has no disk label. then, parted provides no information about the disk
       {
         $error =
-          &FAI::execute_command("$FAI::parted_binary $disk mklabel msdos");
+          &FAI::execute_command(
+          "$FAI::bash_commands{'parted'}} $disk mklabel msdos");
         next;
       }
 
@@ -100,7 +115,8 @@ sub get_current_disks
 
     $ENV{"NO_DRY_RUN"} = "1";
     @parted_print = ();
-    &FAI::execute_command_std( "$FAI::parted_binary $disk unit B print",
+    &FAI::execute_command_std(
+      "$FAI::bash_commands{'parted'}} $disk unit B print",
       \@parted_print, 0 );
     $ENV{"NO_DRY_RUN"} = "";
 
@@ -147,7 +163,8 @@ sub get_current_disks
 
     $ENV{"NO_DRY_RUN"} = "1";
     @parted_print = ();
-    &FAI::execute_command_std( "$FAI::parted_binary $disk unit chs print",
+    &FAI::execute_command_std(
+      "$FAI::bash_commands{'parted'}} $disk unit chs print",
       \@parted_print, 0 );
     $ENV{"NO_DRY_RUN"} = "";
 

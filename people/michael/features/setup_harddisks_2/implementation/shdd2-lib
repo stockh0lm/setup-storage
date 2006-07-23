@@ -2,30 +2,85 @@
 
 use strict;
 
+################################################################################
+#
+# @file shdd2-lib
+#
+# @brief A small library of utility functions possibly useful in various places
+#
+# $Id$
+#
+# @author Christian Kern, Michael Tautschnig
+# @date Sun Jul 23 16:09:36 CEST 2006
+#
+################################################################################
+
 package FAI;
 
+################################################################################
+#
+# @brief Test, whether @ref $cmd is available on the system using $PATH
+#
+# @param $cmd Command that is to be found in $PATH
+#
+# @return 1, if the command is found, else 0
+#
+################################################################################
 sub in_path
 {
-  my ($filesystem) = @_;
 
+  # initialize the parameter
+  my ($cmd) = @_;
+
+  # split $PATH into its components
   my @path_list = split( ":", $ENV{"PATH"} );
 
+  # search all components of $PATH
   foreach my $p (@path_list)
   {
-    ( -x "$p/mkfs.$filesystem" ) and return 0;
+
+    # and test for $cmd being executable
+    ( -x "$p/$cmd" ) and return 1;
   }
-  return 1;
+  return 0;
 }
 
+################################################################################
+#
+# @brief our structure, in which we hold informations about existing partitions
+# and partitions we wan't to create a hold in hash of hashes. This debug function
+# allows to recursivly print such a hash with all keys und subhashes
+# @brief Recursively explore the hash
+#
+# @param hash_ref the reference to the hash, where we want to start printing
+# the hash recursively
+# @param $cmd Command that is to be found in $PATH
+#
+# @param k help variable, is only to be used for the recursion. caller function
+# shoudn't set this one
+#
+# @return returns nothing, is a void function
+# @return 1, if the command is found, else 0
+#
+################################################################################
 sub print_hash
 {
+
+  # This function is for debugging purposes only
+  # only be used in debugging mode, otherwise return silently
   ( $FAI::debug > 0 ) or return 0;
 
+  # get the function parameters
   my ( $hash_ref, $k ) = @_;
+
+  # append a > for showing the depth in the hash of hashes
   $k = "$k>";
 
+  # print all keys
   foreach my $key ( keys %$hash_ref )
   {
+
+    # if there is another hash, recursively call the function with this hash
     if ( ref( $hash_ref->{$key} ) )
     {
       print "$k KEY: $key VAL: hash\n";
