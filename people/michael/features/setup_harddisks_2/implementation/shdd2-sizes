@@ -54,7 +54,7 @@ sub get_current_disks
       $ENV{"NO_DRY_RUN"} = "1";
       my $error =
         &FAI::execute_command(
-        "$FAI::bash_commands{'parted'}} $disk unit TiB print",
+        "$FAI::system_commands{'parted'}} $disk unit TiB print",
         \@parted_print, 0 );
       $ENV{"NO_DRY_RUN"} = "";
 
@@ -63,7 +63,7 @@ sub get_current_disks
       {
         $error =
           &FAI::execute_command(
-          "$FAI::bash_commands{'parted'}} $disk mklabel msdos");
+          "$FAI::system_commands{'parted'}} $disk mklabel msdos");
         next;
       }
 
@@ -134,7 +134,7 @@ sub get_current_disks
     $ENV{"NO_DRY_RUN"} = "1";
     @parted_print = ();
     &FAI::execute_command_std(
-      "$FAI::bash_commands{'parted'}} $disk unit B print",
+      "$FAI::system_commands{'parted'}} $disk unit B print",
       \@parted_print, 0 );
     $ENV{"NO_DRY_RUN"} = "";
 
@@ -182,7 +182,7 @@ sub get_current_disks
     $ENV{"NO_DRY_RUN"} = "1";
     @parted_print = ();
     &FAI::execute_command_std(
-      "$FAI::bash_commands{'parted'}} $disk unit chs print",
+      "$FAI::system_commands{'parted'}} $disk unit chs print",
       \@parted_print, 0 );
     $ENV{"NO_DRY_RUN"} = "";
 

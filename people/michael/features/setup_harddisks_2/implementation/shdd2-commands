@@ -108,7 +108,7 @@ sub build_commands
         else
         {
           push @FAI::commands,
-            "$FAI::bash_commands{'parted'} $disk mklabel $target_label";
+            "$FAI::system_commands{'parted'} $disk mklabel $target_label";
         }
       }
       else
@@ -122,7 +122,7 @@ sub build_commands
             next;
           }
           push @FAI::commands,
-            "$FAI::bash_commands{'parted'} $disk rm $part_id";
+            "$FAI::system_commands{'parted'} $disk rm $part_id";
         }
       }
 
@@ -166,7 +166,7 @@ sub build_commands
             $FAI::configs{$config}{"partitions"}{"size"}{"eff_size"} +
             $next_start - 1;
           push @FAI::commands,
-            "$FAI::bash_commands{'parted'} $disk resize $part_id $next_start"
+            "$FAI::system_commands{'parted'} $disk resize $part_id $next_start"
             . "B "
             . $part_size . "B";
           unless ( $FAI::configs{$config}{"disklabel"} eq "msdos"
@@ -195,7 +195,7 @@ sub build_commands
             $FAI::configs{$config}{"partitions"}{$part_id}{"size"}{"eff_size"} +
             $next_start - 1;
           push @FAI::commands,
-            "$FAI::bash_commands{'parted'} $disk mkpart $part_type $next_start"
+            "$FAI::system_commands{'parted'} $disk mkpart $part_type $next_start"
             . "B "
             . $part_size . "B";
           unless ( $FAI::configs{$config}{"disklabel"} eq "msdos"

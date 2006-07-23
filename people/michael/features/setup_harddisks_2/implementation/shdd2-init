@@ -54,7 +54,6 @@ $ENV{disklist} = "hda
 @FAI::disks = split( /\n/, $ENV{disklist} );
 
 ################################################################################
-#the hash, where we write the disc config we want to have
 #
 # @brief The hash of all configurations specified in the disk_config file
 #
@@ -70,7 +69,6 @@ $ENV{disklist} = "hda
 %FAI::configs = ();
 
 ################################################################################
-#the hash, with information about the actual disc config
 #
 # @brief The current disk configuration
 #
@@ -82,7 +80,6 @@ $ENV{disklist} = "hda
 %FAI::current_config = ();
 
 ################################################################################
-#list of commands
 #
 # @brief The list of commands to be executed
 #
@@ -91,13 +88,15 @@ $ENV{disklist} = "hda
 
 ################################################################################
 #
-# @brief The parted command to be run
+# @brief A map of commands 
+#
+# TODO check for availability, exact version?
 #
 ################################################################################
-$FAI::parted_binary = "/sbin/parted -s";
-
-#list of bash commands
-%FAI::bash_commands = ( parted => "/sbin/parted -s", );
+%FAI::system_commands = {
+  mdadm => "/sbin/mdadm",
+  parted => "/sbin/parted -s"
+};
 
 1;
 

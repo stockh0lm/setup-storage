@@ -65,27 +65,21 @@ sub in_path
 
 ################################################################################
 #
-# @brief our structure, in which we hold informations about existing partitions
-# and partitions we wan't to create a hold in hash of hashes. This debug function
+# @brief The structure, in which we hold informations about existing partitions
+# and partitions we want to create a hold in hash of hashes. This debug function
 # allows to recursivly print such a hash with all keys und subhashes
-# @brief Recursively explore the hash
 #
 # @param hash_ref the reference to the hash, where we want to start printing
 # the hash recursively
-# @param $cmd Command that is to be found in $PATH
 #
-# @param k help variable, is only to be used for the recursion. caller function
-# shoudn't set this one
-#
-# @return returns nothing, is a void function
-# @return 1, if the command is found, else 0
+# @param k A helper variable, is only to be used for the recursion. The caller
+# caller shoudn't set this one
 #
 ################################################################################
 sub print_hash
 {
 
   # This function is for debugging purposes only
-  # only be used in debugging mode, otherwise return silently
   ( $FAI::debug > 0 ) or return 0;
 
   # get the function parameters
