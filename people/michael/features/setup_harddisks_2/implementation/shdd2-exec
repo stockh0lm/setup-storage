@@ -66,20 +66,24 @@ sub execute_command_std       #execute command with standard error handling
 {
   my ( $command, $stdout_ref, $stderr_ref ) = @_;
   my $err = &execute_command( $command, $stdout_ref, $stderr_ref );
-  my $response = &get_error( $err, "response" );
-  my $message  = &get_error( $err, "message" );
-
-  if ( $response eq "die" )
+  unless( $err eq "")
   {
-    die $message;
-  }
+    my $response = &get_error( $err, "response" );
+    my $message  = &get_error( $err, "message" );
 
-  if ( $response eq "warn" )
-  {
-    warn $message;
-  }
+    if ( $response eq "die" )
+    {
+      die $message;
+    }
 
-  return $err;
+    if ( $response eq "warn" )
+    {
+      warn $message;
+    }
+
+    return $err;
+  }
+  return "";
 }
 
 sub execute_command
@@ -102,7 +106,7 @@ sub execute_command
   else
   {
     printf
-"would run command $command, to run in NO_DRY_MODE, please set environment variable NO_DRY_RUN to 1";
+"would run command $command, to run in NO_DRY_MODE, please set environment variable NO_DRY_RUN to 1 \n";
   }
 
   @stderr = <$stderr_fh>;
