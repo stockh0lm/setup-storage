@@ -1,3 +1,28 @@
+fai (2.99.0.5) experimental; urgency=low
+
+  * clean up the code a bit
+  * provide fai.conf with new config-over-nfs syntax
+
+ -- Henning Glawe <glaweh@physik.fu-berlin.de>  Sun, 23 Jul 2006 15:56:43 +0200
+
+fai (2.99.0.4) experimental; urgency=low
+
+  * implement new config syntax
+
+ -- Henning Glawe <glaweh@physik.fu-berlin.de>  Sun, 23 Jul 2006 03:23:19 +0200
+
+fai (2.99.0.3) experimental; urgency=low
+
+  * fix the non-subroutine get-config-dir 
+
+ -- Henning Glawe <glaweh@physik.fu-berlin.de>  Sat, 22 Jul 2006 15:25:38 +0200
+
+fai (2.99.0.2) experimental; urgency=low
+
+  * clean-rcs support
+
+ -- Henning Glawe <glaweh@physik.fu-berlin.de>  Sat, 22 Jul 2006 13:04:47 +0200
+
 fai (3beta) unstable; urgency=low
 
   [ Thomas Lange ]
