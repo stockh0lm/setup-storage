@@ -3,7 +3,7 @@
 
 # get /fai directory, using the method specified in $FAI_CONFIG_METHOD
 
-[ -f /boot/RUNNING_FROM_FAICD ] && mkrw -s 100m $FAI
+mkrw -s 100m $FAI
 # now you have enough time to make changes to the config space
 if [ -n "$fl_wait" ]; then
 	echo "Sleeping. Now you may change the config space in $FAI."
