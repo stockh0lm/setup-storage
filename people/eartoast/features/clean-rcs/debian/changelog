@@ -1,3 +1,12 @@
+fai (2.99.0.6) experimental; urgency=low
+
+  * clean up fai.conf
+  * re-add FAI_CONFIG_DIR to fai.conf for the non-install fai scripts
+    like fai-cd and fai-mirror 
+  * make $FAI always writable before accessing the config space...
+
+ -- Henning Glawe <glaweh@physik.fu-berlin.de>  Mon, 24 Jul 2006 16:25:00 +0200
+
 fai (2.99.0.5) experimental; urgency=low
 
   * clean up the code a bit
