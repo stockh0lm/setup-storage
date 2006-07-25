@@ -1,3 +1,9 @@
+fai (2.99.0.7) experimental; urgency=low
+
+  * call mkrw only if we are running as init-substitute
+
+ -- Henning Glawe <glaweh@physik.fu-berlin.de>  Tue, 25 Jul 2006 13:51:42 +0200
+
 fai (2.99.0.6) experimental; urgency=low
 
   * clean up fai.conf
