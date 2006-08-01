@@ -1,7 +1,12 @@
 #!/bin/bash
 # (c) 2006 Henning Glawe
 
-# get /fai directory, using the method specified in $FAI_CONFIG_METHOD
+### BEGIN SUBROUTINE INFO
+# Provides-Var:
+# Requires-Var:    $FAI_CONFIG_SRC $DO_INIT_TASKS $FAI $rundir
+# Suggests-Var:
+# Short-Description: get $FAI directory from $FAI_CONFIG_SRC
+### END SUBROUTINE INFO
 
 [ $DO_INIT_TASKS -eq 1 ] && mkrw -s 100m $FAI
 # now you have enough time to make changes to the config space

@@ -1,7 +1,11 @@
 #!/bin/bash
-
-# get-fai-cvs -- get fai configuration directory $FAI from a cvs repository.
 # (c) 2002-2006 Henning Glawe
+### BEGIN SUBROUTINE INFO
+# Provides-Var:
+# Requires-Var:    $FAI_CONFIG_SRC $FAI $LOGDIR
+# Suggests-Var:
+# Short-Description: get $FAI from a cvs repository.
+### END SUBROUTINE INFO
 
 pushd &>/dev/null
 
