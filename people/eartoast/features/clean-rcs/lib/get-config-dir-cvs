@@ -7,8 +7,6 @@
 # Short-Description: get $FAI from a cvs repository.
 ### END SUBROUTINE INFO
 
-pushd &>/dev/null
-
 # matched string: "cvs[+ssh]://user@host/path/to/cvsroot module[=tag]"
 PROTOCOL=$(expr match "$FAI_CONFIG_SRC" '\(.*\)://.*')
 CVS_PATH=$(expr match "$FAI_CONFIG_SRC" '.*://\(\S\+\)\s\+.*')
@@ -41,4 +39,3 @@ else
    cvs -q co -P -d $(basename "$FAI") \
      $TAG $CVS_MODULE > $LOGDIR/getconf.log
 fi
-popd &>/dev/null
