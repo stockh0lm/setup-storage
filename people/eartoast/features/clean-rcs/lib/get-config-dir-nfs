@@ -1,5 +1,4 @@
 #!/bin/bash
-# (c) 2006 Henning Glawe
 ### BEGIN SUBROUTINE INFO
 # Provides-Var:
 # Requires-Var:    $FAI_CONFIG_SRC $FAI
