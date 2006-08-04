@@ -104,21 +104,82 @@ so as to suit DOS.
 
 =head1 CONFIGURATION FILE FORMAT
 
-Lines beginning with C<#> are comments.
+FIXME - this is now a new format.  This section of the documentation
+needs updating.
 
-Here is an example to give you a hint;
+For now, here's the EBNF grammar:
 
-   # Configure a system with a single IDE hard disk
-   disk_config hda
-       primary   /       256    rw,errors=remount-ro    ;-j
-       primary   swap    1024
-       logical   /usr    2048
-       logical   /var    600
-       logical   /home   0-
+ file ::= <lines> EOF 
 
-Each disk in the system to be set up should have a B<disk_config>
-section for it.  Then, each wanted partition is listed along with the
-desired size, and any options.
+ lines ::= EOL 
+          /* empty lines or whitespace only */
+          | <comment> EOL 
+          | <config> EOL 
+
+ comment ::= #.* 
+
+ config ::= disk_config lvm 
+           | disk_config raid
+           | disk_config end 
+           | disk_config disk[[:digit:]]+( <option>)*
+           | disk_config [^[:space:]]+( <option>)*
+           /* fully qualified device-path or short form, like hda, whereby full
+            * path is assumed to be /dev/hda */
+           | <volume>
+
+ option ::= /* empty */
+           | preserve:[[:digit:]]+(,[[:digit:]]+)*
+           /* preserve partitions */
+           | disklabel:(msdos|sun)
+           /* write a disklabel - default is msdos */
+           | bootable:[[:digit:]]
+           /* mark a partition bootable, default is / */
+           | virtual
+           /* do not assume the disk to be a physical device, use with xen */
+
+ volume ::= <type> <mountpoint> <size> <filesystem> <mount_options> <fs_options>
+           | vg <name> <size>
+           /* lvm vg */
+
+ type ::= primary
+         /* for physical disks only */
+         | logical
+         /* for physical disks only */
+         | raid[015]
+         /* raid level */
+         | [^/[:space:]]+-[^/[:space:]]+
+         /* lvm logical volume: vg name and lv name*/
+
+ mountpoint ::= -
+               /* do not mount */
+               | swap
+               /* swap space */
+               | /[^[:space:]]*
+               /* fully qualified path */
+
+ name ::= [^/[:space:]]+
+         /* lvm volume group name */
+
+ size ::= [[:digit:]]+%?(-[[:digit:]]+%?)?(:resize)?
+         /* size in megabytes or %, possibly given as a range; physical
+          * partitions or lvm logical volumes only */
+         | -[[:digit:]]+%?(:resize)?
+         /* size in megabytes or % given as upper limit; physical partitions 
+          * or lvm logical volumes only */
+         | preserve[[:digit:]]+
+         /* do not modify this partition */
+         | [^,:[:space:]]+(:(spare|missing))*(,[^,:[:space:]]+(:(spare|missing))*)*
+         /* devices and options for a raid or lvm vg */
+
+ mount_options ::= [^[:space:]]+
+
+ filesystem ::= -
+               | swap
+               | [^[:space:]]
+               /* mkfs.xxx must exist */
+
+ fs_options ::= .*
+               /* options appended to mkfs.xxx call */
 
 =over
 
@@ -311,6 +372,7 @@ For examples, see F</usr/share/doc/fai/examples>.
 
 my $test;
 my $verbose;
+$verbose = $ENV{verbose} if $ENV{verbose};
 
 $| = 1;                     # flush always
 
@@ -319,8 +381,7 @@ $| = 1;                     # flush always
 #****************************************************
 
 use constant PROGNAME => "setup_harddisks";
-
-my $Version = "0.16fai-sv";
+my $Version = "version 0.38fai-lvmraid";
 
 my $megabyte = 1024 * 1024;    # guess
 my $MegOfNulls = "\0" x (2**20);
@@ -328,9 +389,10 @@ my $MegOfNulls = "\0" x (2**20);
 my $sectorsize = 512;
 
 # used programs
-my $g_sfdisk_options = "-q";     # be quiet
+my $g_sfdisk_options = "-q $ENV{sfdisk}";     # be quiet
 my $g_mke2fs_options = "-q";     # be quiet
 my $g_mkreiserfs_options = "";
+my $g_mkxfs_options = "-f";
 my $g_mkswap_options = "";
 
 # FAI input variables
@@ -361,6 +423,7 @@ my $g_NofNotMoPart = 0;      # number of not mountet partitions
 my %g_DiskMountpoints = ();  # mountpoints of every disk. separated by spaces
 my %g_MountpointPart = ();   # partition of every mountpoint. e.g. "hda2"
 my %g_PartMountpoint = ();   # mountpoint of every partition.
+my @g_swaplist;              # list of all swpa devices
 
 # size of partition/mountpoint
 my %g_MPMinSize = ();        # minimum size of mountpoint in units
@@ -405,9 +468,8 @@ USAGE: [-X]                     no test, your harddisks will be formatted
        [-d]                     default: no DOS alignment
 ";
 
-$verbose = $opt_v;
-
-say "Version V$Version starting";
+$verbose ||= $opt_v;
+print "setup_harddisks $Version\n";
 if (defined $opt_X){
     $test = 0;
 } else {
@@ -446,8 +508,8 @@ sub PartName {
     my ($disk, $partno) = @_;
     my $ppath;
     for ($disk) {
-	/^[a-z]+$/ and $ppath = "${disk}${partno}";
-	/\d$/ and $ppath = "${disk}p${partno}";
+      /^(i2o\/)?[a-z]+$/ and $ppath = "${disk}${partno}";
+      /\d$/ and $ppath = "${disk}p${partno}";
     }
     return $ppath;
 }
@@ -473,12 +535,19 @@ cylinder boundaries (DOS alignment) are recorded.
 sub GetAllDisks{
 
     my $line=""; my $disk=""; my $device=""; my $rest; my $result; my $divi;
+    my $devdisklist="";
 
-    my @disks;
+    my (@disks, %parts);
+    #x#
+    #x# # FIXME - hardcoded list required because util-linux is lame
+    #x# $result = `sh -c "LC_ALL=C sfdisk /dev/sd[a-z] /dev/hd[a-z] -g -q" 2>&1`;
 
-    # FIXME - hardcoded list required because util-linux is lame
-    $result = `sh -c "LC_ALL=C sfdisk /dev/sd[a-z] /dev/hd[a-z] -g -q" 2>&1`;
-
+    foreach my $device(split(/\s/,$ENV{disklist})){
+      $devdisklist = "$devdisklist /dev/$device";
+    }
+    print "Probing disks: $devdisklist\n";
+    print "Disks found:";
+    $result = `sh -c "LC_ALL=C sfdisk -g -q $devdisklist"`;
     foreach my $line(split(/\n/,$result)){
 
 	if (($disk, my ($cylinders, $heads, $sectors)) =
@@ -498,21 +567,13 @@ sub GetAllDisks{
 	}
 
     }
-
     say "Disks found: @disks";
 
-    $result = `sh -c "LC_ALL=C sfdisk -d -q /dev/sd[a-z] /dev/hd[a-z] " 2>&1`;
-
-    my %parts;
-
+    $result = `sh -c "LC_ALL=C sfdisk -d -q $devdisklist"`;
     foreach my $line(split(/\n/,$result)){
-
-	if ($line =~ m{\043\s partition \s table \s of \s
-		       /dev/(    cciss/c\dd\d   # new COMPAQ arrays
-		            |    ida/c\dd\d     # older COMPAQ arrays
-                            |    rd/c\dd\d      # ?
-                            |    [a-z]+         # everything else
-		           )}ix){
+#	if($line =~ m'# partition table of /dev/(cciss/c\dd\d|ida/c\dd\d|rd/c\dd\d|[a-z]+)'i){
+# now just match all devices
+	if($line =~ m'# partition table of /dev/(\S+)$'i){
 	   $disk = $1;
 	   $parts{$disk} = [ ];
         }
@@ -565,7 +626,7 @@ sub ParseAllConfigFiles{
     my $ConfigFileExists = 0;  # no config file parsed yet
     if ($g_ConfigFileName){
 	# Read config filename
-	&ParseConfigFile($g_ConfigFileName);
+	&jParseConfigFile($g_ConfigFileName);
 	$ConfigFileExists = 1;
     } else {
 	# Read classes
@@ -581,18 +642,87 @@ sub ParseAllConfigFiles{
     $ConfigFileExists or barf "no config file found";
 }
 
+#****************************************************
+# map "disk_config first" to real disk device
+#****************************************************
+sub mapdisk {
+
+  my ($disk) = @_;
+  my @dlist = split /\s+/,$ENV{disklist};
+  unshift @dlist, "nodisk"; # add dummy element, so disk1 will be mapped to dlist[1]
+
+  if ($disk =~ /disk(\d+)/) {
+    my $n = $1;
+    print "Mapping disk name disk$n to $dlist[$n]\n";
+    $disk = $dlist[$n];
+  }
+  return $disk;
+}
+
 #-------------------------------------------------------------------------------------------------------------------------
 #  ParseConfigFile($filename)
 #
 # Parses the passed configuration file and stacks up the globals.
 #-------------------------------------------------------------------------------------------------------------------------
+#use Parse::RecDescent;
+
 sub ParseConfigFile{
 
     my $config_file = shift;
 
     open (FILE, "$config_file") or die "error opening config file: $config_file; $!\n";
 
+    if ( 0 ) {
     say "parsing config file: $config_file";
+    my $Parser = Parse::RecDescent->new(q{
+        file: line(s?) /\Z/
+        line: /$/
+            | comment /$/
+            | config /$/
+        comment: /\s*#.*$/
+        config:
+              'disk_config' disk_config_arg
+            | volume
+        disk_config_arg:
+              'raid'
+            | 'lvm'
+            | /disk\d+/ option(s?)
+            | /\S/ option(s?)
+        option:
+              /preserve:\d+(,\d+)*/
+            | /disklabel:(msdos|sun)/
+            | /bootable:\d/
+            | 'virtual'
+        volume:
+              type mountpoint size filesystem mount_options fs_options
+            | 'vg' name size
+        type: 'primary'
+            | 'logical'
+            | /raid[0156]/
+            | m{[^/\s]+-[^/\s]+}
+        mountpoint:
+              '-'
+            | 'swap'
+            | m{/\S*}
+        name: /\S+/
+        size: /\d+%?(-\d+%?)?(:resize)?/
+            | /-\d+%?(:resize)?/
+            | /preserve\d+/
+            | /[^,:\s]+(:(spare|missing))*(,[^,:\s]+(:(spare|missing))*)*/
+        mount_options:
+              /\S+/
+        filesystem:
+              '-'
+            | 'swap'
+            | \S+
+              { if ( !in_path("mkfs.$item[0]") ) {
+                    die "unknown/invalid filesystem type '$item[0]'"
+                }
+              }
+        fs_options:
+              /.*$/
+    });
+    }
 
     my $line_no = 0;
     my $disk = "";
@@ -642,12 +772,8 @@ sub ParseConfigFile{
 
 		$g_DiskSize{$vg_name} = $g_lvm{$vg_name}->{MaxSize};
 
-	    } elsif ( ($disk) = ($paras =~ m{^(?:/dev/)?
-					(      cciss/c\dd\d
-					|      ida/c\dd\d
-					|      rd/c\dd\d
-					|      [a-z]+
-				        )}ix )){
+	    } elsif ( ($disk) = ($paras =~ m{^(?:/dev/)?(\S+)}i )){
+		$disk = mapdisk($disk);
 		$vg = "";
 
 		barf("more than one configuration of disk $disk in $config_file") if exists $g_DiskMountpoints{$disk};
@@ -662,7 +788,7 @@ sub ParseConfigFile{
 				primary => 0,
 				no_more_logicals => 0,
 				last_pres_part => "",
-				extmp => "extended$disk" },
+				extmp => "extended$disk" };
 
 	    } else {
 		barf("${config_file}"."[$line_no]: disk unrecognised or invalid: '$paras'");
@@ -673,7 +799,7 @@ sub ParseConfigFile{
 
 	    # primary|partition - command
 	    if (my ($command, $lv_name, $mountpoint, $size, $mntop, $options)
-		= ($line =~ m{^(primary|logical|lv)
+		= ($line =~ m{^\s*(primary|logical|lv)
 			      (?:\s*\(\s*(\S+)\s*\))?  # (lvname)
 			      (?: \s+ (\S+) \s*      # mount point
 			          (?: (\S+) \s*          # size
@@ -775,8 +901,9 @@ sub ParseConfigFile{
 			$g_DiskMountpoints{$disk} .= " $extmp";
 		    }
 
-		    barf("${config_file}"."[$line_no]: only primary partitions can be bootable")
-			if ($options =~ /\bboot\b/i);
+		    # commented out on HEAD?
+		    #barf("${config_file}"."[$line_no]: only primary partitions can be bootable")
+		    #	if ($options =~ /\bboot\b/i);
 
 		} elsif ($command eq "lv") {
 
@@ -856,7 +983,7 @@ sub ParseConfigFile{
 			$g_MPPreserve{$mountpoint} = "";
 			if ($mountpoint =~ m{^/}) {
 			    # If not preserve we must know the filesystemtype (why?)
-			    ($options !~ m{\b(ext2|ext3|auto|swap|dosfat16|winfat32|reiser)\b}i )
+			    ($options !~ m{\b(ext2|ext3|auto|swap|dosfat16|winfat32|reiser|xfs)\b}i )
 				&& ($options .= " auto");
 			}
 		    }
@@ -1006,7 +1133,7 @@ sub BuildNewPartTables{
 
     my ($disk, $mountpoint, $part, $PrimaryMP, $LogicalMP);
 
-    mutter "building partition tables";
+    mutter "Building Partition Tables";
 
     # Build PartMountpoint array
     foreach $disk (keys %g_DiskMountpoints) {
@@ -1260,7 +1387,7 @@ sub PartitionPersfdisk {
     my ($disk, $mountpoint, $line, $part, $PrimaryNo);
     my ($command, $result, $filename, $number);
 
-    say "partitioning with sfdisk";
+    say "Creating partition table(s): ";
 
     foreach $disk (keys %g_DiskMountpoints) {
 
@@ -1319,10 +1446,10 @@ sub PartitionPersfdisk {
 
 	}
 
-	print $g_sfdiskTables{$disk} if $needs_change;
+	print $g_sfdiskTables{$disk}.($verbose>0?":\n":"") if $needs_change;
 
 	my $tmp_dir = $ENV{LOGDIR} || "/tmp";
-	$filename = ( "$tmp_dir/"
+	$filename = ( "$tmp_dir/partition."
 		      . ( ($disk=~ m{/})
 			  ? join('_', split('/', $disk))
 			  : $disk)
@@ -1372,6 +1499,8 @@ sub PartitionPersfdisk {
 		mutter "running: $command";
 		$result = `sh -c "$command"`;
 		barf "sfdisk failed; output:\n$result" if $?;
+		mutter "now waiting for udev to notice change";
+		-f "/etc/init.d/udev" && sleep 10; # when using udev, it takes some time until the device entries for each partition are available
 	    } else {
 		say "partition table for $disk unchanged";
 	    }
@@ -1673,7 +1802,7 @@ sub FormatDisks{
     my ($disk, $device, $mountpoint, $mountpointname, $command,
 	$result);
 
-    say "formatting disks";
+    say "Creating file systems:";
 
     foreach $disk (keys %g_DiskMountpoints) {
 	next if exists $g_lvm{$disk};
@@ -1702,7 +1831,7 @@ sub FormatMountPoint{
     if ( $g_MPPreserve{$mountpoint} &&
 	 ($g_MPOptions{$mountpoint} !~ /\bformat\b/i)){
 
-	say("preserving partition $device".
+	say("Preserving Partition $device".
 	    ($mountpoint =~ /^no/
 	     ? " with no mountpoint\n"
 	     : " with mountpoint $mountpoint\n"));
@@ -1732,7 +1861,7 @@ sub FormatMountPoint{
 
 	($g_MPOptions{$mountpoint} =~ /(\-c)\b/i)
 	    && ($command .= " $1");
-
+	push @g_swaplist, "/dev/$device";
 	$command .= " /dev/$device";
 
 	mutter("running: $command");
@@ -1775,6 +1904,19 @@ sub FormatMountPoint{
 
 	$command .= " /dev/$device";
 
+	mutter "running: $command\n";
+	if ($test != 1){
+	    $result = `$command`;
+	    barf "`$command' failed; output:\n$result" if $?;
+	}
+    }
+
+    elsif ( $g_MPOptions{$mountpoint} =~ /\bxfs\b/i) {
+
+	say "making XFS filesystem on $device";
+
+	$command = "mkfs.xfs $g_mkxfs_options";
+	$command .= " /dev/$device";
 	mutter "running: $command\n";
 	if ($test != 1){
 	    $result = `$command`;
@@ -1826,9 +1968,6 @@ sub BuildfstabLine{
 sub WriteFSTab{
 
     my ($FileSystemTab, $device, $type, $filename);
-
-    say "writing fstab";
-
     $FileSystemTab  = << "EOM";
 # /etc/fstab: static file system information.
 #
@@ -1838,6 +1977,7 @@ EOM
     # 1. /
     $type = "auto";
     ($g_MPOptions{'/'} =~ /\b(reiser)\b/i) && ($type = "reiserfs");
+    ($g_MPOptions{'/'} =~ /\b(xfs)\b/i) && ($type = "xfs");
     ($g_MPOptions{'/'} =~ /\b(ext3)\b/i) && ($type = "ext3");
     ($g_MPOptions{'/'} =~ /\b(ext2)\b/i) && ($type = "ext2");
 
@@ -1868,11 +2008,13 @@ EOM
 	next unless $mountpoint =~ m{^/.+};
 
 	$device = $g_MountpointPart{$mountpoint};
-	$type = "auto";
+	$type = "ext2";
 	($g_MPOptions{$mountpoint} =~ /\b(dosfat16|winfat32)\b/i)
 	    && ($type = "vfat");
 	($g_MPOptions{$mountpoint} =~ /\b(reiser)\b/i)
 	    && ($type = "reiserfs");
+	($g_MPOptions{$mountpoint} =~ /\b(xfs)\b/i)
+	    && ($type = "xfs");
 	($g_MPOptions{$mountpoint} =~ /\b(ext3)\b/i)
 	    && ($type = "ext3");
 	($g_MPOptions{$mountpoint} =~ /\b(ext2)\b/i)
@@ -1887,7 +2029,7 @@ EOM
     my ($tmp_dir) = $ENV{LOGDIR} || "/tmp";
     $filename = "$tmp_dir/fstab";
 
-    print $FileSystemTab;
+    mutter "fstab:\n".$FileSystemTab;
 
     if($test != 1){
 	open(FILE, ">$filename")
@@ -1911,8 +2053,9 @@ This includes:
 
 sub WriteFAIVariables{
 
-    say "writing FAI variables to file $g_FAIOutputFile";
+    mutter "Writing FAI variables to file $g_FAIOutputFile";
     return if $test;
+    my $swaps = join ' ',@g_swaplist;
 
     open(FILE, ">$g_FAIOutputFile")
 	or barf "unable to write to $g_FAIOutputFile; $!";
@@ -1921,6 +2064,7 @@ sub WriteFAIVariables{
 BOOT_DEVICE=/dev/$g_BOOT_DEVICE
 ROOT_PARTITION=/dev/$g_MountpointPart{'/'}
 BOOT_PARTITION=/dev/$g_BootPartition
+SWAPLIST="$swaps"
 EOM
 
     close(FILE);
