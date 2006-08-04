@@ -194,6 +194,19 @@ instance, "hda" or "sdc".
 If the special keyword B<end> is used, parsing of the configration
 file halts.
 
+=item B<disk_reserve> [ I<SIZE> ( I<unit> ) ]
+
+Specify that some of this disk should not be allocated to any
+partition.  I<unit> can be C<G>, C<M> (the default), or C<%>
+(specifying a percentage).  This is always rounded down to the nearest
+cylinder.
+
+This is primarily useful where you can't be sure to get the same disk
+model as a replacement for a RAID array.  It might be slightly
+smaller, so here you get to specify the trade-off between less disk
+space and less likelihood of a disk replacement not able to be added
+to your RAID array.
+
 =item B<primary> | B<logical> ...
 
 B<primary> and B<logical> define partitions.
@@ -408,6 +421,7 @@ my $g_FAIOutputFile = $ENV{diskvar}; # write output variables to this file
 # old partition tables
 my %g_DiskUnits = ();        # unit size of each disk in sectors
 my %g_DiskSize = ();         # size of every disk in units
+my %g_DiskReserve = ();      # cylinders to reserve from allocation
 my %g_SectorsAlignment = ();  # tracksize in sectors
 my %g_PartOldBoot = ();      # partition was bootable. "yes"=yes
 my %g_PartOldStart = ();     # old startunit of partition
@@ -931,8 +945,8 @@ sub ParseConfigFile{
 		$g_DiskMountpoints{$disk||$vg} .= " $mountpoint";
 
 		# size
-		my ($number, $Min, $Max);
-		if ( ($number, $Min, $Max) = ($size =~ /^preserve(\d+)$|^(\d*)\-?(\d*)$/i)) {
+		my ($number, $Min, $is_range, $Max);
+		if ( ($number, $Min, $is_range, $Max) = ($size =~ /^preserve(\d+)$|^(\d*)(\-)?(\d*)$/i)) {
 
 		    if ($number) {
 			barf("LVs cannot currently be preserved.") if $vg;
@@ -994,7 +1008,11 @@ sub ParseConfigFile{
 
 		my $disk_max = ($g_DiskSize{$disk || $vg} * $chunk);
 		say (($disk||$vg).": Disk size is $g_DiskSize{$disk || $vg} (chunks are $chunk) - total $disk_max");
-		$Max ||= ( $Min || ($disk_max / $megabyte) );
+                if ($is_range) {
+                    $Max ||= int($disk_max / $megabyte);
+                } else {
+                    $Max = $Min;
+                }
 		say (($disk||$vg).": Max is $Max");
 		$Min ||= 1;
 
@@ -1091,9 +1109,22 @@ sub ParseConfigFile{
 		barf("${config_file}"."[$line_no]: command vg_extent_size only valid in a VG definition")
 		    if scalar(keys(%{$g_lvm{$vg}->{lvs}}));
 
-		$g_DiskSize{$vg} = $g_DiskSize{$vg} << (10 - $1);
+		$g_DiskSize{$vg} >>= ($1 - 10);
 		$g_DiskUnits{$vg} = (4096 << $1) / $sectorsize;
 
+            } elsif ($line =~ m{^\s*disk_reserve\s*(?i:(\d+)(?:([mg])b?)?|(\d+(?:\.\d+)?)%)\s*$}) {
+                my ($size, $unit, $pc) = ($1, $2, $3);
+
+                if ($size) {
+                    $unit ||= "m";
+                    $size = $size * (lc($unit) eq "g" ? 2**30 : 2**20 )
+			/ ($g_DiskUnits{$disk || $vg} * $sectorsize );
+                }
+                elsif ($pc) {
+                    $size = $g_DiskSize{$disk || $vg} * ($pc/100);
+                }
+                $g_DiskReserve{$disk} = int( $size );
+                mutter("$disk: reserving $g_DiskReserve{$disk} cylinders");
 	    }
 	}
     }
@@ -1241,7 +1272,7 @@ sub SetPartitionPositions{
 	}
     }
 
-    $EndPos = $g_DiskSize{$disk} - 1;
+    $EndPos = $g_DiskSize{$disk} - 1 - $g_DiskReserve{$disk}||0;
 
     &SetGroupPos($DynGroup,$StartPos,$EndPos);
 
