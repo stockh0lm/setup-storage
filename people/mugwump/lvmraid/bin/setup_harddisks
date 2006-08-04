@@ -389,7 +389,7 @@ my $MegOfNulls = "\0" x (2**20);
 my $sectorsize = 512;
 
 # used programs
-my $g_sfdisk_options = "-q $ENV{sfdisk}";     # be quiet
+my $g_sfdisk_options = join(" ",grep { defined } "-q", $ENV{sfdisk});     # be quiet
 my $g_mke2fs_options = "-q";     # be quiet
 my $g_mkreiserfs_options = "";
 my $g_mkxfs_options = "-f";
@@ -546,7 +546,6 @@ sub GetAllDisks{
       $devdisklist = "$devdisklist /dev/$device";
     }
     print "Probing disks: $devdisklist\n";
-    print "Disks found:";
     $result = `sh -c "LC_ALL=C sfdisk -g -q $devdisklist"`;
     foreach my $line(split(/\n/,$result)){
 
@@ -890,6 +889,8 @@ sub ParseConfigFile{
 			$g_MPID{$extmp} = 5;
 
 			my $p = \$disk_state->{primary};
+
+		    	$$p++;
 
 			# ??
 			# ($$p == 3) && ($disk =~ /^sd/) && ($$p++);
@@ -1246,7 +1247,7 @@ sub SetPartitionPositions{
 
     # set FAT12 for really small DOS partitions
     foreach $mountpoint (split(/\s/, $g_DiskMountpoints{$disk})) {
-
+    	next if $mountpoint =~ m{^extended};
 	($g_MPOptions{$mountpoint} =~ /\bdosfat16\b/i)
 	    && (($g_MPSize{$mountpoint} * $g_DiskUnits{$disk}
 		 * $sectorsize) < 32 * $megabyte)
@@ -1815,6 +1816,7 @@ sub FormatDisks{
 
 sub FormatMountPoint{
     my $mountpoint = shift;
+    return if $mountpoint =~ m{^extended};
 
     my $device = $g_MountpointPart{$mountpoint};
     my ($mountpointname, $command, $result);
@@ -1947,7 +1949,7 @@ sub FormatMountPoint{
 
 	$command .= " /dev/$device";
 
-	mutter "running: $command\n";
+	mutter "running: $command";
 	if ($test != 1){
 	    $result = `$command`;
 	    barf "`$command' failed; output:\n$result" if $?;
