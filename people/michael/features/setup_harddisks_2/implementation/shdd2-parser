@@ -10,7 +10,7 @@
 # WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
 # General Public License for more details.
-# 
+#
 # A copy of the GNU General Public License is available as
 # `/usr/share/common-licences/GPL' in the Debian GNU/Linux distribution
 # or on the World Wide Web at http://www.gnu.org/copyleft/gpl.html. You
@@ -189,6 +189,8 @@ sub init_part_config
   # the type of the partition to be created
   my ($type) = @_;
 
+  # type must either be primary or logical, nothing else may be accepted by the
+  # parser
   ( $type eq "primary" || $type eq "logical" ) or die "INTERNAL PARSER ERROR\n";
 
   # check that a physical device is being configured; logical partitions are
@@ -237,7 +239,7 @@ sub init_part_config
     # no further checks for the disk label being msdos have to be performed in
     # this branch, it has been ensured above
 
-    # find the index of the new partition, initialise it to the highest current index
+# find the index of the new partition, initialise it to the highest current index
     foreach
       my $part_id ( sort keys %{ $FAI::configs{$FAI::device}{"partitions"} } )
     {
@@ -622,6 +624,7 @@ $FAI::Parser = Parse::RecDescent->new(
 ################################################################################
 sub run_parser
 {
+
   # read <STDIN> to a single string (not a list), thus $/ has to be unset
   my $ifs = $/;
   undef $/;

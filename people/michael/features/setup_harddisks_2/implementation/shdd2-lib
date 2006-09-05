@@ -50,11 +50,8 @@ sub in_path
   # initialize the parameter
   my ($cmd) = @_;
 
-  # split $PATH into its components
-  my @path_list = split( ":", $ENV{"PATH"} );
-
-  # search all components of $PATH
-  foreach my $p (@path_list)
+  # split $PATH into its components, search all of its components
+  foreach my $p ( split( ":", $ENV{"PATH"} ) )
   {
 
     # and test for $cmd being executable

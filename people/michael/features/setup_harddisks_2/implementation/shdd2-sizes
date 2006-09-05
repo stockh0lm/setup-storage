@@ -83,7 +83,8 @@ sub get_current_disks
     # reset NO_DRY_RUN
     $ENV{"NO_DRY_RUN"} = $no_dry_run;
 
-# parted_2 happens when the disk has no disk label. then, parted provides no information about the disk
+    # parted_2 happens when the disk has no disk label. then, parted provides no
+    # information about the disk
     if ( $error eq "parted_2" )
     {
 

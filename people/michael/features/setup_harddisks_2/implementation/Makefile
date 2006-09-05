@@ -6,6 +6,7 @@ FILES = shdd2 \
 	shdd2-fstab \
 	shdd2-init \
 	shdd2-lib \
+	shdd2-parser \
 	shdd2-sizes
 
 tidy:

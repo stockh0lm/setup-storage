@@ -51,8 +51,8 @@ package FAI;
 ################################################################################
 $FAI::error_codes = [
   {
-    error        => "parted_1",
-    message      => "Parted produced error. Couldn't remove Partition",
+    error   => "parted_1",
+    message => "Parted produced error. Couldn't remove Partition",
     stderr_regex =>
       ".*Error: Could not stat device rm - No such file or directory.*",
     stdout_regex => "",
@@ -68,8 +68,8 @@ $FAI::error_codes = [
     response     => "die",
   },
   {
-    error        => "parted_3",
-    message      => "Parted produced error. Could not open disk",
+    error   => "parted_3",
+    message => "Parted produced error. Could not open disk",
     stderr_regex =>
       ".*Error: Could not stat device .* - No such file or directory.*",
     stdout_regex => "",
