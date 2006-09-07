@@ -4,7 +4,7 @@ Priority: extra
 Maintainer: Holger Levsen <debian@layer-acht.org>
 Uploaders: Thomas Lange <lange@debian.org>
 Standards-Version: 3.7.2
-Build-Depends: linux-tree-2.6.16, modutils, kernel-package, debhelper (>= 4), bin86, fakeroot, module-init-tools
+Build-Depends: linux-tree-2.6.17, modutils, kernel-package, debhelper (>= 4), bin86, fakeroot, module-init-tools
 
 Package: fai-kernels
 Architecture: i386 powerpc amd64

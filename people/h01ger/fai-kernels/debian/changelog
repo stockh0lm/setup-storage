@@ -1,3 +1,25 @@
+fai-kernels (1.12) unstable; urgency=low
+
+  * reverted 1.11-2 as the NMU was a.) incomplete (only i386), b.) included
+    cruft and unmentioned changes, c.) I had most changes in SVN anyway and d.)
+    got additional bonus points for not sending the patches to the BTS nor 
+    opening a bug for the NMU
+  * switched to 2.6.17
+  * added CONFIG_USB_HIDINPUT=y to amd64 and i386 (Closes: #385435)
+  * enabled some more SCSI modules on i386, amd64 and powerpc (Closes: #381494)
+
+ -- Holger Levsen <debian@layer-acht.org>  Sat,  2 Sep 2006 00:26:23 +0200
+
+fai-kernels (1.11.2) unstable; urgency=low
+
+  * build with CONFIG_SKGE and CONFIG_SKY2 driver Marvell/Yukon gigabit
+    ethernet cards support on i386 (closes: #385613).
+  * build with CONFIG_USB_HIDINPUT driver for USB keyboards on i386
+    (closes: #385435).
+  * added myself as uploader
+
+ -- Cyril Bouthors <cyril@bouthors.org>  Sat,  2 Sep 2006 14:41:27 +0300
+
 fai-kernels (1.11.1) unstable; urgency=low
 
   * build SATA_SIS as a module on i386 (Closes: #378021)
