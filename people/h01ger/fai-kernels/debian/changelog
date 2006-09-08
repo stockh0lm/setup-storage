@@ -4,7 +4,7 @@ fai-kernels (1.12) unstable; urgency=low
     cruft and unmentioned changes, c.) I had most changes in SVN anyway and d.)
     got additional bonus points for not sending the patches to the BTS nor 
     opening a bug for the NMU
-  * switched to 2.6.17
+  * switched images and configs to 2.6.17
   * added CONFIG_USB_HIDINPUT=y to amd64 and i386 (Closes: #385435)
   * enabled some more SCSI modules on i386, amd64 and powerpc (Closes: #381494)
 
