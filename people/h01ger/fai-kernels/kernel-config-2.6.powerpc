@@ -576,7 +576,7 @@ CONFIG_VIA_RHINE=y
 # CONFIG_VIA_VELOCITY is not set
 # CONFIG_TIGON3 is not set
 # CONFIG_BNX2 is not set
-# CONFIG_MV643XX_ETH is not set
+CONFIG_MV643XX_ETH=y
 
 #
 # Ethernet (10000 Mbit)
