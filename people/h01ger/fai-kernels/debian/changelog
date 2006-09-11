@@ -7,10 +7,11 @@ fai-kernels (1.12) unstable; urgency=low
   * switched images and configs to 2.6.17
   * added CONFIG_USB_HIDINPUT=y to amd64 and i386 (Closes: #385435)
   * enabled some more SCSI modules on i386, amd64 and powerpc (Closes: #381494)
-  * enabled CONFIG_SKGE and CONFIG_SKY2 on i386 and amd64 (Closes: 385613)
+  * enabled CONFIG_SKGE and CONFIG_SKY2 on i386 and amd64 (Closes: #385613)
   * enabled CONFIG_MV643XX_ETH on powerpc
+  * enabled CONFIG_NETLINK on i386, amd64 and powerpc (Closes: #380611)
 
- -- Holger Levsen <debian@layer-acht.org>  Sat,  2 Sep 2006 00:26:23 +0200
+ -- Holger Levsen <debian@layer-acht.org>  Mon, 11 Sep 2006 12:07:23 +0200
 
 fai-kernels (1.11.2) unstable; urgency=low
 

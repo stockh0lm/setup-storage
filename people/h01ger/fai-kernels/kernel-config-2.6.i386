@@ -1,7 +1,7 @@
 #
 # Automatically generated make config: don't edit
-# Linux kernel version: 2.6.17-fai-kernels
-# Fri Sep  8 22:42:20 2006
+# Linux kernel version: 2.6.17
+# Sat Sep  9 00:30:09 2006
 #
 CONFIG_X86_32=y
 CONFIG_SEMAPHORE_SLEEPERS=y
@@ -296,7 +296,9 @@ CONFIG_NETFILTER=y
 #
 # Core Netfilter Configuration
 #
-# CONFIG_NETFILTER_NETLINK is not set
+CONFIG_NETFILTER_NETLINK=m
+# CONFIG_NETFILTER_NETLINK_QUEUE is not set
+# CONFIG_NETFILTER_NETLINK_LOG is not set
 # CONFIG_NETFILTER_XTABLES is not set
 
 #
@@ -306,6 +308,7 @@ CONFIG_IP_NF_CONNTRACK=m
 # CONFIG_IP_NF_CT_ACCT is not set
 # CONFIG_IP_NF_CONNTRACK_MARK is not set
 # CONFIG_IP_NF_CONNTRACK_EVENTS is not set
+# CONFIG_IP_NF_CONNTRACK_NETLINK is not set
 # CONFIG_IP_NF_CT_PROTO_SCTP is not set
 CONFIG_IP_NF_FTP=m
 CONFIG_IP_NF_IRC=m
