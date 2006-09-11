@@ -2026,10 +2026,12 @@ EOM
                            "none", "swap",
 			   $g_MPfstaboptions{$mountpoint}, 0, 0);
     }
-    # 2.5. /tmp
+    # 2.5. /tmp - set up tmpfs, unless they defined /tmp explicitly.
+    #      If you don't like that, tough!  :P
     $FileSystemTab .=
             BuildfstabLine("swap", "/tmp", "tmpfs",
-                           "defaults", 0, 0);
+                           "defaults", 0, 0)
+		unless $g_MountpointPart{'/tmp'};
 
     # 3. /proc
     $FileSystemTab .=
