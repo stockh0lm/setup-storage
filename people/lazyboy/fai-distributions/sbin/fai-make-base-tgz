@@ -1,7 +1,30 @@
 #!/bin/sh
+
+# this script should help to create base system images for use in FAI
+# installations.
+# even if debsoostrap seems to have scripts for multiple different
+# debian-based distributions, it most often does not succeed, for example to
+# create etch base system from sarge, create debian base system from ubuntu,
+# etc.
+# in the end, you need the actual derbootstrap of this distribution.
+#
+# thsi script should help lazy people (so, at least myself :) ) to make it
+# easy to create them anyway, also without installing and re-installing the
+# currently needed deboostrap system.
+#
+# we have multiple possibilities:
+# - download a ready made base system image for the
+#   distribution wanted from a default location, or one given at the command
+#   line
+# - create a new base system  with 
+#   - a debootstrap downloaded from the default location
+#   - a debootstrap downloaded from a given location
+#
+# TODO: add the possibility to just download a readily created base image?
+
+
 PATH=/usr/local/bin:/usr/local/sbin:/bin:/sbin:/usr/bin:/usr/sbin
 
-DISTRIBUTION="ubuntu_breezy"
 
 if [ `id -u` -ne 0 ]; then
     echo "Run this program as root."
@@ -9,8 +32,9 @@ if [ `id -u` -ne 0 ]; then
 fi
 
 # option e currently does nothing
-while getopts vc:f: opt ; do
+while getopts vc:f:d: opt ; do
     case "$opt" in
+        d) DISTRIBUTION=$OPTARG ;;
         c) cfdir=$OPTARG ;;
         v) verbose=1 ; v=-v ;;
         f) cfg=$OPTARG ;;
@@ -34,6 +58,10 @@ else
     . $cfdir/fai.conf
 fi
 
+if [ -z $DISTRIBUTION ]; then
+    echo "error: must give distribution for which base tgz should be built - exiting"
+    exit 1    
+fi
 
 . /etc/fai-distributions/${DISTRIBUTION}.conf
 
@@ -42,13 +70,17 @@ if [ -z "$NFSROOT" ]; then
     exit 4
 fi
 
-# call debootstrap as necesary - (how can this be done without having the
-# ubuntu debootstrap installed?)
+# call debootstrap as neccessary
 
-BOOTSTRAP_DIR=/var/fai/bootstrappers/$DISTRIBUTION
+# TODO: base bootstrapper dir should be defined in (not yet existing) config
+# file)
+BOOTSTRAP_DIR=/var/lib/fai-distributions/bootstrappers/$DISTRIBUTION
+
+# TODO:  cleanup dir if it already exists!
 mkdir -p $BOOTSTRAP_DIR
 cd $BOOTSTRAP_DIR
-wget $BOOTSTRAP_ARCHIVE/ubuntu_breezy/$BOOTSTRAP_PACKAGE
+
+wget $BOOTSTRAP_ARCHIVE/$BOOTSTRAP_PACKAGE
 
 
 # extact debootstrap archive
@@ -56,14 +88,15 @@ dpkg-deb -x $BOOTSTRAP_PACKAGE .
 
 cd -
 
-# FIXME: can/should probably be defined somewhere in /etc/fai?
+# TODO: put into (not yet existing)general config file for fai-distributions
 TMP_CHROOT_DIR=`mktemp -d /tmp/fai/${DISTRIBUTION}_debootstrap.XXXXXX`
-echo "TMPDIT is $TMP_CHROOT_DIR"
+echo "TMPDIR is $TMP_CHROOT_DIR"
 
-FAI_DEBOOTSTRAP_OPTIONS="--arch i386 \
-    --exclude=pcmcia-cs,pppoe,dhcp-client,exim4,exim4-base,exim4-config,exim4-daemon-light,modconf,libident,exim \
-    --include=lilo \
-    breezy \
+# TODO: put into config file (for each distribution)!
+DEBOOTSTRAP_OPTIONS="--arch $DEBOOTSTRAP_ARCH \
+    --exclude=$DEBOOTSTRAP_EXCLUDE \
+    --include=$DEBOOTSTRAP_INCLUDE \
+    $DEBOOTSTRAP_DIST_NAME \
     $TMP_CHROOT_DIR \
     $MIRROR_LOCATION"
 
@@ -71,8 +104,8 @@ cd `dirname $0`
 
 export DEBOOTSTRAP_DIR=$BOOTSTRAP_DIR/usr/lib/debootstrap/
 
-echo run $BOOTSTRAP_DIR/usr/sbin/debootstrap $FAI_DEBOOTSTRAP_OPTIONS
-$BOOTSTRAP_DIR/usr/sbin/debootstrap $FAI_DEBOOTSTRAP_OPTIONS
+echo run $BOOTSTRAP_DIR/usr/sbin/debootstrap $DEBOOTSTRAP_OPTIONS
+$BOOTSTRAP_DIR/usr/sbin/debootstrap $DEBOOTSTRAP_OPTIONS
 
 chroot $TMP_CHROOT_DIR apt-get clean
        
