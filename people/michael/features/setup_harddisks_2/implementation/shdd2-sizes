@@ -47,6 +47,10 @@ package FAI;
 sub get_current_disks
 {
 
+  # backup value of $ENV{"NO_DRY_RUN"}
+  my $no_dry_run = "";
+  defined( $ENV{"NO_DRY_RUN"} ) and $no_dry_run = $ENV{"NO_DRY_RUN"};
+
   # obtain the current state of all disks
   foreach my $disk (@FAI::disks)
   {
@@ -63,12 +67,8 @@ sub get_current_disks
     # initialise the hash
     $FAI::current_config{$disk}{"partitions"} = {};
 
-    # the list to hold the output of parted commands
+    # the list to hold the output of parted commands as parsed below
     my @parted_print = ();
-
-    # backup value of $ENV{"NO_DRY_RUN"}
-    my $no_dry_run = "";
-    defined( $ENV{"NO_DRY_RUN"} ) and $no_dry_run = $ENV{"NO_DRY_RUN"};
 
     # set NO_DRY_RUN to perform read-only commands always
     $ENV{"NO_DRY_RUN"} = "1";
@@ -83,8 +83,8 @@ sub get_current_disks
     # reset NO_DRY_RUN
     $ENV{"NO_DRY_RUN"} = $no_dry_run;
 
-    # parted_2 happens when the disk has no disk label. then, parted provides no
-    # information about the disk
+    # parted_2 happens when the disk has no disk label, because parted then
+    # provides no information about the disk
     if ( $error eq "parted_2" )
     {
 
@@ -94,11 +94,17 @@ sub get_current_disks
           . " $disk mklabel "
           . $FAI::configs{$disk}{"disklabel"} );
 
+      # set NO_DRY_RUN to perform read-only commands always
+      $ENV{"NO_DRY_RUN"} = "1";
+
       # retry partition-table print
       $error =
         &FAI::execute_command(
         $FAI::system_commands{"parted"} . " $disk unit TiB print",
         \@parted_print, 0 );
+
+      # reset NO_DRY_RUN
+      $ENV{"NO_DRY_RUN"} = $no_dry_run;
     }
 
     # check, whether there is still an error
@@ -155,6 +161,7 @@ sub get_current_disks
     my $parted_fs_before = 0;
     my $parted_fs_len    = 0;
 
+    # Parse the output line by line
     foreach my $line (@parted_print)
     {
 
@@ -193,7 +200,8 @@ sub get_current_disks
 
         # we must have seen the header, otherwise probably the format has
         # changed
-        ( $parted_fs_len > 0 ) or die "Table header not seen yet\n";
+        ( $parted_fs_len > 0 )
+          or die "INTERNAL ERROR: Table header not seen yet\n";
 
         # get the partition number
         $line =~ /^\s*(\d+)/;
@@ -211,65 +219,92 @@ sub get_current_disks
       }
     }
 
-    # MT: TODO: CONT HERE
+    # set NO_DRY_RUN to perform read-only commands always
     $ENV{"NO_DRY_RUN"} = "1";
+
+    # reset the output list
     @parted_print = ();
-    &FAI::execute_command_std(
+
+    # obtain the partition table using bytes as units
+    # TODO: when to use _std, when should one use execute_command
+    my $error =
+      &FAI::execute_command_std(
       "$FAI::system_commands{'parted'}} $disk unit B print",
       \@parted_print, 0 );
-    $ENV{"NO_DRY_RUN"} = "";
 
+    # reset NO_DRY_RUN
+    $ENV{"NO_DRY_RUN"} = $no_dry_run;
+
+    # check, whether an error has occured
+    # TODO: is this necessary?
+    if ( $error ne "" )
+    {
+      my $response = &FAI::get_error( $error, "response" );
+      ( $response eq "die" ) and die &FAI::get_error( $error, "message" );
+      ( $response eq "warn" ) and warn &FAI::get_error( $error, "message" );
+    }
+
+    # Parse the output of the byte-wise partition table
     foreach my $line (@parted_print)
     {
-      if ( $FAI::current_config{$disk}{"disklabel"} eq "msdos" )
-      {
-        if ( $line =~
-          /^\s*(\d+)*\s+(\d+)B\s+(\d+)B\s+(\d+)B\s+(primary|logical|extended)/i
-          )
-        {
 
-          $FAI::current_config{$disk}{"partitions"}{$1}{"begin_byte"} = $2;
-          $FAI::current_config{$disk}{"partitions"}{$1}{"end_byte"}   = $3;
-          $FAI::current_config{$disk}{"partitions"}{$1}{"count_byte"} = $4;
-          if ( $5 eq "extended" )
-          {
-            $FAI::current_config{$disk}{"partitions"}{$1}{"is_extended"} = 1;
-          }
-          else
-          {
-            $FAI::current_config{$disk}{"partitions"}{$1}{"is_extended"} = 0;
-          }
-        }
-      }
-      else
-      {
-        if ( $line =~ /^\s*(\d+)*\s+(\d+)B\s+(\d+)B\s+(\d+)B/i )
-        {
-
-          $FAI::current_config{$disk}{"partitions"}{$1}{"begin_byte"}  = $2;
-          $FAI::current_config{$disk}{"partitions"}{$1}{"end_byte"}    = $3;
-          $FAI::current_config{$disk}{"partitions"}{$1}{"count_byte"}  = $4;
-          $FAI::current_config{$disk}{"partitions"}{$1}{"is_extended"} = 0;
-        }
-      }
-
+      # The size of the disk
       if ( $line =~ /^Disk .*: (\d+)B$/i )
       {
         $FAI::current_config{$disk}{"begin_byte"} = 0;
         $FAI::current_config{$disk}{"end_byte"}   = $1;
       }
+
+      # One of the partition lines, see above example
+      next
+        unless ( $line =~
+        /^\s*(\d+)*\s+(\d+)B\s+(\d+)B\s+(\d+)B(\s+(primary|logical|extended))?/i
+        );
+
+      # set the corresponding entries
+      $FAI::current_config{$disk}{"partitions"}{$1}{"begin_byte"} = $2;
+      $FAI::current_config{$disk}{"partitions"}{$1}{"end_byte"}   = $3;
+      $FAI::current_config{$disk}{"partitions"}{$1}{"count_byte"} = $4;
+
+      # is_extended defaults to false/0
+      $FAI::current_config{$disk}{"partitions"}{$1}{"is_extended"} = 0;
+
+      # but may be true/1 on msdos disk labels
+      (      ( $FAI::current_config{$disk}{"disklabel"} eq "msdos" )
+          && ( $6 eq "extended" ) )
+        and $FAI::current_config{$disk}{"partitions"}{$1}{"is_extended"} = 1;
     }
 
+    # set NO_DRY_RUN to perform read-only commands always
     $ENV{"NO_DRY_RUN"} = "1";
+
+    # reset the output list
     @parted_print = ();
-    &FAI::execute_command_std(
+
+    # obtain the partition table using bytes as units
+    # TODO: when to use _std, when should one use execute_command
+    my $error =
+      &FAI::execute_command_std(
       "$FAI::system_commands{'parted'}} $disk unit chs print",
       \@parted_print, 0 );
-    $ENV{"NO_DRY_RUN"} = "";
 
+    # reset NO_DRY_RUN
+    $ENV{"NO_DRY_RUN"} = $no_dry_run;
+
+    # check, whether an error has occured
+    # TODO: is this necessary?
+    if ( $error ne "" )
+    {
+      my $response = &FAI::get_error( $error, "response" );
+      ( $response eq "die" ) and die &FAI::get_error( $error, "message" );
+      ( $response eq "warn" ) and warn &FAI::get_error( $error, "message" );
+    }
+
+    # Parse the output of the CHS partition table
     foreach my $line (@parted_print)
     {
 
+      # The partition geometry
       if ( $line =~ /^\s*(\d+)\s+(\d+),(\d+),(\d+)\s+(\d+),(\d+),(\d+)/i )
       {
         $FAI::current_config{$disk}{"partitions"}{$1}{"begin_cylinder"} = $2;
@@ -280,6 +315,7 @@ sub get_current_disks
         $FAI::current_config{$disk}{"partitions"}{$1}{"end_sector"}     = $7;
       }
 
+      # The disk geometry
       if ( $line =~ /^Disk .*: (\d+),(\d+),(\d+)$/i )
       {
         $FAI::current_config{$disk}{"begin_cylinder"} = 0;
@@ -296,52 +332,75 @@ sub get_current_disks
 
 ################################################################################
 #
-# @brief TODO
+# @brief Compute the desired sizes of the partitions and test feasibility
+# thereof.
 #
 ################################################################################
 sub compute_sizes
 {
+  # TODO MT CONT here
+  # loop through all device configurations
   foreach my $config ( keys %FAI::configs )
   {
     if ( $config eq "RAID" || $config =~ /^VG_/ )
     {
 
-      # compute the sizes of lvms
+      # TODO compute the sizes of lvms, RAIDs
       next;
     }
+    # device is an effective disk
     elsif ( $config =~ /^PHY_(.*)$/ )
     {
+      # initialise variables
+      # the id of the extended partition to be created, if required
       my $extended            = -1;
+      # the device name of the disk
       my $disk                = $1;
+      # remaining free space to be shared by those partitions whose size is a
+      # range
       my $redist_space        = 0;
+      # minimum space required by all partitions, i.e., the lower ends of the
+      # ranges TODO ???
       my $min_req_space       = 0;
+      # TODO ???
       my $min_req_total_space = 0;
+      # TODO ???
       my @redist_list         = ();
+      # the multiplier for the amount added to the lower bounds of the ranges
       my $redist_factor       = 0;
+      # TODO ???
       my $range_start         = 0;
 
+      # loop through all configured partitions in a sorted manner
       foreach
         my $part_id ( sort keys %{ $FAI::configs{$config}{"partitions"} } )
       {
+        # find/handle the extended partition, if any
         if (
           $FAI::configs{$config}{"partitions"}{$part_id}{"size"}{"extended"} ==
           1 )
         {
-          ( $extended == -1 ) or die "more than 1 extended partition\n";
+          # make sure that there is only one extended partition
+          ( $extended == -1 ) or die "INTERNAL ERROR: More than 1 extended partition\n";
+          # ensure that it is a primary partition
           ( $part_id <= 4 )
-            or die "extended partition wouldn't be a primary one\n";
+            or die "INTERNAL ERROR: Extended partition wouldn't be a primary one\n";
+          # set the local variable to this id
           $extended = $part_id;
+          # initialise the size of the extended partition to 0
           $FAI::configs{$config}{"partitions"}{$part_id}{"size"}{"eff_size"} =
             0;
         }
+        # the partition $pard_id need not be preserved
+        # this is the main part of this function
         elsif (
           $FAI::configs{$config}{"partitions"}{$part_id}{"size"}{"preserve"} ==
           0 )
         {
-          if (
-            $FAI::configs{$config}{"partitions"}{$part_id}{"size"}{"range"} =~
-            /^(\d+%?)-(\d+%?)$/ )
-          {
+          # make the size specification is a range (even though it might be
+          # something like x-x)
+          ( $FAI::configs{$config}{"partitions"}{$part_id}{"size"}{"range"} =~
+            /^(\d+%?)-(\d+%?)$/ ) or die "INTERNAL ERROR: Invalid range\n";
             my $start = $1;
             my $end   = $2;
             if ( $start =~ /^(\d+)%$/ )
@@ -379,11 +438,6 @@ sub compute_sizes
             }
             $min_req_space       += $start;
             $min_req_total_space += $start;
-          }
-          else
-          {
-            die "invalid range\n";
-          }
         }
         else
         {
