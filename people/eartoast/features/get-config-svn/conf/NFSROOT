@@ -1,0 +1,30 @@
+# package list for creating the NFSROOT
+
+PACKAGES install
+fai-nfsroot module-init-tools dhcp3-client ssh rdate lshw hwinfo portmap
+bootpc rsync lftp rsh-client less dump reiserfsprogs usbutils
+psmisc pciutils hdparm smartmontools parted mdadm lvm2
+dnsutils ntpdate dosfstools cvs jove xfsprogs xfsdump
+sysutils dialog discover mdetect libnet-perl
+console-tools console-common
+expect iproute udev
+
+# you should not edit the lines below
+# architecture dependend list of packages that are installed
+
+PACKAGES install I386
+grub lilo hwtools read-edid
+
+PACKAGES install AMD64
+grub lilo
+
+PACKAGES install IA64
+elilo gnu-efi efibootmgr
+
+PACKAGES install SPARC
+silo sparc-utils
+
+PACKAGES install ALPHA
+aboot
+
+#PACKAGES install powerpc
