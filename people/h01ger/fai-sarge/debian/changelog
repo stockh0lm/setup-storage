@@ -1,3 +1,10 @@
+fai (2.8.4sarge1.h01ger.3) stable; urgency=low
+
+  * added depends on file
+  * added myself as uploader
+
+ -- Holger Levsen <debian@layer-acht.org>  Thu, 21 Sep 2006 10:15:37 +0200
+
 fai (2.8.4sarge1.h01ger.2) stable; urgency=low
 
   * default fai config is

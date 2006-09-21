@@ -2,12 +2,13 @@ Source: fai
 Section: admin
 Priority: extra
 Maintainer: Thomas Lange <lange@debian.org>
+Uploaders: Holger Levsen <debian@layer-acht.org>
 Standards-Version: 3.6.1
 Build-Depends-Indep: debhelper (>= 4.1.16), debiandoc-sgml, tetex-bin, tetex-extra
 
 Package: fai
 Architecture: all
-Depends: perl, libapt-pkg-perl, subversion
+Depends: perl, libapt-pkg-perl, subversion, file
 Recommends: debootstrap, nfs-kernel-server | nfs-server, fai-kernels, dhcp3-server | bootp, tftpd-hpa | tftpd, rsh-server, wget, syslinux
 Suggests: ssh, debmirror, mknbi, apt-move, mkinitrd-cd, grub
 Description:  Fully Automatic Installation
