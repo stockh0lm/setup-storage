@@ -10,7 +10,6 @@
 ### END SUBROUTINE INFO
 
 # matched string: "svn://user@host/svnpath"
-# dir contains user@host/path/to/cvsroot
 protocol=$(expr match "$FAI_CONFIG_SRC" '\([^:]*\)://')
 username=$(expr match "$FAI_CONFIG_SRC" '[^:]*://\([^@]*\)@')
 svnpath=$(expr match "$FAI_CONFIG_SRC" '[^:]*://[^@]\+@\(\S\+\)')
@@ -19,8 +18,11 @@ case $protocol in
 	svn)
 		svnurl="svn://$svnpath"
 		;;
+	svn+http)
+		svnurl="http://$svnpath"
+		;;
 	*)
-		echo "get-config-dir-cvs: protocol $protocol not implemented"
+		echo "get-config-dir-svn: protocol $protocol not implemented"
 		exit 1
 		;;
 esac
