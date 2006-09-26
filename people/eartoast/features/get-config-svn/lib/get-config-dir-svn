@@ -32,9 +32,9 @@ esac
 if [ -d "$FAI/.svn" ] ; then
    echo "Updating SVN in $FAI"
    cd $FAI
-   svn -q up $user > $LOGDIR/getconf.log
+   svn up $user | grep -v 'Updated to revision' > $LOGDIR/getconf.log
 else 
    echo "Checking out SVN"
-   svn -q co $user \
-     $svnurl $FAI > $LOGDIR/getconf.log
+   svn co $user \
+     $svnurl $FAI | grep -v 'Checked out revision' > $LOGDIR/getconf.log
 fi
