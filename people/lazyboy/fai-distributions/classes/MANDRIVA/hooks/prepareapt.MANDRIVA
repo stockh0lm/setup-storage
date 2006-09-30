@@ -18,9 +18,10 @@ fi
 
 fcopy /etc/urpmi/urpmi.cfg
 
-chroot $FAI_ROOT urpmi.update -f Main
-chroot $FAI_ROOT urpmi.update -f Contrib
-chroot $FAI_ROOT urpmi.update -f Jpackage
+$ROOTCMD urpmi.update -f Main
+$ROOTCMD urpmi.update -f Contrib
+$ROOTCMD urpmi.update -f Jpackage
 touch $FAI_ROOT/etc/mtab
 touch $FAI_ROOT/var/log/urpmi.log
 
+skiptask prepareapt

@@ -51,6 +51,11 @@ if [ ! -d "$cfdir" ]; then
     exit 6
 fi
 
+if [ ! -d $NFSROOT ]; then
+	echo "need a working nfsroot - run fai-setup or make-fai-nfsroot"
+	exit 1
+fi
+
 [ "$verbose" ] && echo "Using configuration files from directory $cfdir"
 if [ -n "$cfg" ]; then
     . $cfdir/$cfg
@@ -70,13 +75,16 @@ if [ -z "$NFSROOT" ]; then
     exit 4
 fi
 
-# call debootstrap as neccessary
 
-# TODO: base bootstrapper dir should be defined in (not yet existing) config
-# file)
+# TODO: base bootstrapper dir should be defined in (not yet existing)
+# generic config file)
 BOOTSTRAP_DIR=/var/lib/fai-distributions/bootstrappers/$DISTRIBUTION
 
-# TODO:  cleanup dir if it already exists!
+# cleanup dir if it already exists!
+if [ -d $BOOTSTRAP_DIR ]; then
+	rm -r $BOOTSTRAP_DIR
+fi
+
 mkdir -p $BOOTSTRAP_DIR
 cd $BOOTSTRAP_DIR
 
@@ -88,10 +96,22 @@ dpkg-deb -x $BOOTSTRAP_PACKAGE .
 
 cd -
 
+# TODO: put into generic config file
+FAI_TMP_BASEDIR=/tmp/fai/distributions
+
+if [ -d $FAI_TMP_BASEDIR ]; then
+	echo "deleting FAI_TMP_BASEDIR $FAI_TMP_BASEDIR"
+	rm -r $FAI_TMP_BASEDIR
+fi
+
+mkdir -p $FAI_TMP_BASEDIR
+
 # TODO: put into (not yet existing)general config file for fai-distributions
-TMP_CHROOT_DIR=`mktemp -d /tmp/fai/${DISTRIBUTION}_debootstrap.XXXXXX`
+TMP_CHROOT_DIR=`mktemp -d $FAI_TMP_BASEDIR/${DISTRIBUTION}_debootstrap.XXXXXX`
+
 echo "TMPDIR is $TMP_CHROOT_DIR"
 
+# call debootstrap as neccessary
 # TODO: put into config file (for each distribution)!
 DEBOOTSTRAP_OPTIONS="--arch $DEBOOTSTRAP_ARCH \
     --exclude=$DEBOOTSTRAP_EXCLUDE \
@@ -112,6 +132,8 @@ chroot $TMP_CHROOT_DIR apt-get clean
 echo "Creating base-$DISTRIBUTION.tgz"
 
 cd $TMP_CHROOT_DIR
+
+
 tar cfz $NFSROOT/var/tmp/base-$DISTRIBUTION.tgz *
 
 chroot $TMP_CHROOT_DIR umount /dev

@@ -1,3 +1,15 @@
+fai-distributions (0.1-9) unstable; urgency=low
+
+  * fix packaging error - things work better when we have sbin also
+
+ -- Henning Sprang <henning@sprang.de>  Thu, 28 Sep 2006 02:47:14 +0200
+
+fai-distributions (0.1-8) unstable; urgency=low
+
+  * add and fix fai-make-base-tgz for etch (others need to follow)
+
+ -- Henning Sprang <henning@sprang.de>  Thu, 28 Sep 2006 02:06:01 +0200
+
 fai-distributions (0.1-7) unstable; urgency=low
 
   * fixing tmpdir names 

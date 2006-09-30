@@ -31,6 +31,8 @@ install:
 	#cd bin ; install * $(DESTDIR)/usr/bin
 	cp -a classes $(DOCDIR)
 	cp -a dists/* $(LIBDIR)
+	cp -a sbin/* $(SBINDIR)
+
 	# FIXME: those links don't work anyway... fix then re-enable the links
 	#for dist in `ls dists`; do \
 		ln -s /usr/lib/$(PACKAGENAME)/$$dist/make-base-tgz $(DESTDIR)/usr/sbin/make-$$dist-base-tgz; \
