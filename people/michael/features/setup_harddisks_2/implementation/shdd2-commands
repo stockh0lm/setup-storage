@@ -52,39 +52,50 @@ sub build_commands
   # loop through all configs
   foreach my $config ( keys %FAI::configs )
   {
+
     # TODO implement RAID/LVM support
     if ( $config eq "RAID" || $config =~ /^VG_/ )
     {
+
       # TODO
       next;
     }
+
     # configure a physical device
     elsif ( $config =~ /^PHY_(.*)$/ )
     {
+
       # the device to be configured
-      my $disk        = $1;
+      my $disk = $1;
+
       # a list of partitions that must be preserved - TODO ???
       my @to_preserve = ();
+
       # the index of the existing extended partiton
-      my $extended    = -1;
+      my $extended = -1;
 
       # the desired disklabel - TODO ???
       my $target_label = $FAI::configs{$config}{'disklabel'};
+
       # the current disklabel - TODO ???
       my $source_label = $FAI::current_config{$disk}{'disklabel'};
 
       # find any existing extended partition on msdos disklabels
       if ( $FAI::current_config{$disk}{"disklabel"} eq "msdos" )
       {
+
         # loop over all existing partitions
-        foreach
-        my $part_id ( sort keys %{ $FAI::current_config{$disk}{"partitions"} } )
+        foreach my $part_id (
+          sort keys %{ $FAI::current_config{$disk}{"partitions"} } )
         {
-          if ( $FAI::current_config{$disk}{"partitions"}{$part_id}{"is_extended"} == 1 )
+          if ( $FAI::current_config{$disk}{"partitions"}{$part_id}
+            {"is_extended"} == 1 )
           {
+
             # TODO: should be handled properly
             ( $extended == -1 ) or die "INTERNAL ERROR: Can't handle more than 1
             extended partition\n";
+
             # set the id of the extended partition
             $extended = $part_id;
           }
