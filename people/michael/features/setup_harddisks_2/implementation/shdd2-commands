@@ -24,7 +24,7 @@ use strict;
 #
 # @file shdd2-commands
 #
-# @brief TODO
+# @brief Build the required commands using the config stored in %FAI::configs
 #
 # $Id$
 #
@@ -35,40 +35,64 @@ use strict;
 
 package FAI;
 
+################################################################################
+#
+# @brief Using the configurations from %FAI::configs, a list of commands is
+# build
+#
+# The list is @FAI::commands
+#
+################################################################################
 sub build_commands
 {
 
   #TODO: remove
   $FAI::current_config{"/dev/hda"}{"disklabel"} = "msdos";
 
+  # loop through all configs
   foreach my $config ( keys %FAI::configs )
   {
+    # TODO implement RAID/LVM support
     if ( $config eq "RAID" || $config =~ /^VG_/ )
     {
-
-      # compute the sizes of lvms
+      # TODO
       next;
     }
+    # configure a physical device
     elsif ( $config =~ /^PHY_(.*)$/ )
     {
+      # the device to be configured
       my $disk        = $1;
+      # a list of partitions that must be preserved - TODO ???
       my @to_preserve = ();
+      # the index of the existing extended partiton
       my $extended    = -1;
 
+      # the desired disklabel - TODO ???
       my $target_label = $FAI::configs{$config}{'disklabel'};
+      # the current disklabel - TODO ???
       my $source_label = $FAI::current_config{$disk}{'disklabel'};
 
-      foreach
-        my $part_id ( sort keys %{ $FAI::current_config{$disk}{"partitions"} } )
+      # find any existing extended partition on msdos disklabels
+      if ( $FAI::current_config{$disk}{"disklabel"} eq "msdos" )
       {
-        if ( $FAI::current_config{$disk}{"disklabel"} eq "msdos"
-          && $FAI::current_config{$disk}{"partitions"}{$part_id}
-          {"is_extended"} == 1 )
+        # loop over all existing partitions
+        foreach
+        my $part_id ( sort keys %{ $FAI::current_config{$disk}{"partitions"} } )
         {
-          $extended = $part_id;
+          if ( $FAI::current_config{$disk}{"partitions"}{$part_id}{"is_extended"} == 1 )
+          {
+            # TODO: should be handled properly
+            ( $extended == -1 ) or die "INTERNAL ERROR: Can't handle more than 1
+            extended partition\n";
+            # set the id of the extended partition
+            $extended = $part_id;
+          }
         }
       }
 
+      # find partitions that should be preserved or resized
+      # MT: TODO - CONT here
       foreach
         my $part_id ( sort keys %{ $FAI::configs{$config}{"partitions"} } )
       {

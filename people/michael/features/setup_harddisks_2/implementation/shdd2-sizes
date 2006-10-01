@@ -338,7 +338,6 @@ sub get_current_disks
 ################################################################################
 sub compute_sizes
 {
-  # TODO MT CONT here
   # loop through all device configurations
   foreach my $config ( keys %FAI::configs )
   {
@@ -356,24 +355,24 @@ sub compute_sizes
       my $extended            = -1;
       # the device name of the disk
       my $disk                = $1;
-      # remaining free space to be shared by those partitions whose size is a
-      # range
+      # remaining free space is to be shared by those partitions whose size is a
+      # range; $redist_space keeps track of the maximum space to be
+      # redistributed
       my $redist_space        = 0;
       # minimum space required by all partitions, i.e., the lower ends of the
-      # ranges TODO ???
+      # ranges
+      # $min_req_space counts up to the next preserved partition
       my $min_req_space       = 0;
-      # TODO ???
+      # $min_req_total_space counts for the entire disk
       my $min_req_total_space = 0;
-      # TODO ???
+      # list of partition ids that require redistribution
       my @redist_list         = ();
-      # the multiplier for the amount added to the lower bounds of the ranges
-      my $redist_factor       = 0;
-      # TODO ???
+      # the start of a range of non-preserved disk space
       my $range_start         = 0;
 
       # loop through all configured partitions in a sorted manner
       foreach
-        my $part_id ( sort keys %{ $FAI::configs{$config}{"partitions"} } )
+      my $part_id ( sort keys %{ $FAI::configs{$config}{"partitions"} } )
       {
         # find/handle the extended partition, if any
         if (
@@ -389,161 +388,199 @@ sub compute_sizes
           $extended = $part_id;
           # initialise the size of the extended partition to 0
           $FAI::configs{$config}{"partitions"}{$part_id}{"size"}{"eff_size"} =
-            0;
+          0;
         }
         # the partition $pard_id need not be preserved
-        # this is the main part of this function
         elsif (
           $FAI::configs{$config}{"partitions"}{$part_id}{"size"}{"preserve"} ==
           0 )
         {
-          # make the size specification is a range (even though it might be
-          # something like x-x)
+          # make sure the size specification is a range (even though it might be
+          # something like x-x) and store the dimensions
           ( $FAI::configs{$config}{"partitions"}{$part_id}{"size"}{"range"} =~
             /^(\d+%?)-(\d+%?)$/ ) or die "INTERNAL ERROR: Invalid range\n";
-            my $start = $1;
-            my $end   = $2;
-            if ( $start =~ /^(\d+)%$/ )
-            {
-              $start =
-                POSIX::floor(
-                $FAI::current_config{$disk}{"end_byte"} * $1 / 100 );
-            }
-            else
-            {
-              $start = $start * 1024.0 * 1024.0;
-            }
-            if ( $end =~ /^(\d+)%$/ )
-            {
-              $end =
-                POSIX::ceil(
-                $FAI::current_config{$disk}{"end_byte"} * $1 / 100 );
-            }
-            else
-            {
-              $end = $end * 1024.0 * 1024.0;
-            }
-            $FAI::configs{$config}{"partitions"}{$part_id}{"size"}{"range"} =
-              $start . "-" . $end;
-            if ( $end == $start )
-            {
-              $FAI::configs{$config}{"partitions"}{$part_id}{"size"}
-                {"eff_size"} = $start;
-            }
-            else
-            {
-              $FAI::configs{$config}{"partitions"}{$part_id}{"size"}
-                {"eff_size"} = -1;
-              $redist_space += $end - $start;
-            }
-            $min_req_space       += $start;
-            $min_req_total_space += $start;
+          my $start = $1;
+          my $end   = $2;
+          # start may be given in is percents of the size
+          if ( $start =~ /^(\d+)%$/ )
+          {
+            # rewrite it to bytes
+            $start =
+            POSIX::floor(
+              $FAI::current_config{$disk}{"end_byte"} * $1 / 100 );
+          }
+          else
+          {
+            # it is given in megabytes, make it bytes
+            $start = $start * 1024.0 * 1024.0;
+          }
+          # end may be given in is percents of the size
+          if ( $end =~ /^(\d+)%$/ )
+          {
+            # rewrite it to bytes
+            $end =
+            POSIX::ceil(
+              $FAI::current_config{$disk}{"end_byte"} * $1 / 100 );
+          }
+          else
+          {
+            # it is given in megabytes, make it bytes
+            $end = $end * 1024.0 * 1024.0;
+          }
+          # write back the size spec in bytes
+          $FAI::configs{$config}{"partitions"}{$part_id}{"size"}{"range"} =
+          $start . "-" . $end;
+          # check, whether the size is fixed
+          if ( $end == $start )
+          {
+            # then set eff_size to a proper value
+            $FAI::configs{$config}{"partitions"}{$part_id}{"size"}
+            {"eff_size"} = $start;
+          }
+          else
+          {
+            # make sure that $end > $start
+            ( $end > $start ) or die "INTERNAL ERROR: end < start\n";
+            # effective size is not yet known, use -1 to indicate this
+            $FAI::configs{$config}{"partitions"}{$part_id}{"size"}
+            {"eff_size"} = -1;
+            # add the valid range to the space to be redistributed among the
+            # non-fixed sizes
+            $redist_space += $end - $start;
+            # add this $part_id to the redistribution list
+            push @redist_list, $part_id;
+          }
+          # add the minimum size to the required space (locally)
+          $min_req_space       += $start;
+          # add the minimum size to the required space (entire disk)
+          $min_req_total_space += $start;
         }
+        # partition must be preserved
         else
         {
-          if ( !defined( $FAI::current_config{$disk}{"partitions"}{$part_id} ) )
-          {
-            die "$part_id can't be preserved, it does not exist.\n";
-          }
+          # a partition that should be preserved must exist already
+          defined( $FAI::current_config{$disk}{"partitions"}{$part_id} ) or
+          die "$part_id can't be preserved, it does not exist.\n";
+          # set the effective size to the value known already
           $FAI::configs{$config}{"partitions"}{$part_id}{"size"}{"eff_size"} =
-            $FAI::current_config{$disk}{"partitions"}{$part_id}{"count_byte"};
+          $FAI::current_config{$disk}{"partitions"}{$part_id}{"count_byte"};
+          # and add it to the total disk space required by this config
           $min_req_total_space +=
-            $FAI::configs{$config}{"partitions"}{$part_id}{"size"}{"eff_size"};
+          $FAI::configs{$config}{"partitions"}{$part_id}{"size"}{"eff_size"};
 
+          # check, whether there are partitions that require redistribution
           if ( scalar(@redist_list) > 0 )
           {
-            my $redist_factor =
-              ( $FAI::current_config{$disk}{"partitions"}{$part_id}
-                {"begin_byte"} - 1 - $range_start - $min_req_space ) /
-              $redist_space;
-            print "redist factor is $redist_factor\n";
+            # compute the available space and the resulting multiplier of all
+            # ranges
+            my $free_space =
+            $FAI::current_config{$disk}{"partitions"}{$part_id}
+            {"begin_byte"} - 1 - $range_start - $min_req_space;
+            ( $free_space >= 0 ) or die "INTERNAL ERROR: negative free space\n";
+            # the multiplier for the amount added to the lower bounds of the ranges
+            my $redist_factor = 1.0;
+            ( $free_space < $redist_space ) and $redist_factor = $free_space /
+            $redist_space;
+            ( $FAI::debug > 0 ) and print "redist factor is $redist_factor\n";
 
-            foreach my $part_id (@redist_list)
+            # redistribute the free space
+            foreach my $part (@redist_list)
             {
-              ( $FAI::configs{$config}{"partitions"}{$part_id}{"size"}
-                  {"eff_size"} == -1 )
-                or die "internal error\n";
-              if ( $FAI::configs{$config}{"partitions"}{$part_id}{"size"}
-                {"range"} =~ /^(\d+%?)-(\d+%?)$/ )
-              {
-                my $start = $1;
-                my $end   = $2;
-                $FAI::configs{$config}{"partitions"}{$part_id}{"size"}
-                  {"eff_size"} =
-                  POSIX::floor(
-                  $start + ( ( $end - $start ) * $redist_factor ) );
-              }
-              else
-              {
-                die "invalid range\n";
-              }
+              # make sure the entry requires redistribution
+              ( $FAI::configs{$config}{"partitions"}{$part}{"size"}
+                {"eff_size"} == -1 )
+                or die "INTERNAL ERROR: invalid entry in redist_list\n";
+              # re-check that the size is indeed a range and obtain the start
+              # and end-points
+              ( $FAI::configs{$config}{"partitions"}{$part}{"size"}
+                {"range"} =~ /^(\d+%?)-(\d+%?)$/ ) or 
+              die "INTERNAL ERROR: invalid range spec\n";
+              # store the start and end
+              my $start = $1;
+              my $end   = $2;
+              # set the new effective size according to $redist_factor
+              $FAI::configs{$config}{"partitions"}{$part_id}{"size"}
+              {"eff_size"} =
+              POSIX::floor(
+                $start + ( ( $end - $start ) * $redist_factor ) );
             }
           }
 
+          # empty $redist_list;
           @redist_list = ();
+          # set the range start past the preserved partition
           $range_start =
-            $FAI::current_config{$disk}{"partitions"}{$part_id}{"end_byte"} + 1;
+          $FAI::current_config{$disk}{"partitions"}{$part_id}{"end_byte"} + 1;
+          # reset $redist space and $min_req_space to 0
           $redist_space  = 0;
           $min_req_space = 0;
 
         }
       }
 
+      # check, whether there are partitions that require redistribution
       if ( scalar(@redist_list) > 0 )
       {
-        my $redist_factor =
-          ( $FAI::current_config{$disk}{"end_byte"} - 1 - $range_start -
-            $min_req_space ) / $redist_space;
-        print "redist factor is $redist_factor\n";
+        # compute the available space and the resulting multiplier of all
+        # ranges
+        my $free_space =
+        $FAI::current_config{$disk}{"partitions"}{$part_id}
+        {"begin_byte"} - 1 - $range_start - $min_req_space;
+        ( $free_space >= 0 ) or die "INTERNAL ERROR: negative free space\n";
+        # the multiplier for the amount added to the lower bounds of the ranges
+        my $redist_factor = 1.0;
+        ( $free_space < $redist_space ) and $redist_factor = $free_space /
+        $redist_space;
+        ( $FAI::debug > 0 ) and print "redist factor is $redist_factor\n";
 
-        foreach my $part_id (@redist_list)
+        # redistribute the free space
+        foreach my $part (@redist_list)
         {
-          ( $FAI::configs{$config}{"partitions"}{$part_id}{"size"}
-              {"eff_size"} == -1 )
-            or die "internal error\n";
-          if (
-            $FAI::configs{$config}{"partitions"}{$part_id}{"size"}{"range"} =~
-            /^(\d+%?)-(\d+%?)$/ )
-          {
-            my $start = $1;
-            my $end   = $2;
-            $FAI::configs{$config}{"partitions"}{$part_id}{"size"}{"eff_size"} =
-              POSIX::floor( $start + ( ( $end - $start ) * $redist_factor ) );
-          }
-          else
-          {
-            die "invalid range\n";
-          }
+          # make sure the entry requires redistribution
+          ( $FAI::configs{$config}{"partitions"}{$part}{"size"}
+            {"eff_size"} == -1 )
+            or die "INTERNAL ERROR: invalid entry in redist_list\n";
+          # re-check that the size is indeed a range and obtain the start
+          # and end-points
+          ( $FAI::configs{$config}{"partitions"}{$part}{"size"}
+            {"range"} =~ /^(\d+%?)-(\d+%?)$/ ) or 
+          die "INTERNAL ERROR: invalid range spec\n";
+          # store the start and end
+          my $start = $1;
+          my $end   = $2;
+          # set the new effective size according to $redist_factor
+          $FAI::configs{$config}{"partitions"}{$part_id}{"size"}
+          {"eff_size"} =
+          POSIX::floor(
+            $start + ( ( $end - $start ) * $redist_factor ) );
         }
       }
 
-      if ( $min_req_total_space > $FAI::current_config{$disk}{"end_byte"} )
-      {
-        die "Disk is too small - at least $min_req_space is required\n";
-      }
 
-      if ( $FAI::configs{$config}{"disklabel"} ne "msdos" && $extended > -1 )
-      {
-        die "extended partitions are not supported by this disklabel\n";
-      }
+      # check, whether there is sufficient space on the disk
+      ( $min_req_total_space > $FAI::current_config{$disk}{"end_byte"} ) and
+      die "Disk is too small - at least $min_req_total_space is required\n";
 
-      if ( $FAI::configs{$config}{"disklabel"} eq "msdos" && $extended > -1 )
+      # make sure, extended partitions are only created on msdos disklabels
+      ( $FAI::configs{$config}{"disklabel"} ne "msdos" && $extended > -1 ) and
+      die "INTERNAL ERROR: extended partitions are not supported by this disklabel\n";
+
+      # compute the size of the extended partition, if any
+      next unless ( $FAI::configs{$config}{"disklabel"} eq "msdos" && $extended > -1 )
+      foreach
+      my $part_id ( sort keys %{ $FAI::configs{$config}{"partitions"} } )
       {
-        my $extended_size = 0;
-        foreach
-          my $part_id ( sort keys %{ $FAI::configs{$config}{"partitions"} } )
-        {
-          next if ( $part_id <= 4 );
-          $extended_size +=
-            $FAI::configs{$config}{"partitions"}{$part_id}{"size"}{"eff_size"};
-        }
-        $FAI::configs{$config}{"partitions"}{$extended}{"size"}{"eff_size"} =
-          $extended_size;
+        # logical partitions have an id > 4
+        next if ( $part_id <= 4 );
+        # add the effective size of $part_id to the size of the extended partition
+        $FAI::configs{$config}{"partitions"}{$extended}{"size"}{"eff_size"} +=
+        $FAI::configs{$config}{"partitions"}{$part_id}{"size"}{"eff_size"};
       }
     }
+    # an invalid config entry has been found
     else
     {
-      die "Internal error (invalid config entry $config).\n";
+      die "INTERNAL ERROR: invalid config entry $config.\n";
     }
   }
 }
