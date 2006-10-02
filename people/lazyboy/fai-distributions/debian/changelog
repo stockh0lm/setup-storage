@@ -1,3 +1,9 @@
+fai-distributions (0.1-10) unstable; urgency=low
+
+  * add ubuntu dapper config 
+
+ -- Henning Sprang <henning@sprang.de>  Mon,  2 Oct 2006 14:23:51 +0200
+
 fai-distributions (0.1-9) unstable; urgency=low
 
   * fix packaging error - things work better when we have sbin also
