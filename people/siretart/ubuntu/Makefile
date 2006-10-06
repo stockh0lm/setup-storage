@@ -1,3 +1,5 @@
+SHELL=/bin/bash
+
 include VERSION
 
 DESTDIR=$(shell pwd)/debian/tmp
