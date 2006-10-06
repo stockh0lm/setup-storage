@@ -1,3 +1,10 @@
+fai-kernels (1.12ubuntu1) edgy; urgency=low
+
+  * recompiled for edgy
+  * enabled NFSv4 for working around https://launchpad.net/bugs/64423
+
+ -- Reinhard Tartler <siretart@tauware.de>  Fri,  6 Oct 2006 21:42:35 +0200
+
 fai-kernels (1.12) unstable; urgency=low
 
   * reverted 1.11-2 as the NMU was a.) incomplete (only i386), b.) included
