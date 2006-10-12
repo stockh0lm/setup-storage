@@ -8,6 +8,7 @@ dnsutils ntpdate dosfstools cvs jove xfsprogs xfsdump
 sysutils dialog discover mdetect libnet-perl
 console-tools console-common
 expect iproute udev subversion
+sysvinit upstart-
 
 # you should not edit the lines below
 # architecture dependend list of packages that are installed
