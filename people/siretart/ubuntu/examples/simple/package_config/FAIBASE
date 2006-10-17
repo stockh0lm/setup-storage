@@ -1,5 +1,5 @@
 PACKAGES aptitude
-linux-image-486
+linux-image-generic
 cfengine2
 cron
 debconf-utils
