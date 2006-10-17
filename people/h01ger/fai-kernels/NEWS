@@ -1,3 +1,7 @@
+NEW in fai-kernels 1.13
+
+  - kernels might not fit on 1.44mb floppies anymore. 
+
 NEW in fai-kernels 1.11
 
   - removed kernel 2.4

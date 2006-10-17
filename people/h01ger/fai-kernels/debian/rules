@@ -59,6 +59,7 @@ binary-arch: build install
 	dh_testroot
 	dh_installdocs
 	cp -p $(kname)/.config `pwd`/debian/fai-kernels/usr/share/doc/fai-kernels/config-$(kversion)
+	cp -p floppy-config/kernel-config-2.6.$(DEB_HOST_ARCH) `pwd`/debian/fai-kernels/usr/share/doc/fai-kernels/config-$(kversion).144mb-floppy
 	dh_installchangelogs 
 	dh_compress
 	dh_fixperms
