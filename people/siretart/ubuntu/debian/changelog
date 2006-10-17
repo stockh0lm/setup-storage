@@ -1,7 +1,9 @@
-fai (3.0) edgy; urgency=low
+fai (3.0ubuntu1) edgy; urgency=low
 
   * add SHELL=/bin/bash to top level makefile. 
     ubuntu uses /bin/sh -> /bin/dash by default
+  * patch for fai-start-stop-daemon taken from Thomas Lange
+  * prefer sysvinit over upstart for fai-make-nfs-root
 
  -- Reinhard Tartler <siretart@tauware.de>  Fri,  6 Oct 2006 23:21:40 +0200
 
