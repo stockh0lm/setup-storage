@@ -1,7 +1,7 @@
 #
 # Automatically generated make config: don't edit
-# Linux kernel version: 2.6.17.11-ubuntu1
-# Fri Oct  6 20:43:34 2006
+# Linux kernel version: 2.6.17.13-ubuntu1
+# Wed Oct 18 10:45:31 2006
 #
 CONFIG_X86_64=y
 CONFIG_64BIT=y
