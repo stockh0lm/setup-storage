@@ -1,10 +1,11 @@
-fai (3.1ubuntu) edgy; urgency=low
+fai (3.1ubuntu1) edgy; urgency=low
 
   * merge FAI 3.1 changes. All necessary ubuntu hacks have been 
     incorporated by upstream (thanks Thomas).
   * changes to default configuration to make a usable ubuntu installation
     - point to archive.ubuntu.com instead of ftp.debian.org
     - use sysvinit instead of upstart, because its default bootlog behavior
+  * make fai-mount-disk use /bin/bash instead of /bin/sh
 
  -- Reinhard Tartler <siretart@tauware.de>  Sat, 21 Oct 2006 10:30:18 +0200
 
