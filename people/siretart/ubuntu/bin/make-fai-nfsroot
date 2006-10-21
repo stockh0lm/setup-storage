@@ -55,6 +55,7 @@ while getopts ervC:f:kKV: opt ; do
         f) die "Option -f is not supported any more. Use option -c instead" ;;
         k) kinstall=1 ;;
         K) kremove=1; kinstall=1 ;;
+        h) usage ;;
 	e) expert=1 ;;
         ?) exit 5 ;; # error in option parsing
     esac
@@ -236,8 +237,8 @@ create_nfsroot() {
     [ -d $NFSROOT/var/state ] || mkdir $NFSROOT/var/state
     cp -a $cfdir/apt $NFSROOT/etc
 
-    ainsl -a $NFSROOT/etc/hosts "127.0.0.1 localhost"
-    ainsl    $NFSROOT/etc/hosts "$NFSROOT_ETC_HOSTS"
+    ainsl -as $NFSROOT/etc/hosts "127.0.0.1 localhost"
+    ainsl     $NFSROOT/etc/hosts "$NFSROOT_ETC_HOSTS"
     add_all_host_entries
 
     # we need these option before installing the first package. So we
@@ -261,6 +262,7 @@ EOF
     rm etc/mtab dev/MAKEDEV
     ln -s /proc/mounts etc/mtab
     [ -d "var/lib/discover" ] || mkdir var/lib/discover
+    [ -d "var/discover" ] || mkdir var/discover
     mkdir etc/sysconfig tmp/etc
     cp -p /etc/resolv.conf tmp/etc # so we have DNS after chroot $NFSROOT on the install server
     ln -sf /tmp/etc/resolv.conf etc/resolv.conf
@@ -417,6 +419,19 @@ else
 fi
 }
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+usage() {
+
+    cat <<-EOF
+	Copyright (C) 1999-2006 Thomas Lange
+	Report bugs to <fai@informatik.uni-koeln.de>.
+
+	Usage: make-fai-nfsroot [OPTIONS]
+  Create an NFSROOT for FAI.
+	Read the man pages pages make-fai-nfsroot(8).
+EOF
+    exit 0
+}
+# - - - - - - - - - - - - - - - - - - - - - - - - - -
 # main routine
 
 [ -z "$KERNELPACKAGE" ] && die "\$KERNELPACKAGE is not set. Aborting."

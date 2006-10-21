@@ -1,7 +1,7 @@
+include VERSION
 SHELL=/bin/bash
 
-include VERSION
-
+SHELL=/bin/bash
 DESTDIR=$(shell pwd)/debian/tmp
 export DOCDIR = $(shell pwd)/debian/fai-doc/usr/share/doc/fai-doc
 LIBDIR = $(DESTDIR)/usr/lib/fai

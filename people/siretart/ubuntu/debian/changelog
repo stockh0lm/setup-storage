@@ -1,11 +1,34 @@
-fai (3.0ubuntu1) edgy; urgency=low
+fai (3.1ubuntu) edgy; urgency=low
 
-  * add SHELL=/bin/bash to top level makefile. 
-    ubuntu uses /bin/sh -> /bin/dash by default
-  * patch for fai-start-stop-daemon taken from Thomas Lange
-  * prefer sysvinit over upstart for fai-make-nfs-root
+  * merge FAI 3.1 changes. All necessary ubuntu hacks have been 
+    incorporated by upstream (thanks Thomas).
+  * changes to default configuration to make a usable ubuntu installation
+    - point to archive.ubuntu.com instead of ftp.debian.org
+    - use sysvinit instead of upstart, because its default bootlog behavior
 
- -- Reinhard Tartler <siretart@tauware.de>  Fri,  6 Oct 2006 23:21:40 +0200
+ -- Reinhard Tartler <siretart@tauware.de>  Sat, 21 Oct 2006 10:30:18 +0200
+
+fai (3.1) unstable; urgency=low
+
+  * Makefile: force bash in Makefile, fixes FTBFS in ubuntu
+  * rename action dirinst to dirinstall (closes: #390345)
+  * fai-cd: fix wrong path for sources.list (closes: #391639)
+  * scripts/FAIBASE/10-misc: use ainsl instead of echo >> ...
+  * lib/create_ramdisk: make /var/discover writeable
+  * make-fai-nfsroot: create directory var/discover
+  * subroutines: move find's maxdepth option to the left, prevent multiple
+    fai softupdate running simultaneously (closes: #390680)
+  * get-config-dir*: replace \s and \S in expr with regex using [:space:],
+    so it also works for sarge's version of expr
+  * subroutines-liux: add test if base.tgz exists (closes: #390343),
+    sources.list must be used from /etc/apt during normal installation
+  * fai: add option -u,--hostname (closes: #390367)
+  * LAST/5-misc: do not fail if hardware clock can't be set
+  * fcopy: swap call of postinst and set_mode
+  * install_packages: add missing package list to yum and rpm calls
+    (closes: #392032)
+  
+ -- Thomas Lange <lange@debian.org>  Tue, 10 Oct 2006 01:29:35 +0200
 
 fai (3.0) unstable; urgency=low
 
