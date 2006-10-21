@@ -31,7 +31,7 @@ stamp-kernel: unpack-stamp
 	cd $(kname) ; \
 	yes '' | make oldconfig ; \
 	cd $(kname) ; make-kpkg clean ; \
-	make-kpkg --rootcmd fakeroot --append-to-version -fai-kernels --revision $(REVISION) kernel-image 
+	NO_PKG_MANGLE=1 make-kpkg --rootcmd fakeroot --append-to-version -fai-kernels --revision $(REVISION) kernel-image 
 	touch stamp-kernel
 
 build:	

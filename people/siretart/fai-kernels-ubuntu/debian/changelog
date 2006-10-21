@@ -2,8 +2,10 @@ fai-kernels (1.12ubuntu1) edgy; urgency=low
 
   * recompiled for edgy
   * enabled NFSv4 for working around https://launchpad.net/bugs/64423
+  * call make-kpkg with NO_PKG_MANGLE=1 to shortcircuit pkgstripstranslations
+    on the launchpad buildds.
 
- -- Reinhard Tartler <siretart@tauware.de>  Fri,  6 Oct 2006 21:42:35 +0200
+ -- Reinhard Tartler <siretart@tauware.de>  Sat, 21 Oct 2006 10:55:29 +0200
 
 fai-kernels (1.12) unstable; urgency=low
 
