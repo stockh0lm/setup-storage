@@ -3,6 +3,7 @@ fai-kernels (1.13) unstable; urgency=low
   * upgraded to 2.6.18
   * introduced config-2.6.17.144floppy in /usr/share/doc/fai-kernels/
   	### needs better README ###
+  * moved NEWS to NEWS.Debian
 
  -- Holger Levsen <debian@layer-acht.org>  Mon, 16 Oct 2006 21:59:57 +0000
 
