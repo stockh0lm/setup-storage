@@ -5,8 +5,9 @@ fai-kernels (1.13) unstable; urgency=low
   	### needs better README ###
   * moved NEWS to NEWS.Debian
   * enabled nfs4
+  * bnx2 network driver enabled (Closes: #387572)
 
- -- Holger Levsen <debian@layer-acht.org>  Sun, 22 Oct 2006 09:48:40 +0000
+ -- Holger Levsen <debian@layer-acht.org>  Sun, 22 Oct 2006 09:54:08 +0000
 
 fai-kernels (1.12) unstable; urgency=low
 
