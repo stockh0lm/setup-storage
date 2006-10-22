@@ -4,8 +4,9 @@ fai-kernels (1.13) unstable; urgency=low
   * introduced config-2.6.17.144floppy in /usr/share/doc/fai-kernels/
   	### needs better README ###
   * moved NEWS to NEWS.Debian
+  * enabled nfs4
 
- -- Holger Levsen <debian@layer-acht.org>  Mon, 16 Oct 2006 21:59:57 +0000
+ -- Holger Levsen <debian@layer-acht.org>  Sun, 22 Oct 2006 09:48:40 +0000
 
 fai-kernels (1.12) unstable; urgency=low
 
