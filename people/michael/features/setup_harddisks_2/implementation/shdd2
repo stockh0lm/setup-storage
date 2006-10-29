@@ -75,8 +75,5 @@ foreach my $cmd (@FAI::commands)
 my @fstab = &FAI::generate_fstab( \%FAI::configs );
 
 # TODO - debugging only; print fstab
-foreach my $line (@fstab)
-{
-  printf "$line\n";
-}
+printf "$_\n" foreach (@fstab);
 

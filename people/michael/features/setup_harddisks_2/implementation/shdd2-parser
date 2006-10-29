@@ -399,18 +399,12 @@ $FAI::Parser = Parse::RecDescent->new(
     option: /^preserve:(\d+(,\d+)*)/
         {
           # set the preserve flag for all ids
-          foreach my $id ( split( ",", $1 ) )
-          {
-            $FAI::configs{ $FAI::device }{ "partitions" }{ $id }{ "size" }{ "preserve" } = 1;
-          }
+          $FAI::configs{ $FAI::device }{ "partitions" }{ $_ }{ "size" }{ "preserve" } = 1 foreach ( split( ",", $1 ) );
         }
         | /^resize:(\d+(,\d+)*)/
         {
           # set the resize flag for all ids
-          foreach my $id ( split( ",", $1 ) )
-          {
-            $FAI::configs{ $FAI::device }{ "partitions" }{ $id }{ "size" }{ "resize" } = 1;
-          }
+          $FAI::configs{ $FAI::device }{ "partitions" }{ $_ }{ "size" }{ "resize" } = 1 foreach ( split( ",", $1 ) );
         }
         | /^disklabel:(msdos|sun|gpt|mac)/
         {

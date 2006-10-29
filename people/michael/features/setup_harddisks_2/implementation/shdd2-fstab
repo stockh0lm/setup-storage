@@ -24,7 +24,7 @@ use strict;
 #
 # @file shdd2-fstab
 #
-# @brief TODO
+# @brief Generate an fstab file as appropriate for the configuration
 #
 # $Id$
 #
@@ -57,6 +57,8 @@ package FAI;
 ################################################################################
 sub generate_fstab
 {
+
+  # MT: TODO - CONT HERE
   my ( $hash_ref, $modus, $device, $listref, $call_count ) = @_;
 
   #first check if we have already a list, when not, create one

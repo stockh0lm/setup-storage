@@ -46,9 +46,6 @@ package FAI;
 sub build_commands
 {
 
-  #TODO: remove
-  $FAI::current_config{"/dev/hda"}{"disklabel"} = "msdos";
-
   # loop through all configs
   foreach my $config ( keys %FAI::configs )
   {
@@ -68,17 +65,11 @@ sub build_commands
       # the device to be configured
       my $disk = $1;
 
-      # a list of partitions that must be preserved - TODO ???
+      # the list of partitions that must be preserved
       my @to_preserve = ();
 
       # the index of the existing extended partiton
       my $extended = -1;
-
-      # the desired disklabel - TODO ???
-      my $target_label = $FAI::configs{$config}{'disklabel'};
-
-      # the current disklabel - TODO ???
-      my $source_label = $FAI::current_config{$disk}{'disklabel'};
 
       # find any existing extended partition on msdos disklabels
       if ( $FAI::current_config{$disk}{"disklabel"} eq "msdos" )
@@ -88,134 +79,157 @@ sub build_commands
         foreach my $part_id (
           sort keys %{ $FAI::current_config{$disk}{"partitions"} } )
         {
-          if ( $FAI::current_config{$disk}{"partitions"}{$part_id}
-            {"is_extended"} == 1 )
-          {
+          next
+            unless ( $FAI::current_config{$disk}{"partitions"}{$part_id}
+            {"is_extended"} == 1 );
 
-            # TODO: should be handled properly
-            ( $extended == -1 ) or die "INTERNAL ERROR: Can't handle more than 1
-            extended partition\n";
+          # TODO: should be handled properly
+          ( $extended == -1 ) or die "INTERNAL ERROR: Can't handle more than 1
+          extended partition\n";
 
-            # set the id of the extended partition
-            $extended = $part_id;
-          }
+          # set the id of the extended partition
+          $extended = $part_id;
         }
       }
 
       # find partitions that should be preserved or resized
-      # MT: TODO - CONT here
       foreach
         my $part_id ( sort keys %{ $FAI::configs{$config}{"partitions"} } )
       {
 
-        if (
+        next
+          unless (
           $FAI::configs{$config}{"partitions"}{$part_id}{"size"}{"preserve"} ==
           1
           || $FAI::configs{$config}{"partitions"}{$part_id}{"size"}{"resize"} ==
-          1 )
-        {
-          if ( !defined( $FAI::current_config{$disk}{"partitions"}{$part_id} ) )
-          {
-            die "$part_id can't be preserved, it does not exist.\n";
-          }
-          else
-          {
-            push @to_preserve, $part_id;
-            if ( $extended > -1
-              && $part_id > 4
-              && $FAI::current_config{$disk}{"disklabel"} eq "msdos" )
-            {
-              push @to_preserve, $extended;
-              $extended = -1;
-            }
-          }
-        }
+          1 );
 
+        # preserved partitions must exist already
+        defined( $FAI::current_config{$disk}{"partitions"}{$part_id} )
+          or die "$part_id can't be preserved, it does not exist.\n";
+
+        # add $part_id to the list of preserved partitions
+        push @to_preserve, $part_id;
+
+        # in case $part_id is a logical partition, the corresponding extended
+        # partition must be preserved as well
+        if ( $extended > -1
+          && $part_id > 4
+          && $FAI::current_config{$disk}{"disklabel"} eq "msdos" )
+        {
+          push @to_preserve, $extended;
+
+          # set $extended to -1 to avoid adding it multiple times; do not rely
+          # on $extended later on!
+          $extended = -1;
+        }
       }
+
+      # sort the list of preserved partitions
       @to_preserve = sort { $a <=> $b } @to_preserve;
 
-      if ( $target_label ne $source_label )
+      # check, whether a new disk label is required
+      if ( $FAI::configs{$config}{'disklabel'} ne
+        $FAI::current_config{$disk}{'disklabel'} )
       {
-        if ( scalar(@to_preserve) > 0 )
-        {
-          die "Can't change disklabel, partitions are to be preserved!\n";
-        }
-        else
-        {
-          push @FAI::commands,
-            "$FAI::system_commands{'parted'} $disk mklabel $target_label";
-        }
+
+        # A new disk label may only be written if no partitions need to be
+        # preserved
+        ( scalar(@to_preserve) > 0 )
+          and die "Can't change disklabel, partitions are to be preserved!\n";
+
+        # add a command to set the disklabel
+        push @FAI::commands, "$FAI::system_commands{'parted'} $disk mklabel"
+          . $FAI::configs{$config}{'disklabel'};
       }
       else
       {
+
+        # the disk label is unchanged, now all partitions must be removed unless
+        # they are to be preserved
         foreach my $part_id (
           sort keys %{ $FAI::current_config{$disk}{"partitions"} } )
         {
+
+          # partition $part_id is to be preserved, skip it
           if ( $to_preserve[0] == $part_id )
           {
+
+            # and remove it from the list
             shift @to_preserve;
             next;
           }
+
+          # add a command to remove $part_id
           push @FAI::commands,
             "$FAI::system_commands{'parted'} $disk rm $part_id";
         }
       }
 
+      # the byte count where the next parition should start
       my $next_start = 0;
 
+      # generate the commands for resizing or creating partitions
       foreach
         my $part_id ( sort keys %{ $FAI::configs{$config}{"partitions"} } )
       {
+
+        # check, whether $part_id must be preserved; we have checked it for
+        # existence above already
         if (
           $FAI::configs{$config}{"partitions"}{$part_id}{"size"}{"preserve"} ==
           1 )
         {
-          if ( !defined( $FAI::current_config{$disk}{"partitions"}{$part_id} ) )
-          {
-            die "$part_id can't be preserved, it does not exist.\n";
-          }
-          unless ( $FAI::configs{$config}{"disklabel"} eq "msdos"
+
+          # the next partition may start after the preserved partition
+          $next_start =
+            $FAI::current_config{$disk}{"partitions"}{$part_id}{"end_byte"} + 1
+            unless ( $FAI::configs{$config}{"disklabel"} eq "msdos"
             && $FAI::configs{$config}{"partitions"}{$part_id}{"size"}
-            {"extended"} == 1 )
-          {
-            $next_start =
-              $FAI::current_config{$disk}{"partitions"}{$part_id}{"end_byte"} +
-              1;
-          }
+            {"extended"} == 1 );
         }
+
+        # check, whether $part_id must be resized; we have checked it for
+        # existence above already
         elsif (
           $FAI::configs{$config}{"partitions"}{$part_id}{"size"}{"resize"} ==
           1 )
         {
-          if ( !defined( $FAI::current_config{$disk}{"partitions"}{$part_id} ) )
-          {
-            die "$part_id can't be resized, it does not exist.\n";
-          }
-          elsif ( $FAI::current_config{$disk}{"partitions"}{"filesystem"} ne
-            $FAI::configs{$config}{"partitions"}{$part_id}{"filesystem"} )
-          {
-            die "Filesystem change has been requested for $part_id, can't
-            resize\n";
-          }
-          my $part_size =
+
+          # resizing a partition, which must be formatted later makes no sense
+          ( $FAI::current_config{$disk}{"partitions"}{"filesystem"} ne
+              $FAI::configs{$config}{"partitions"}{$part_id}{"filesystem"} )
+            and die
+"Filesystem change has been requested for $part_id, resizing makes no sense\n";
+
+          # compute end byte of the resized partition
+          my $part_end =
             $FAI::configs{$config}{"partitions"}{"size"}{"eff_size"} +
             $next_start - 1;
+
+          # build an appropriate command
           push @FAI::commands,
             "$FAI::system_commands{'parted'} $disk resize $part_id $next_start"
             . "B "
             . $part_size . "B";
-          unless ( $FAI::configs{$config}{"disklabel"} eq "msdos"
+
+          # set $next_start unless this is an extended partition
+          $next_start = $part_size + 1
+            unless ( $FAI::configs{$config}{"disklabel"} eq "msdos"
             && $FAI::configs{$config}{"partitions"}{$part_id}{"size"}
-            {"extended"} == 1 )
-          {
-            $next_start = $part_size + 1;
-          }
+            {"extended"} == 1 );
         }
+
+        # $part_id neither needs to be resized nor preserved, but newly created
         else
         {
+
+          # the type of the partition defaults to primary
           my $part_type = "primary";
           if ( $FAI::configs{$config}{"disklabel"} eq "msdos" )
           {
+
+            # change the partition type to extended or logical as appropriate
             if ( $FAI::configs{$config}{"partitions"}{$part_id}{"size"}
               {"extended"} == 1 )
             {
@@ -226,21 +240,25 @@ sub build_commands
               $part_type = "logical";
             }
           }
-          my $part_size =
+
+          # compute end byte of the new partition
+          my $part_end =
             $FAI::configs{$config}{"partitions"}{$part_id}{"size"}{"eff_size"} +
             $next_start - 1;
-          push @FAI::commands,
-"$FAI::system_commands{'parted'} $disk mkpart $part_type $next_start"
-            . "B "
-            . $part_size . "B";
-          unless ( $FAI::configs{$config}{"disklabel"} eq "msdos"
+
+          # build a parted command to create the partition
+          push @FAI::commands, "$FAI::system_commands{'parted'} $disk mkpart
+            $part_type $next_start" . "B " . $part_size . "B";
+          $next_start = $part_size + 1
+            unless ( $FAI::configs{$config}{"disklabel"} eq "msdos"
             && $FAI::configs{$config}{"partitions"}{$part_id}{"size"}
-            {"extended"} == 1 )
-          {
-            $next_start = $part_size + 1;
-          }
+            {"extended"} == 1 );
         }
       }
+    }
+    else
+    {
+      die "INTERNAL ERROR: Invalid config\n";
     }
   }
 }
