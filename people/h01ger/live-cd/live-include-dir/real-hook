@@ -1,0 +1,153 @@
+#!/bin/sh
+
+# (c) Holger Levsen <debian@layer-acht.org>
+# GPLv2
+
+#
+# populate fai config dir
+#
+mkdir -p /srv/fai/config
+cp -avx /usr/share/doc/fai-doc/examples/simple/* /srv/fai/config/
+
+# fixme: this is just a wordaround for #390504
+mkdir -p /var/lib/fai
+ln -s /srv/fai/config /var/lib/fai/config
+# fixme: this is a workaround for #390504
+echo FAI_CONFIG_SRC=file:///srv/fai/config >> /etc/fai/fai.conf
+# fai.conf is still incomplete, but we cannot complete it yet... (see below)
+# we need from fai-nfsroot for fai-mirror:
+mv /mount2dir /usr/lib/fai/
+
+
+#
+# run fai at boot
+#
+mv /run_fai /etc/init.d/
+update-rc.d run_fai start 99 2 3 4 5 . 
+
+#
+# no autologin to casper user account
+#
+### missing, not important atm
+
+#
+# hack around:
+## WARNING: /srv/fai/nfsroot/var/tmp/base-pkgs.lis 
+## WARNING: /srv/fai/nfsroot/var/tmp/packages.nfsroot does not exists.
+##	minus fai-nfsroot and lilo
+## Can't add those packages. Maybe the nfsroot is not yet created.
+cat >> /srv/fai/config/package_config/live << EOF
+
+PACKAGES install
+adduser apt apt-utils aptitude base-files base-passwd bash bsdmainutils bsdutils coreutils cpio cron debconf debconf-i18n debianutils diff dmidecode dpkg dselect e2fslibs e2fsprogs ed findutils gcc-4.1-base gettext-base gnupg grep groff-base gzip hostname ifupdown initscripts iptables iputils-ping klogd laptop-detect libacl1 libattr1 libblkid1 libbz2-1.0 libc6 libcap1 libcomerr2 libconsole libdb4.2 libdb4.3 libdb4.4 libdevmapper1.02 libgcc1 libgcrypt11 libgdbm3 libgnutls13 libgpg-error0 libldap-2.3-0 libldap2 liblocale-gettext-perl liblzo1 liblzo2-2 libncurses5 libncursesw5 libnewt0.52 libopencdk8 libpam-modules libpam-runtime libpam0g libpopt0 libreadline5 libsasl2 libselinux1 libsepol1 libsigc++-1.2-5c2 libsigc++-2.0-0c2a libslang2 libss2 libssl0.9.8 libstdc++6 libtasn1-2 libtasn1-3 libtasn1-3-bin libtext-charwidth-perl libtext-iconv-perl libtext-wrapi18n-perl libusb-0.1-4 libuuid1 libwrap0 login logrotate lsb-base makedev man-db manpages mawk mktemp module-init-tools modutils mount nano ncurses-base ncurses-bin net-tools netbase netcat openbsd-inetd passwd perl-base procps readline-common sed sysklogd sysv-rc sysvinit tar tasksel tasksel-data tcpd traceroute tzdata util-linux vim-common vim-tiny wget whiptail zlib1g
+module-init-tools dhcp3-client ssh rdate lshw hwinfo portmap bootpc rsync lftp rsh-client less dump reiserfsprogs usbutils psmisc pciutils hdparm smartmontools parted mdadm lvm2 dnsutils ntpdate dosfstools cvs jove xfsprogs xfsdump sysutils dialog discover mdetect libnet-perl console-tools console-common expect iproute udev subversion grub hwtools read-edid 
+debian-archive-keyring
+EOF
+
+# workaround stupid udev problem: s/disk1/hda/
+cat > /srv/fai/config/disk_config/FAIBASE << EOF
+# generic disk configuration for one small disk
+# disk size from 500Mb up to what you can buy today
+#
+# <type> <mountpoint> <size in mb> [mount options]     [;extra options]
+
+disk_config hda
+#disk_config disk1
+primary  /             150-300      rw,errors=remount-ro ; -c -j ext3
+logical  swap          40-500      rw                   
+logical  /var          90-1000     rw                   ; -m 5  -j ext3
+logical  /tmp          50-1000     rw                   ; -m 0 -j ext3
+logical  /usr          200-4000    rw                   ; -j ext3
+logical  /home         50-         rw,nosuid            ; -m 1 -j ext3
+# logical /home        preserve9   rw,nosuid            ; -m 1 -j ext3
+EOF
+
+
+#
+# create hook to partition disks on softupdate
+#
+#fixme: softupdate.DEFAULT is not a proper classname for this case...
+# first EOF in brackets to avoid escaping of variables
+cat > /srv/fai/config/hooks/softupdate.DEFAULT << 'EOF'
+#!/bin/bash
+
+set_disk_info
+load_keymap_consolechars
+
+task_partition
+task_mountdisks	
+# use debootstrap instead of task_extrbase	
+echo start debootstrap
+echo "target=$target"
+df -h
+debootstrap etch /tmp/target file:///media/mirror
+mkdir -p $target/media/mirror/debian
+echo mounting mirror into chroot
+mount --bind /media/mirror $target/media/mirror/debian
+echo "deb file:///media/mirror/debian etch main" > $target/etc/apt/sources.list
+cat <<'FOE' > $target/etc/apt/apt.conf.d/10fai
+APT::Get::AllowUnauthenticated "true";
+Aptitude::CmdLine::Ignore-Trust-Violations yes;
+FOE
+cat <<'FOE' > $target/etc/hosts
+127.0.0.1               localhost
+# The following lines are desirable for IPv6 capable hosts
+::1     ip6-localhost ip6-loopback
+fe00::0 ip6-localnet
+ff00::0 ip6-mcastprefix
+ff02::1 ip6-allnodes
+ff02::2 ip6-allrouters
+ff02::3 ip6-allhosts
+FOE
+
+cat $target/etc/apt/sources.list
+echo debug: task_softupdate
+task_softupdate
+
+EOF
+#
+# fix grub install - thanks to Oliver 'oz' Osburg
+#fixme: fstab fehlt
+cat > /srv/fai/config/scripts/GRUB/10-setup << 'EOF'
+#! /bin/bash
+set -a
+[ -r /tmp/fai/disk_var.sh ] && . /tmp/fai/disk_var.sh
+error=0 ; trap "error=$((error|1))" ERR
+#fcopy -Uv boot/grub/menu.lst
+mkdir -p $target/boot/grub
+grub-install --no-floppy --root-directory=$target $BOOT_DEVICE
+GROOT=$(device2grub $BOOT_PARTITION)
+$ROOTCMD /usr/sbin/update-grub -y
+echo "Grub installed on $BOOT_DEVICE on $GROOT"
+exit $error
+EOF
+#
+# make them executable...
+#
+chmod +x /srv/fai/config/scripts/GRUB/10-setup 
+chmod +x /srv/fai/config/hooks/softupdate.DEFAULT
+
+
+#
+# make mirror on cd...
+#
+mkdir -p /media/mirror
+# fixme: workaround #390377 
+export ftp_proxy="http://mainframe:3128/"
+export http_proxy="http://mainframe:3128/"
+# fixme: I386 and AMD64 only if...
+fai-mirror -v -c live,DEFAULT,DEMO,FAIBASE,I386,CHROOT,AMD64,DHCPC,GRUB /media/mirror
+# new sources.list for this mirror
+mv /sources.list /etc/fai/apt/
+
+# another workaround
+# during fai-mirror run, FAI_ROOT needs to be set to an existing chroot...
+echo target=/tmp/target >> /etc/fai/fai.conf
+echo FAI_ROOT=/tmp/target >> /etc/fai/fai.conf
+
+#
+# cleanup make-live hooks
+#
+rm /hook
+rm /real-hook
+
