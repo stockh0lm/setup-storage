@@ -1,3 +1,15 @@
+fai (2.8.4sarge1.h01ger.6) stable; urgency=low
+
+  * call cfagent differently so it works :) (taken from trunk) 
+
+ -- Holger Levsen <debian@layer-acht.org>  Sun,  5 Nov 2006 13:11:46 +0100
+
+fai (2.8.4sarge1.h01ger.5) stable; urgency=low
+
+  * added alternative depends on cfengine2 for use in etch
+
+ -- Holger Levsen <debian@layer-acht.org>  Sat,  4 Nov 2006 20:24:50 +0100
+
 fai (2.8.4sarge1.h01ger.4) stable; urgency=low
 
   * added depends on cfengine 
