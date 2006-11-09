@@ -5,7 +5,9 @@ fai-live-cd with live-package
 -----------------------------
 
 download all files in live-include-dir and run
-# make-live --hook live-include-dir/hook 
+# sudo apt-get install live-package
+# sudo rm /etc/make-live.conf 	
+# sudo make-live --hook live-include-dir/hook --config live-include-dir/hook/make-live.conf 
 
 
 
