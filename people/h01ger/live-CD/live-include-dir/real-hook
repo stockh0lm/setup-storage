@@ -132,9 +132,6 @@ chmod +x /srv/fai/config/hooks/softupdate.DEFAULT
 # make mirror on cd...
 #
 mkdir -p /media/mirror
-# fixme: workaround #390377 
-export ftp_proxy="http://mainframe:3128/"
-export http_proxy="http://mainframe:3128/"
 # fixme: I386 and AMD64 only if...
 fai-mirror -v -c live,DEFAULT,DEMO,FAIBASE,I386,CHROOT,AMD64,DHCPC,GRUB /media/mirror
 # new sources.list for this mirror
