@@ -2,14 +2,16 @@ fai-kernels (1.13) unstable; urgency=low
 
   * as floppies are really rare nowadays, the kernel size is not optimized for 
     1.44mb size anymore. Use http://rom-o-matic.net/ to generate a etherboot 
-    floppy for netbooting or copy 2.88mb floppy image to a CD. 
+    floppy for netbooting using PXE or copy the 2.88mb floppy image to a CD. 
  
   * Alternativly you can rebuild fai-kernels with a config from 
-    /usr/share/doc/fai-kernels/config-2.6.18.144mb-floppy - the kernel from
-    this configuration still fits on 1.44mb floppies. You might need to add
-    needed drivers to the config and then remove unneeded ones (network card
-    drivers from cards you don't have are good candidates). Instructions howto 
-    rebuild the package can be found in the README.
+    /usr/share/doc/fai-kernels/config-2.6.18.144mb-floppy - the kernel with
+    this configuration still fits on 1.44mb floppies and there should be
+    enough space for additional driversa. You might need to add needed drivers
+    to the config. In case you need more space you can remove unneeded drivers
+    to save more space. Network card drivers from cards you don't have are good 
+    candidates :) Instructions howto  rebuild the package can be found in the 
+    README.
 
  -- Holger Levsen <debian@layer-acht.org>  Sat, 11 Nov 2006 17:43:57 +0100
 

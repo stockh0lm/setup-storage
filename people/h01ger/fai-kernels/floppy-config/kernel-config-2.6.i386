@@ -808,21 +808,21 @@ CONFIG_VIA_RHINE=y
 #
 # Ethernet (1000 Mbit)
 #
-CONFIG_DL2K=y
-CONFIG_E1000=y
+# CONFIG_DL2K is not set
+# CONFIG_E1000 is not set
 # CONFIG_E1000_NAPI is not set
 # CONFIG_E1000_DISABLE_PACKET_SPLIT is not set
-CONFIG_NS83820=y
+# CONFIG_NS83820 is not set
 # CONFIG_HAMACHI is not set
 # CONFIG_YELLOWFIN is not set
-CONFIG_R8169=y
+# CONFIG_R8169 is not set
 # CONFIG_R8169_NAPI is not set
 # CONFIG_SIS190 is not set
-CONFIG_SKGE=y
-CONFIG_SKY2=y
-CONFIG_SK98LIN=y
+# CONFIG_SKGE is not set
+# CONFIG_SKY2 is not set
+# CONFIG_SK98LIN is not set
 # CONFIG_VIA_VELOCITY is not set
-CONFIG_TIGON3=y
+# CONFIG_TIGON3 is not set
 # CONFIG_BNX2 is not set
 
 #

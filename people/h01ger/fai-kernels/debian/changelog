@@ -3,6 +3,8 @@ fai-kernels (1.13) unstable; urgency=low
   * upgraded to 2.6.18
   * introduced config-2.6.17.144floppy in /usr/share/doc/fai-kernels/
     for easy rebuilding with a kernel that still fits on a 1.44mb floppy
+    Those configurations are the same as where used in fai-kernels 1.12
+    but without the gigabit nic drivers. 
   * moved NEWS to NEWS.Debian
   * enabled nfs4
   * bnx2 network driver enabled (Closes: #387572)
