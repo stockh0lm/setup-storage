@@ -2,12 +2,12 @@ fai-kernels (1.13) unstable; urgency=low
 
   * upgraded to 2.6.18
   * introduced config-2.6.17.144floppy in /usr/share/doc/fai-kernels/
-  	### needs better README ###
+    for easy rebuilding with a kernel that still fits on a 1.44mb floppy
   * moved NEWS to NEWS.Debian
   * enabled nfs4
   * bnx2 network driver enabled (Closes: #387572)
 
- -- Holger Levsen <debian@layer-acht.org>  Sun, 22 Oct 2006 09:54:08 +0000
+ -- Holger Levsen <debian@layer-acht.org>  Sat, 11 Nov 2006 17:43:57 +0100 
 
 fai-kernels (1.12) unstable; urgency=low
 
