@@ -1,15 +1,18 @@
 fai-kernels (1.13) unstable; urgency=low
 
   * upgraded to 2.6.18
+  * bnx2 network driver enabled (Closes: #387572)
+  * copied the Graphics support and Console display driver support 
+    configuration sections from config-2.6.18-2-vserver-686/amd64/powerpc
+    (Closes: #396740) 
   * introduced config-2.6.17.144floppy in /usr/share/doc/fai-kernels/
     for easy rebuilding with a kernel that still fits on a 1.44mb floppy
     Those configurations are the same as where used in fai-kernels 1.12
-    but without the gigabit nic drivers. 
+    but without the gigabit nic drivers.
   * moved NEWS to NEWS.Debian
   * enabled nfs4
-  * bnx2 network driver enabled (Closes: #387572)
 
- -- Holger Levsen <debian@layer-acht.org>  Sat, 11 Nov 2006 17:43:57 +0100 
+ -- Holger Levsen <debian@layer-acht.org>  Mon, 13 Nov 2006 18:35:14 +0000
 
 fai-kernels (1.12) unstable; urgency=low
 
