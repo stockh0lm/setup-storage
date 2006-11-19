@@ -20,7 +20,7 @@ if [ ! -d $BUILD_DIR ] ; then
 	exit 1
 fi
 
-PUBLISH_DIR="/www/webserver/lambda.holgerlevsen.de/htdocs/"
+PUBLISH_DIR="/www/webserver/failive.debian.net/htdocs/"
 LOCKFILE="/var/lock/failive-build"
 LOGFILE=`mktemp`
 TODAY="`date +%Y%m%d%H%M`"
@@ -75,7 +75,7 @@ rm $LOCKFILE
 # todo: enable rm for real
 #
 cd $PUBLISH_DIR
-#find . -mtime +1 !  -name "failive-*00.???" -exec echo rm {} \;
-#find . -mtime +2 !  -name "failive-1600.???" -exec echo rm {} \;
-#find . -mtime +14 ! -name "failive-0400.???" -exec echo rm {} \;
+find . -mtime +1 !  -name "failive-*00.???" -exec echo rm {} \;
+find . -mtime +2 !  -name "failive-1600.???" -exec echo rm {} \;
+find . -mtime +14 ! -name "failive-0400.???" -exec echo rm {} \;
 
