@@ -1,4 +1,4 @@
-(c) Holger Levsen 2006
+(c) Holger Levsen, Oliver Osburg 2006
 released under GPL2
 
 fai-live-cd with live-package
@@ -16,3 +16,6 @@ additional comments:
 - /etc/make-live.conf is not included, I basically used the package default
 - feedback is great
 - the live-cd works, but grub installation is buggy
+- install sequence runs now in softupdate-mode. 
+  This should probably be change to dirinstall or install
+- base.tgz has to be taken from some FAI nfsroot.
