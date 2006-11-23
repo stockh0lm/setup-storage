@@ -1,3 +1,9 @@
+fai-kernels (1.14) unstable; urgency=low
+
+  * add Vcs-Svn control field (Closes:  #399554) 
+
+ -- Holger Levsen <debian@layer-acht.org>  Thu, 23 Nov 2006 21:14:49 +0000
+
 fai-kernels (1.13) unstable; urgency=low
 
   * upgraded to 2.6.18
