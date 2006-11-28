@@ -1,10 +1,11 @@
 fai-kernels (1.14) unstable; urgency=low
 
-  * add Vcs-Svn control field (Closes:  #399554)
+  * add Vcs-Svn control field (Closes: #399554)
   * build IPMI modules on i386 and amd64 (Closes: #399545)
-  * build 3ware modules on powerpc (Closes: #399538)
+  * build 3ware modules on all archs (Closes: #399538)
+  * build JFFS2 modules on i386 (Closes: #399990) 
 
- -- Holger Levsen <debian@layer-acht.org>  Tue, 28 Nov 2006 19:30:36 +0000
+ -- Holger Levsen <debian@layer-acht.org>  Tue, 28 Nov 2006 19:56:00 +0000
 
 fai-kernels (1.13) unstable; urgency=low
 
