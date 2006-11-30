@@ -15,7 +15,7 @@ case "$1" in
 	# so we go for softupdates...
 	#
 	unset LANG
-        sh -xv /usr/sbin/fai  -N softupdate
+        sh /usr/sbin/fai  -N softupdate
 	;;
   *)
   	echo doing nothing

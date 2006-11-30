@@ -18,4 +18,5 @@ additional comments:
 - the live-cd works, but grub installation is buggy
 - install sequence runs now in softupdate-mode. 
   This should probably be change to dirinstall or install
-- base.tgz has to be taken from some FAI nfsroot.
+- FIX NEEDED: /etc/fstab has to be copied from $LOGDIR (wherever that 
+  is)
