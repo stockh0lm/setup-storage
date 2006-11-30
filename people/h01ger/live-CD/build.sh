@@ -60,6 +60,9 @@ else
   echo 
   echo "An error occured, .iso was not created :-("
   echo 
+  echo "30 last lines of the make-live output:"
+  echo
+  tail -30 $LOGFILE
 fi 
 cp $LOGFILE $PUBLISH_DIR/faicd-${TODAY}.log
 chmod 644 $PUBLISH_DIR/faicd-${TODAY}.log
