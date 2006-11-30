@@ -20,7 +20,7 @@ if [ ! -d $BUILD_DIR ] ; then
 	exit 1
 fi
 
-PUBLISH_DIR="/www/webserver/failive.debian.net/htdocs/"
+PUBLISH_DIR="/www/webserver/faicd.debian.net/htdocs/"
 LOCKFILE="/var/lock/failive-build"
 LOGFILE=`mktemp`
 TODAY="`date +%Y%m%d%H%M`"
@@ -54,15 +54,15 @@ nice sudo /usr/sbin/make-live --hook live-include-dir/hook --config make-live.co
 # publish
 # 
 if [ -f debian-live/binary.iso ] ; then
-  cp debian-live/binary.iso $PUBLISH_DIR/failive-${TODAY}.iso
+  cp debian-live/binary.iso $PUBLISH_DIR/faicd-${TODAY}.iso
 else 
   echo "#########################################################"
   echo 
   echo "An error occured, .iso was not created :-("
   echo 
 fi 
-cp $LOGFILE $PUBLISH_DIR/failive-${TODAY}.log
-chmod 644 $PUBLISH_DIR/failive-${TODAY}.log
+cp $LOGFILE $PUBLISH_DIR/faicd-${TODAY}.log
+chmod 644 $PUBLISH_DIR/faicd-${TODAY}.log
 rm $LOGFILE
 
 #
@@ -75,7 +75,7 @@ rm $LOCKFILE
 # todo: enable rm for real
 #
 cd $PUBLISH_DIR
-find . -mtime +1 !  -name "failive-*00.???" -exec echo rm {} \;
-find . -mtime +2 !  -name "failive-1600.???" -exec echo rm {} \;
-find . -mtime +14 ! -name "failive-0400.???" -exec echo rm {} \;
+find . -mtime +1 !  -name "fai*-*00.???" -exec echo rm {} \;
+find . -mtime +2 !  -name "fai*-1600.???" -exec echo rm {} \;
+find . -mtime +14 ! -name "fai*-0400.???" -exec echo rm {} \;
 
