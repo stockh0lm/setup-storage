@@ -125,15 +125,15 @@ echo "target is: " $target
 # DEBUG: what's up with LOGDIR?
 echo "cp $LOGDIR/fstab $target/etc/fstab"
 rm $target/etc/fstab
-cp /tmp/fai/fstab /tmp/target/etc/fstab
 task_configure
 /usr/lib/fai/get-boot-info
 #task_softupdate
 echo "copy fstab"
 
+# I had a lot of trouble with that.
 if [ -f $LOGDIR/fstab ] ; then
 	echo "fstab found. OK"
-	cp $LOGDIR/fstab
+	cp $LOGDIR/fstab $target/etc/fstab 
 else
         echo "fstab NOT found :-("
 fi
