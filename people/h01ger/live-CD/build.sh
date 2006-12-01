@@ -38,7 +38,7 @@ touch $LOCKFILE
 # cleanup & prepare
 #
 cd $BUILD_DIR 
-sudo rm debian-live -rf
+sudo rm debian-live -rf > /dev/null
 [ $? ] || echo "problems removing old build"
 # display diffs from current local version to version in repository
 svn diff --revision HEAD
