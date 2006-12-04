@@ -7,11 +7,11 @@ fai-kernels (1.13) unstable; urgency=low
   * Alternativly you can rebuild fai-kernels with a config from 
     /usr/share/doc/fai-kernels/config-2.6.18.144mb-floppy - the kernel with
     this configuration still fits on 1.44mb floppies and there should be
-    enough space for additional driversa. You might need to add needed drivers
+    enough space for additional drivers. You might need to add needed drivers
     to the config. In case you need more space you can remove unneeded drivers
-    to save more space. Network card drivers from cards you don't have are good 
-    candidates :) Instructions howto  rebuild the package can be found in the 
-    README.
+    to save more space. Network card drivers from cards you don't have are 
+    good candidates :) Instructions howto  rebuild the package can be found in
+    the README.
 
  -- Holger Levsen <debian@layer-acht.org>  Sat, 11 Nov 2006 17:43:57 +0100
 
