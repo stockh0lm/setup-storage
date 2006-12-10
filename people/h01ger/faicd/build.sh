@@ -4,19 +4,19 @@
 # Licended under GPL2
 #
 #
-# build script for fai live-cd
+# build script for faicd
 #
 ##############################################################################
 
 #
-# only build in ~/live-CD
+# only build in ~/faicd
 #
 cd
-BUILD_DIR="live-CD"
+BUILD_DIR="faicd"
 if [ ! -d $BUILD_DIR ] ; then
 	echo "`pwd`$BUILD_DIR doesn't exist, aborting."
 	echo
-	echo "cd && svn co svn://svn.debian.org/svn/fai/people/h01ger/live-CD ./live-CD"
+	echo "cd && svn co svn://svn.debian.org/svn/fai/people/h01ger/faicd ./faicd"
 	exit 1
 fi
 
