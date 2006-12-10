@@ -1,3 +1,10 @@
+fai-kernels (1.15) unstable; urgency=low
+
+  * build against newer version of linux-source-2.6.18 (2.6.18-7)
+  * JFFS2 (i386 only) needs MTD, this really (Closes: #399990)
+
+ -- Holger Levsen <debian@layer-acht.org>  Sun, 10 Dec 2006 13:54:20 +0000
+
 fai-kernels (1.14) unstable; urgency=low
 
   * build against newer version of linux-source-2.6.18
