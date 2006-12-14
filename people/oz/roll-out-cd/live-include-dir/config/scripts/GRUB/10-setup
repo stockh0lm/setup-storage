@@ -1,0 +1,18 @@
+#! /bin/bash
+
+set -a
+
+[ -r /tmp/fai/disk_var.sh ] && . /tmp/fai/disk_var.sh
+
+error=0 ; trap "error=$((error|1))" ERR
+
+#ifcopy -Uv boot/grub/menu.lst
+mkdir -p $target/boot/grub
+
+/usr/sbin/grub-install --no-floppy --root-directory=$target $BOOT_DEVICE
+GROOT=$(device2grub $BOOT_PARTITION)
+$ROOTCMD /usr/sbin/update-grub -y
+echo "Grub installed on $BOOT_DEVICE on $GROOT"
+
+exit $error
+

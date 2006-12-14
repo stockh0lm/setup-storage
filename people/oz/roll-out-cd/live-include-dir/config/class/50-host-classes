@@ -1,0 +1,24 @@
+#! /bin/sh
+
+# assign classes hosts
+
+# use a list of classes for our demo machine
+case $HOSTNAME in
+    faiserver)
+	echo "FAIBASE DEMO FAISERVER GERMAN" ;;
+    faiserver-cd)
+	echo "FAIBASE DEMO FAISERVER-CD GERMAN LDAPSERVER LDAPCLIENT" ;;
+    fai-client)
+        echo "FAIBASE DHCPC DEMO XORG GNOME GERMAN LDAPCLIENT DUALBOOT" ;;    
+    demohost)
+	echo "FAIBASE DHCPC DEMO XORG GNOME GERMAN" ;;
+    atom*)
+	echo "FAIBASE DHCPC DEMO" ;;
+    *)
+	echo "FAIBASE" ;;
+esac
+
+(ifclass I386 || ifclass AMD64) && echo GRUB 
+
+[ "$INSTALL" = "X11" ] && echo "XORG GNOME LDAPCLIENT GERMAN"
+exit 0

@@ -1,0 +1,12 @@
+#!/bin/bash
+# install a basic ldap client
+fcopy -r /etc/ldap
+fcopy /etc/samba/smb.conf
+fcopy /etc/pamldap.conf
+fcopy /etc/nsswitch.conf
+fcopy /etc/resolv.conf
+fcopy -r /etc/pam.d/
+fcopy /etc/libnss-ldap.conf
+fcopy -r /etc/smbldap-tools
+mkdir -p $target/lib/init/rw
+mv $target/etc/pamldap.conf $target/etc/pam_ldap.conf

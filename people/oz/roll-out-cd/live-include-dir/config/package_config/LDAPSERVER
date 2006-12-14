@@ -1,0 +1,6 @@
+PACKAGES aptitude-r
+autofs-ldap courier-ldap ldap-account-manager
+ldap-utils libldap2 libnet-ldap-perl migrationtools
+libnss-ldap libpam-ldap php5-ldap php5-gd php5-imap
+php5-snmp php5-mcrypt php5-recode php5-mhash php5-uuid
+slapd smbldap-tools php5-imagick sasl2-bin mcrypt nmap

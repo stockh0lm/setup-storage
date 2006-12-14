@@ -1,0 +1,11 @@
+DEFAULT fai-kernel
+PROMPT 0
+MENU TITLE Multioperatingsystem Networkinstallationserver
+
+label fai-kernel
+kernel fai-kernel
+append ip=dhcp nfsroot=192.168.0.1:/srv/fai/nfsroot FAI_ACTION=install FAI_FLAGS=createvt,sshd INSTALL=X11
+
+label ubuntu-kernel
+kernel ubuntu-kernel
+append ip=dhcp nfsroot=192.168.0.1:/srv/fai/nfsroot.ubuntu FAI_ACTION=install FAI_FLAGS=createvt,sshd INSTALL=all-install

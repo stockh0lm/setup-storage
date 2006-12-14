@@ -1,0 +1,59 @@
+#!/bin/sh
+# The postinstall script
+# setting apt to ask no questions!
+export DEBIAN_FRONTEND=noninteractive
+export HOME=/root
+
+if ls /etc/udev/rules.d/*persistent-net* ; then
+    rm /etc/udev/rules.d/*persistent-net*
+    echo "Script will be executed again afer reboot."
+    # pxeboot kernel 
+    reboot
+else
+    locale-gen
+    echo "FAI setup will need a while..."
+    fai-setup -v
+    cp /srv/fai/nfsroot/boot/vm*fai-kernel* /var/lib/tftpboot/fai-kernel
+    
+#     echo "J-OY-2232
+# J-OY-2232"  > /tmp/....pass
+#     echo "demo
+# demo" > /tmp/....passdemo
+#     smbldap-populate < /tmp/....pass
+#     smbldap-useradd -c "demo user" demo
+#     smbldap-passwd demo < /tmp/....passdemo
+#     # remove this script from init area
+
+# Mediawiki setup 
+    mysqladmin password ernte23
+    mysqladmin drop wikidb
+    cd /var/lib/roll-out/
+    gunzip mysql.dump.gz
+    mysql -pernte23 < /var/lib/roll-out/mysql.dump
+    gzip mysql.dump
+    cd /var/lib/mediawiki1.7
+    tar xvfz /var/lib/roll-out/mediawiki.tgz
+
+# LDAP stuff
+    /etc/init.d/slapd stop
+    rm -rf /var/lib/ldap/*
+    cd /var/lib/roll-out/
+    gunzip server.ldif.gz
+    slapadd < server.ldif
+    chown -R openldap:openldap /var/lib/ldap/
+    /etc/init.d/slapd start
+    smbpasswd -w J-OY-2237
+    cd /var/lib/ldap-account-manager
+    mv config config.preinst
+    tar xvfz /var/lib/roll-out/lamconfig.tgz
+    mkdir /var/log/ldap/
+    chown -R www-data /var/log/ldap/
+    chown -R www-data /var/lib/ldap-account-manager
+    chown -R www-data /etc/ldap-account-manager
+    mv /etc/rc2.d/S99postinstall-faiserver /root
+# livecd Clone stuff
+   cd /srv/fai/config
+   tar xfz /var/lib/roll-out/live-include.tgz
+   
+   reboot
+fi

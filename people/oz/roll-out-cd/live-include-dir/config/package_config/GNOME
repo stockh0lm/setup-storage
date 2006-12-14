@@ -1,0 +1,10 @@
+PACKAGES aptitude
+gnome-desktop-environment
+firefox
+firefox-gnome-support
+thunderbird
+thunderbird-gnome-support
+menu gdm
+gnumeric
+gnome-apt
+abiword-gnome

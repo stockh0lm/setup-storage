@@ -1,0 +1,13 @@
+#!/bin/bash
+/usr/sbin/partimage --batch  -f3 restore /dev/hda1 /var/lib/roll-out/freedos.img.000
+
+cat >> $target/boot/grub/menu.lst << EOF
+# FreeDOS
+
+title FreeDOS
+root (hd0,0)
+chainloader +1
+makeactive
+
+EOF
+

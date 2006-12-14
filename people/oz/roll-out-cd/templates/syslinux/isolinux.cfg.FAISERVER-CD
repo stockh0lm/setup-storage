@@ -1,0 +1,32 @@
+DEFAULT menu.c32
+PROMPT 0
+
+MENU TITLE Fully Automated Installation
+
+label fai
+  MENU LABEL Install FAIServer-CD
+  kernel vmlinuz
+  append initrd=initrd.gz boot=casper ip=192.168.0.1::192.168.0.254:255.255.255.0:faiserver-cd:eth0:off  vga=0x314 hostname=faiserver-cd FAI_FLAGS=createvt,sshd splash silent
+label fai-client
+  MENU LABEL Install FAI-Client 
+  kernel vmlinuz
+  append initrd=initrd.gz boot=casper root=192.168.0.1:/srv/fai/nfsroot FAI_FLAGS="verbose,createvt,sshd" FAI_ACTION=install ip=dhcp::::fai-client:eth0:off rw hostname=fai-client  INSTALL=X11 vga=0x314 splash silent
+label demohost
+  MENU LABEL Install a stand-alone demohost
+  kernel vmlinuz
+  append initrd=initrd.gz boot=casper root=192.168.0.1:/srv/fai/nfsroot FAI_FLAGS="verbose,createvt,sshd" FAI_ACTION=install ip=dhcp::::fai-client:eth0:off rw hostname=demohost  INSTALL=X11 vga=0x314 splash silent
+label linux
+  MENU LABEL live-cd
+  kernel vmlinuz
+  append initrd=initrd.gz boot=casper 
+label memtest
+  MENU LABEL Perform a memory test
+  kernel memtest
+display isolinux.txt
+timeout 0
+f1 f1.txt
+f3 f3.txt
+f4 f4.txt
+f8 f8.txt
+f9 f9.txt
+f0 f10.txt
