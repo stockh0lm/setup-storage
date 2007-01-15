@@ -78,7 +78,6 @@ rm $LOCKFILE
 
 #
 # cleanup old images and logs
-# todo: enable rm for real
 #
 cd $PUBLISH_DIR
 find . -mtime +1 !  -name "fai*-*00.???" -exec echo rm {} \;
