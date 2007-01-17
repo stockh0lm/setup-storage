@@ -84,3 +84,15 @@ find . -mtime +1 !  -name "fai*-*00.???" -exec echo rm {} \;
 find . -mtime +2 !  -name "fai*-1600.???" -exec echo rm {} \;
 find . -mtime +14 ! -name "fai*-0400.???" -exec echo rm {} \;
 
+#
+# re-create warning README
+#
+cat > $PUBLISH_DIR/README.html << 'EOF'
+<html>
+<head></head>
+<body>
+<p><b>WARNING:</p><p></b>Booting this FAI live-cd will ERASE YOUR HARDDISK!!</p>
+</body>
+</html>
+EOF
+
