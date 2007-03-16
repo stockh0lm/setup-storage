@@ -80,9 +80,9 @@ rm $LOCKFILE
 # cleanup old images and logs
 #
 cd $PUBLISH_DIR
-find . -mtime +1 !  -name "fai*-*00.???" -exec echo rm {} \;
-find . -mtime +2 !  -name "fai*-1600.???" -exec echo rm {} \;
-find . -mtime +14 ! -name "fai*-0400.???" -exec echo rm {} \;
+#find . -mtime +1 -name "faicd-*.???" !  -name "fai*-*00.???" -exec rm -f {} \;
+#find . -mtime +2 -name "faicd-*.???" !  -name "fai*-1600.???" -exec rm -f {} \;
+find . -mtime +14 -name "faicd-*.???" -exec rm -f {} \;
 
 #
 # re-create warning README
