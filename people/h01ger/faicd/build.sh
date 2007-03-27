@@ -55,6 +55,7 @@ nice sudo /usr/sbin/make-live --hook live-include-dir/hook --config make-live.co
 # 
 if [ -f debian-live/binary.iso ] ; then
   cp debian-live/binary.iso $PUBLISH_DIR/faicd-${TODAY}.iso
+  md5sum $PUBLISH_DIR/faicd-${TODAY}.iso > $PUBLISH_DIR/faicd-${TODAY}.md5sum
   echo
   echo successfully build live-cd, download at http://faicd.debian.net/faicd-${TODAY}.iso
   echo
