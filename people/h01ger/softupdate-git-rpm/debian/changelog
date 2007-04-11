@@ -2,6 +2,8 @@ fai (3.1.8-0.holger.1) unstable; urgency=low
 
   * added get-config-dir-git
   * added Suggests: subversion, git-core to fai-client
+  * fixed subroutines to not give an error if not installed with fai 
+    (Closes: #415880)
 
  -- Holger Levsen <debian@layer-acht.org>  Wed, 11 Apr 2007 14:26:23 +0200
 
