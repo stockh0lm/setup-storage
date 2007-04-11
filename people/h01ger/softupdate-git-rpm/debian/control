@@ -11,6 +11,7 @@ Package: fai-client
 Architecture: all
 Section: admin
 Depends: perl, libapt-pkg-perl, file, cfengine2 | cfengine
+Suggests: subversion, git-core
 Conflicts: fai
 Replaces: fai
 Description: Fully Automatic Installation client package
