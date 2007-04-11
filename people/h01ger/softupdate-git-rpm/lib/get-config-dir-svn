@@ -27,6 +27,9 @@ case $protocol in
 	svn+https)
 		svnurl="https://$svnpath"
 		;;
+	svn+ssh)
+		svnurl="svn+ssh://$svnpath"
+		;;
 	*)
 		echo "get-config-dir-svn: protocol $protocol not implemented"
 		exit 1
