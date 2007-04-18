@@ -1,3 +1,9 @@
+fai-kernels (1.18) unstable; urgency=low
+
+  * updated to build against 2.6.20 
+
+ -- Holger Levsen <debian@layer-acht.org>  Thu, 19 Apr 2007 01:37:00 +0200
+
 fai-kernels (1.17) unstable; urgency=low
 
   * build against newer version of linux-source-2.6.18 (2.6.18.dfsg.1-11) 
