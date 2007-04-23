@@ -8,7 +8,7 @@ fai-kernels (1.17.1) stable; urgency=low
 
   * build arcmsr scsi-driver as module on all three archs (Closes: #417752)
   
-   -- Holger Levsen <debian@layer-acht.org>  Thu, 19 Apr 2007 01:43:20 +0200
+ -- Holger Levsen <debian@layer-acht.org>  Thu, 19 Apr 2007 01:43:20 +0200
 
 fai-kernels (1.17) unstable; urgency=low
 
