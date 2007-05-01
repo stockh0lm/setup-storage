@@ -48,7 +48,7 @@ svn up
 #
 # build
 #
-nice sudo /usr/sbin/make-live --hook live-include-dir/hook --config make-live.conf > $LOGFILE 2>&1
+nice sudo /usr/bin/make-live --hook live-include-dir/hook --config make-live.conf > $LOGFILE 2>&1
 
 #
 # publish
