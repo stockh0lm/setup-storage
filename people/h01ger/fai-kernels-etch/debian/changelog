@@ -1,8 +1,25 @@
-fai-kernels (1.17.1) stable; urgency=low
+fai-kernels (1.17etch1) stable-security; urgency=high
 
-  * build arcmsr scsi-driver as module on all three archs (Closes: #417752)
+  * NMU by the Security Team
+  * Rebuild against linux-source-2.6.18 (2.6.18.dfsg.1-12etch1):
+    * bugfix/core-dump-unreadable-PT_INTERP.patch
+      [SECURITY] Fix a vulnerability that allows local users to read
+      otherwise unreadable (but executable) files by triggering a core dump.
+      See CVE-2007-0958
+    * bugfix/appletalk-length-mismatch.patch
+      [SECURITY] Fix a remote DoS (crash) in appletalk
+      Depends upon bugfix/appletalk-endianness-annotations.patch
+      See CVE-2007-1357
+    * bugfix/cm4040-buffer-overflow.patch
+      [SECURITY] Fix a buffer overflow in the Omnikey CardMan 4040 driver
+      See CVE-2007-0005
+    * bugfix/ipv6_fl_socklist-no-share.patch
+      [SECURITY] Fix local DoS vulnerability caused by inadvertently sharing
+      ipv6_fl_socklist between the listening socket and the socket created
+      for connection.
+      See CVE-2007-1592
 
- -- Holger Levsen <debian@layer-acht.org>  Thu, 19 Apr 2007 01:43:20 +0200
+ -- dann frazier <dannf@debian.org>  Mon, 30 Apr 2007 14:39:56 -0600
 
 fai-kernels (1.17) unstable; urgency=low
 
