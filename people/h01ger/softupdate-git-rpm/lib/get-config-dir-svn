@@ -28,7 +28,9 @@ case $protocol in
 		svnurl="https://$svnpath"
 		;;
 	svn+ssh)
-		svnurl="svn+ssh://$svnpath"
+		svnurl="svn+ssh://$username@$svnpath"
+		# this is a bit hackish: if $username is empty, the path gets corrected below... 
+		# explaination: svn co -username foo svn+ssh://bar doesnt work as svn co svn+ssh://foo@bar
 		;;
 	*)
 		echo "get-config-dir-svn: protocol $protocol not implemented"
@@ -37,6 +39,7 @@ case $protocol in
 esac
 		
 [ -n "$username" ] && user="--username $username"
+[ -z "$username" ] && svnurl=$FAI_CONFIG_SRC
 
 if [ -d "$FAI/.svn" ] ; then
    echo "Updating SVN in $FAI"

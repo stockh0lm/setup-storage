@@ -1,3 +1,9 @@
+fai (3.1.8-0.holger.2) unstable; urgency=low
+
+  * make svn+ssh work with a username again
+
+ -- Holger Levsen <debian@layer-acht.org>  Tue, 24 Apr 2007 20:39:32 +0200
+
 fai (3.1.8-0.holger.1) unstable; urgency=low
 
   * added get-config-dir-git
@@ -5,8 +11,9 @@ fai (3.1.8-0.holger.1) unstable; urgency=low
   * fixed subroutines to not give an error if not installed with fai
     (Closes: #415880)
   * add support for svn+ssh for get-config-svn
+  * fix get-config-svn so it works without a user@ in $URL
 
- -- Holger Levsen <debian@layer-acht.org>  Wed, 11 Apr 2007 16:44:33 +0200
+ -- Holger Levsen <debian@layer-acht.org>  Sat, 14 Apr 2007 13:51:45 +0200
 
 fai (3.1.8) unstable; urgency=medium
 
