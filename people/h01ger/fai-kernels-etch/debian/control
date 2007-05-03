@@ -1,7 +1,7 @@
 Source: fai-kernels
 Section: admin
 Priority: extra
-Maintainer: Holger Levsen <debian@layer-acht.org>
+Maintainer: Holger Levsen <holger@debian.org>
 Uploaders: Thomas Lange <lange@debian.org>
 Standards-Version: 3.7.2
 Build-Depends: linux-tree-2.6.18, modutils, kernel-package, debhelper (>= 4), bin86, fakeroot, module-init-tools

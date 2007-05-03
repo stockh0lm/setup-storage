@@ -1,8 +1,9 @@
 fai-kernels (1.17etch2) stable; urgency=low
 
-  * build arcmsr scsi-driver as module on all three archs (Closes: #417752) 
+  * build arcmsr scsi-driver as module on all three archs (Closes: #417752)
+  * updated maintainer address
 
- -- Holger Levsen <holger@debian.org>  Wed,  2 May 2007 23:00:34 +0200
+ -- Holger Levsen <holger@debian.org>  Thu,  3 May 2007 10:01:23 +0200
 
 fai-kernels (1.17etch1) stable-security; urgency=high
 
