@@ -1,0 +1,18 @@
+fai-kernels on other archs than i386
+------------------------------------
+
+With the release of fai-kernels 1.11 packages for amd64 and powerpc are also 
+available. Please send feedback directly to me if they work for you and/or 
+report errors and missing drivers to the BTS.
+
+If you use FAI on other archs, don't hesitate to submit a wishlist bug to the 
+BTS. Depending on the progress of using using standard debian kernels with 
+"nfsroot"-initrds for FAI I might upload another version of fai-kernels then
+or point you to another solution.
+
+make-fai-bootfloppy (which also can build .iso images for cdroms) has only
+been tested on i386, it should work on amd64, but it will not work on 
+powerpc.
+
+
+Holger Levsen <debian@layer-acht.org>,  2006-07-07
