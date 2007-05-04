@@ -1,3 +1,9 @@
+fai (3.1.8-lvmraid1) unstable; urgency=low
+
+  * Added LVM+RAID capable setup_harddisks
+
+ -- Sam Vilain <sam@vilain.net>  Fri,  4 May 2007 14:57:01 +1200
+
 fai (3.1.8) unstable; urgency=medium
 
   * conf/NFSROOT: remove unknow package name (closes: 407950)
