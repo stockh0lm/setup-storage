@@ -1,9 +1,36 @@
-fai-kernels (1.17etch2) stable; urgency=low
+fai-kernels (1.17+etch3) stable; urgency=low
 
   * build arcmsr scsi-driver as module on all three archs (Closes: #417752)
   * updated maintainer address
 
- -- Holger Levsen <holger@debian.org>  Thu,  3 May 2007 10:01:23 +0200
+ -- Holger Levsen <holger@debian.org>  Wed, 16 May 2007 11:03:49 +0200
+
+fai-kernels (1.17+etch2) stable-security; urgency=high
+
+  * NMU by the Security Team
+  * Rebuild against linux-source-2.6.18 (2.6.18.dfsg.1-12etch2):
+    * bugfix/nfnetlink_log-null-deref.patch
+      [SECURITY] Fix remotely exploitable NULL pointer dereference in
+      nfulnl_recv_config()
+      See CVE-2007-1496
+    * bugfix/nf_conntrack-set-nfctinfo.patch
+      [SECURITY] Fix incorrect classification of IPv6 fragments as ESTABLISHED,
+      which allows remote attackers to bypass certain rulesets
+      See CVE-2007-1497
+    * bugfix/netlink-infinite-recursion.patch
+      [SECURITY] Fix infinite recursion bug in netlink
+      See CVE-2007-1861
+    * bugfix/nl_fib_lookup-oops.patch
+      Add fix for oops bug added by previous patch
+
+ -- dann frazier <dannf@debian.org>  Wed, 09 May 2007 18:26:42 -0600
+
+fai-kernels (1.17+etch1) stable-security; urgency=high
+
+  * NMU by the Security Team
+  * Rebuild with a version greater than the binNMU in stable (1.17+b1)
+
+ -- dann frazier <dannf@debian.org>  Fri,  4 May 2007 13:33:20 -0600
 
 fai-kernels (1.17etch1) stable-security; urgency=high
 
