@@ -7,7 +7,8 @@ FILES = shdd2 \
 	shdd2-init \
 	shdd2-lib \
 	shdd2-parser \
-	shdd2-sizes
+	shdd2-sizes \
+	shdd2-volumes
 
 tidy:
 	perltidy -bl -i=2 $(FILES)

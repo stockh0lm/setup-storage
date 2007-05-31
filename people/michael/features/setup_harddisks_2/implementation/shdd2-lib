@@ -90,7 +90,11 @@ sub print_hash
   {
 
     # if there is another hash, recursively call the function with this hash
-    if ( ref( $hash_ref->{$key} ) )
+    if ( ref( $hash_ref->{$key} ) eq 'ARRAY' )
+    {
+      print "$k KEY: $key VAL: " . join( " ", @{ $hash_ref->{$key} } ) . "\n";
+    }
+    elsif ( ref( $hash_ref->{$key} ) )
     {
       print "$k KEY: $key VAL: hash\n";
       &print_hash( $hash_ref->{$key}, $k );

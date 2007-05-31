@@ -50,12 +50,16 @@ use strict;
 #            /* preserve partitions */
 #            | resize:[[:digit:]]+(,[[:digit:]]+)*
 #            /* attempt to resize partitions */
-#            | disklabel:(msdos|sun)
+#            | disklabel:(msdos|gpt)
 #            /* write a disklabel - default is msdos */
 #            | bootable:[[:digit:]]+
 #            /* mark a partition bootable, default is / */
 #            | virtual
 #            /* do not assume the disk to be a physical device, use with xen */
+#            | fstabkey:(device|label|uuid)
+#            /* when creating the fstab, the key used for defining the device
+#            may be the device (/dev/xxx), a label given using -L, or the uuid
+#            */
 #
 # volume ::= <type> <mountpoint> <size> <filesystem> <mount_options> <fs_options>
 #            | vg <name> <size>
@@ -145,8 +149,8 @@ sub init_disk_config
   if ( $disk =~ /^\d+$/ )
   {
 
-    # $disk-1 must not be valid index in the map of all disks in the system
-    ( $FAI::disks < $disk )
+    # $disk-1 must be a valid index in the map of all disks in the system
+    ( scalar( @FAI::disks ) >= $disk )
       or die "this system does not have a physical disk $disk\n";
 
     # fetch the (short) device name
@@ -172,6 +176,7 @@ sub init_disk_config
     "virtual"    => 0,
     "disklabel"  => "msdos",
     "bootable"   => -1,
+    "fstabkey"   => "device",
     "partitions" => {}
   };
 }
@@ -352,6 +357,7 @@ $FAI::Parser = Parse::RecDescent->new(
         {
           $return = 1;
         }
+        | <error>
 
     line: <skip: qr/[ \t]*/> "\\n"
         | <skip: qr/[ \t]*/> comment "\\n"
@@ -385,12 +391,18 @@ $FAI::Parser = Parse::RecDescent->new(
         }
         | /^disk(\d+)/
         {
+          # check, whether parted is available
+          ( &FAI::in_path( "parted" ) == 1 ) or 
+            die "parted not found in PATH\n";
           # initialise the entry of the hash corresponding to disk$1
           &FAI::init_disk_config( $1 );
         }
         option(s?)
         | /^\S+/
         {
+          # check, whether parted is available
+          ( &FAI::in_path( "parted" ) == 1 ) or 
+            die "parted not found in PATH\n";
           # initialise the entry of the hash corresponding to $item[1]
           &FAI::init_disk_config( $item[ 1 ] );
         }
@@ -406,22 +418,33 @@ $FAI::Parser = Parse::RecDescent->new(
           # set the resize flag for all ids
           $FAI::configs{ $FAI::device }{ "partitions" }{ $_ }{ "size" }{ "resize" } = 1 foreach ( split( ",", $1 ) );
         }
-        | /^disklabel:(msdos|sun|gpt|mac)/
+        | /^disklabel:(msdos|gpt)/
         {
           # set the disk label - actually not only the above, but all types 
-          # supported by parted could be allowed
+          # supported by parted could be allowed, but others are not implemented
+          # yet
           $FAI::configs{ $FAI::device }{ "disklabel" } = $1;
         }
         | /^bootable:(\d+)/
         {
           # specify a partition that should get the bootable flag set
           $FAI::configs{ $FAI::device }{ "bootable" } = $1;
+          ( $FAI::device =~ /^PHY_(.+)$/ ) or die 
+            "INTERNAL ERROR: unexpected device name\n";
+          # set the BOOT_DEVICE and BOOT_PARTITION variables
+          $FAI::disk_var{ "BOOT_DEVICE" } = $1; 
+          $FAI::disk_var{ "BOOT_PARTITION" } = $1 . 
+            $FAI::configs{ $FAI::device }{ "bootable" }; 
         }
         | 'virtual'
         {
           # this is a configuration for a virtual disk
-          # TODO not yet implemented
           $FAI::configs{ $FAI::device }{ "virtual" } = 1;
+        }
+        | /^fstabkey:(device|label|uuid)/
+        {
+          # the information preferred for fstab device identifieres
+          $FAI::configs{ $FAI::device }{ "fstabkey" } = $1;
         }
 
     volume: 'vg' name devices
@@ -466,6 +489,9 @@ $FAI::Parser = Parse::RecDescent->new(
             die "Logical volume $2 has been defined already.\n";
           # initialise the new hash
           $FAI::configs{$FAI::device}{"volumes"}{$2} = {};
+          # initialise the preserve and resize flags
+          $FAI::configs{$FAI::device}{"volumes"}{$2}{"size"}{"preserve"} = 0;
+          $FAI::configs{$FAI::device}{"volumes"}{$2}{"size"}{"resize"} = 0;
           # set the reference to the current volume
           # the reference is used by all further processing of this config line
           $FAI::partition_pointer = ( \%FAI::configs )->{$FAI::device}->{"volumes"}->{$2};
@@ -479,28 +505,42 @@ $FAI::Parser = Parse::RecDescent->new(
         | 'swap'
         {
           # this partition is swap space, not mounted
-          $FAI::partition_pointer->{ "mountpoint" } = "swap";
+          $FAI::partition_pointer->{ "mountpoint" } = "none";
         }
         | m{^/\S*}
         {
           # set the mount point
           $FAI::partition_pointer->{ "mountpoint" } = $item[ 1 ];
+          # mark the bootable partition, if it is not set yet and this is a PHY_
+          # device
+          if ( $item[ 1 ] eq "/" && $FAI::device =~ /^PHY_(.+)$/ &&
+            $FAI::configs{$FAI::device}{"bootable"} == -1 )
+          {
+            $FAI::configs{$FAI::device}{"bootable"} =
+              $FAI::partition_pointer->{"number"};
+            # set the BOOT_DEVICE and BOOT_PARTITION variables
+            $FAI::disk_var{ "BOOT_DEVICE" } = $1; 
+            $FAI::disk_var{ "BOOT_PARTITION" } = $1 . 
+              $FAI::configs{ $FAI::device }{ "bootable" };
+          }
         }
 
-    name: m{^([^/\s\-]+)\s+}
+    name: m{^([^/\s\-]+)}
         {
-          # make sure this line is part of an LVM configuration
-          ( $FAI::device =~ /^VG_/ ) or
-            die "vg is invalid in a non LVM-context.\n";
           # set the device name to VG_ and the name of the volume group
           $FAI::device = "VG_$1";
           # make sure, the volume group $1 not has been defined already
           defined( $FAI::configs{$FAI::device} ) and
             die "Volume group $1 has been defined already.\n";
+          # make sure this line is part of an LVM configuration
+          ( $FAI::device =~ /^VG_/ ) or
+            die "vg is invalid in a non LVM-context.\n";
           # initialise the new hash
           $FAI::configs{$FAI::device}{"volumes"} = {};
           # initialise the list of physical devices
           $FAI::configs{$FAI::device}{"devices"} = ();
+          # the rule must not return undef
+          1;
         }
 
     size: /^(\d+%?(-(\d+%?)?)?)(:resize)?\s+/
@@ -533,18 +573,13 @@ $FAI::Parser = Parse::RecDescent->new(
         | /^preserve(\d+)\s+/
         {
           # set the preserve flag, if the index of the partition hasn't changed
-          if( $1 == $FAI::partition_pointer->{ "number" } )
-          {
-            $FAI::partition_pointer->{ "size" }->{ "preserve" } = 1;
-          }
-          else
-          {
-            die "partition number of to-be-preserved partition $1 changed to $FAI::partition_pointer->{number}\n";
-          }
+          ( $1 == $FAI::partition_pointer->{ "number" } ) or die
+            "Partition number of to-be-preserved partition $1 changed to $FAI::partition_pointer->{number}\n";
+          $FAI::partition_pointer->{ "size" }->{ "preserve" } = 1;
         }
         | <error: invalid partition size near "$text">
 
-    devices: /^([^\d,:\s\-][^,:\s]*(:(spare|missing))*(,[^,:\s]+(:(spare|missing))*)*)\s+/
+    devices: /^([^\d,:\s\-][^,:\s]*(:(spare|missing))*(,[^,:\s]+(:(spare|missing))*)*)/
         {
           # split the device list by ,
           foreach my $dev ( split( ",", $1 ) )
@@ -579,9 +614,11 @@ $FAI::Parser = Parse::RecDescent->new(
             }
             else
             {
-              push @{ $FAI::configs{$FAI::device}{"devices"} }, $dev;
+              # create an empty hash for each device
+              $FAI::configs{$FAI::device}{"devices"}{$dev} = {};
             }
           }
+          1;
         }
         | <error: invalid device spec "$text">
 
@@ -600,11 +637,12 @@ $FAI::Parser = Parse::RecDescent->new(
         }
         | /^\S+/
         {
-          ( &FAI::in_path("mkfs.$item[1]") == 1 ) or die "unknown/invalid filesystem type $item[1]";
+          ( &FAI::in_path("mkfs.$item[1]") == 1 ) or 
+            die "unknown/invalid filesystem type $item[1] (mkfs.$item[1] not found in PATH)\n";
           $FAI::partition_pointer->{ "filesystem" } = $item[ 1 ];
         }
 
-    fs_options: /.*/
+    fs_options: /[^;\n]*/
         {
           $FAI::partition_pointer->{ "fs_options" } = $item[ 1 ];
         }
@@ -613,20 +651,27 @@ $FAI::Parser = Parse::RecDescent->new(
 
 ################################################################################
 #
-# @brief Parse the data from <STDIN> using @ref $FAI::Parser
+# @brief Parse the data from <$IN> using @ref $FAI::Parser
+#
+# @param IN file handle for input file, may be STDIN
 #
 ################################################################################
 sub run_parser
 {
+  my ( $IN ) = @_;
 
-  # read <STDIN> to a single string (not a list), thus $/ has to be unset
+  # read <$IN> to a single string (not a list), thus $/ has to be unset
   my $ifs = $/;
   undef $/;
-  my $input = <STDIN>;
+  my $input = <$IN>;
   $/ = $ifs;
 
-  # print the contents of <STDIN> for debugging purposes
+  # print the contents of <$IN> for debugging purposes
   ( $FAI::debug > 0 ) and print "Input was:\n" . $input;
+
+  # check for old-style configuration files
+  ( $input =~ m{(^|\n)[^\n#]+;} ) and die 
+    "Old style configuration files are not supported\n";
 
   # attempt to parse $input - any error will lead to termination
   defined $FAI::Parser->file($input) or die "Syntax error\n";

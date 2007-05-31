@@ -37,14 +37,11 @@ package FAI;
 
 ################################################################################
 #
-# @brief Enable debugging by setting $FAI::debug to a value greater than 0
+# @brief Enable debugging by setting $debug to a value greater than 0
 #
 ################################################################################
-$FAI::debug = 1;
-
-# TODO - REMOVE THIS
-$ENV{disklist} = "hda
-";
+$FAI::debug = 0;
+defined( $ENV{debug} ) and $FAI::debug = $ENV{debug};
 
 ################################################################################
 #
@@ -55,15 +52,67 @@ $ENV{disklist} = "hda
 
 ################################################################################
 #
+# @brief The variables later written to disk_var.sh
+#
+################################################################################
+%FAI::disk_var = ();
+$FAI::disk_var{ "SWAPLIST" } = "";
+
+################################################################################
+#
 # @brief The hash of all configurations specified in the disk_config file
 #
 # The structure is as follows:
-# VG_<NAME>
-#   TODO
 # PHY_<DEVICE>
-#   TODO
+#   virtual (0|1)
+#   disklabel STRING
+#   bootable -1..n
+#   partitions
+#     <1..n>
+#       size
+#         extended (0|1)
+#         preserve (0|1)
+#         resize (0|1)
+#         range
+#         eff_size
+#       number 1..n
+#       maps_to_existing 1..n
+#       start_byte
+#       end_byte
+#       mountpoint
+#       mount_options
+#       filesystem
+#       fs_options
+#       label
+# VG_<NAME>
+#   devices
+#   estimated_size
+#   volumes
+#     <logical-volume-name>
+#       size
+#         preserve (0|1)
+#         resize (0|1)
+#         range
+#         eff_size
+#       mountpoint
+#       mount_options
+#       filesystem
+#       fs_options
+#       label
 # RAID
-#   TODO
+#   volumes
+#     <0..n>
+#       mode
+#       devices
+#         /dev/<device-name>
+#           options
+#             spare (0|1)
+#             missing (0|1)
+#       mountpoint
+#       mount_options
+#       filesystem
+#       fs_options
+#       label
 #
 ################################################################################
 %FAI::configs = ();
@@ -74,10 +123,50 @@ $ENV{disklist} = "hda
 #
 # The structure is as follows:
 # <DEVICE>
-#   TODO
+#   bios_cylinders
+#   bios_heads
+#   bios_sectors_per_track
+#   sector_size
+#   disklabel
+#   begin_byte
+#   end_byte
+#   partitions
+#     <1..n>
+#       begin_byte
+#       end_byte
+#       count_byte
+#       is_extended
+#       filesystem
 #
 ################################################################################
 %FAI::current_config = ();
+
+################################################################################
+#
+# @brief The current LVM configuration
+#
+# The structure is as follows:
+# <VG>
+#   physical_volumes
+#   size
+#   volumes
+#     <lv-name>
+#       size
+#
+################################################################################
+%FAI::current_lvm_config = ();
+
+################################################################################
+#
+# @brief The current RAID configuration
+#
+# The structure is as follows:
+# <0..n>
+#   devices
+#   mode
+#
+################################################################################
+%FAI::current_raid_config = ();
 
 ################################################################################
 #
@@ -90,12 +179,12 @@ $ENV{disklist} = "hda
 #
 # @brief A map of commands
 #
-# TODO check for availability, exact version?
+# checks for availability within $PATH are performed from within the parser
 #
 ################################################################################
 %FAI::system_commands = (
-  "mdadm"  => "/sbin/mdadm",
-  "parted" => "/sbin/parted -s"
+  "mdadm"  => "mdadm",
+  "parted" => "parted -s"
 );
 
 1;

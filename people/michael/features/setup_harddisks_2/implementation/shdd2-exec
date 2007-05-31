@@ -52,7 +52,7 @@ package FAI;
 $FAI::error_codes = [
   {
     error   => "parted_1",
-    message => "Parted produced error. Couldn't remove Partition",
+    message => "Parted produced error. Couldn't remove partition\n",
     stderr_regex =>
       ".*Error: Could not stat device rm - No such file or directory.*",
     stdout_regex => "",
@@ -61,15 +61,15 @@ $FAI::error_codes = [
   },
   {
     error        => "parted_2",
-    message      => "Parted produced error. Could not read disk label.",
+    message      => "Parted produced error. Could not read disk label.\n",
     stderr_regex => ".*Error: Unable to open .* - unrecognised disk label.*",
     stdout_regex => "",
     program      => "parted",
-    response     => "die",
+    response     => "warn",
   },
   {
     error   => "parted_3",
-    message => "Parted produced error. Could not open disk",
+    message => "Parted produced error. Could not open disk\n",
     stderr_regex =>
       ".*Error: Could not stat device .* - No such file or directory.*",
     stdout_regex => "",
@@ -77,12 +77,28 @@ $FAI::error_codes = [
     response     => "die"
   },
   {
-    error        => "port_1",
-    message      => "test_error",
-    stderr_regex => ".*Error: .* Port test not found.*",
+    error   => "parted_4",
+    message => "parted not found\n",
+    stderr_regex => ".*(parted: command not found|/sbin/parted: No such file or directory)",
     stdout_regex => "",
-    program      => "port",
+    program      => "parted",
     response     => "die"
+  },
+  {
+    error   => "parted_5",
+    message => "Parted was unable to create the partition\n",
+    stderr_regex => "Warning: You requested a partition from .* to .*\\.\$",
+    stdout_regex => "",
+    program      => "parted",
+    response     => \&FAI::restore_partition_table,
+  },
+  {
+    error   => "mkfs.xfs_1",
+    message => "mkfs.xfs refused to create a filesystem. Probably you should add -f to the mkfs options in your disk_config file.\n",
+    stderr_regex => "mkfs.xfs: /dev/.* appears to contain an existing filesystem",
+    stdout_regex => "",
+    program      => "mkfs.xfs",
+    response     => "die",
   },
 ];
 
@@ -99,10 +115,8 @@ sub get_error_message
 {
   my ($error) = @_;
   my @treffer = grep { $_->{error} eq "$error" } @$FAI::error_codes;
-  foreach my $m (@treffer)    #returns the first found error message.
-  {
-    return "$m->{'message'}";
-  }
+  # returns the first found error message.
+  return $treffer[ 0 ]->{'message'};
 }
 
 ################################################################################
@@ -119,10 +133,8 @@ sub get_error
 {
   my ( $error, $field ) = @_;
   my @treffer = grep { $_->{error} eq "$error" } @$FAI::error_codes;
-  foreach my $m (@treffer)    #returns the first found error message.
-  {
-    return "$m->{$field}";
-  }
+  # returns the first found error message.
+  return $treffer[ 0 ]->{$field};
 }
 ################################################################################
 #
@@ -145,20 +157,16 @@ sub execute_command_std    #execute command with standard error handling
 {
   my ( $command, $stdout_ref, $stderr_ref ) = @_;
   my $err = &execute_command( $command, $stdout_ref, $stderr_ref );
-  unless ( $err eq "" )
+  if ( $err ne "" )
   {
     my $response = &get_error( $err, "response" );
     my $message  = &get_error( $err, "message" );
 
-    if ( $response eq "die" )
-    {
-      die $message;
-    }
+    $response->() if ( ref( $response ) );
 
-    if ( $response eq "warn" )
-    {
-      warn $message;
-    }
+    die $message if ( $response eq "die" );
+
+    warn $message if ( $response eq "warn" );
 
     return $err;
   }
@@ -176,7 +184,7 @@ sub execute_command_std    #execute command with standard error handling
 # output of the bash command
 #
 # @reference stderr_ref reference to a list, that should contain the standard
-# errer output of the bash command
+# error output of the bash command
 #
 # @return the identifier of the error
 #
@@ -189,27 +197,22 @@ sub execute_command
   my @stdout      = ();
   my $stderr_line = "";
   my $stdout_line = "";
-  my $run         = 0;
-  if ( defined( $ENV{"NO_DRY_RUN"} ) && !( $ENV{"NO_DRY_RUN"} =~ /^\s*$/ ) )
-  {
-    $run = 1;
-  }
 
   #make tempfile, get perl filehandle and filename of the file
-  ( my $stderr_fh, my $stderr_filename ) = File::Temp::tempfile();
-  ( my $stdout_fh, my $stdout_filename ) = File::Temp::tempfile();
+  ( my $stderr_fh, my $stderr_filename ) = File::Temp::tempfile( UNLINK => 1 );
+  ( my $stdout_fh, my $stdout_filename ) = File::Temp::tempfile( UNLINK => 1 );
 
   # do only execute the given command, when in no_dry_mode
-  if ( $run == 1 )
+  if ( $FAI::no_dry_run )
   {
-
+    
+    ( $FAI::debug ) and print "(CMD) $command 1> $stdout_filename 2> $stderr_filename\n";
     # execute the bash command, write stderr and stdout into the testfiles
     `$command 1> $stdout_filename 2> $stderr_filename`;
   }
   else
   {
-    printf
-"would run command $command, to run in NO_DRY_MODE, please set environment variable NO_DRY_RUN to 1 \n";
+    print "would run command $command; to have them executed, use -X \n";
   }
 
   # read the tempfile into lists, each element of the list one line
@@ -220,31 +223,22 @@ sub execute_command
   close($stderr_fh);
   close($stdout_fh);
 
+  ( $FAI::debug ) and print "(STDERR) $_" foreach ( @stderr );
+  ( $FAI::debug ) and print "(STDOUT) $_" foreach ( @stdout );
+
   #if the stderr contains information, get the first line for error recognition
-  if ( scalar(@stderr) > 0 )
-  {
-    $stderr_line = $stderr[0];
-  }
+  $stderr_line = $stderr[0] if ( scalar(@stderr) > 0 );
 
   #see last comment
-  if ( scalar(@stdout) > 0 )
-  {
-    $stdout_line = $stdout[0];
-  }
+  $stdout_line = $stdout[0] if ( scalar(@stdout) > 0 );
 
   #if an array is passed to the function, it is filled with the stdout
-  if ( 'ARRAY' eq ref($stdout_ref) )
-  {
-    @$stdout_ref = @stdout;
-  }
+  @$stdout_ref = @stdout if ( 'ARRAY' eq ref($stdout_ref) );
 
   #see above
-  if ( 'ARRAY' eq ref($stderr_ref) )
-  {
-    @$stderr_ref = @stderr;
-  }
+  @$stderr_ref = @stderr if ( 'ARRAY' eq ref($stderr_ref) );
 
-  #get the error, eventually happened
+  #get the error, if there was any
   foreach my $err (@$FAI::error_codes)
   {
     if (

@@ -1,14 +1,8 @@
-# disk configuration for a 6 disk configuration
-
-# This is set up much like everything else; 
-
-# <type> <mountpoint> <size in mb> <mount options> <filesystem> [extra options]
-
 disk_config sda
 
-primary  /    256         - -  
-primary  swap 1024        -                   -
-primary  -		0-				 - -
+primary  -    256         -    -  
+primary  swap 1024        swap       sw
+primary  -		0-				 -    -
 
 disk_config sdb
 primary  -		0-				 - -
