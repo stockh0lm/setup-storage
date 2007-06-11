@@ -1,3 +1,10 @@
+fai (3.1.8-0.holger.3) etch; urgency=low
+
+  * changed distribution to etch
+  * added alternative build deps to texlive-base-bin and texlive-latex-extra
+
+ -- Holger Levsen <holger@debian.org>  Mon, 11 Jun 2007 21:16:33 +0100
+
 fai (3.1.8-0.holger.2) unstable; urgency=low
 
   * make svn+ssh work with a username again
