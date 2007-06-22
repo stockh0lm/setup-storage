@@ -48,6 +48,14 @@ calling fai-class(1). You need to use this option for the first
 softupdate if the system was not installed with FAI, and you can use
 it in subsequent runs as well.
 .TP
+.B \-u\--hostname <HOSTNAME>
+Use this hostname instead the output of the hostname command. This is useful in conjunction 
+with the dirinstall action, where you most probably want to manually define a hostname that 
+should be used for defining classes and for the network setup and other stuff. There, you
+most probably don't want the name of the host where you run fai dirinstall on be
+used - because programs in a chroot, or in a virtualized OS instance should run on their 
+own name, and install their own set of classes.
+.TP
 .B \-v|\-\-verbose
 Create verbose output.
 .SH ACTIONS
