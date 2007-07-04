@@ -1,3 +1,17 @@
+fai (3.1.8-0.rpm-holger.3) unstable; urgency=low
+
+  * added alternative build deps to texlive-base-bin and texlive-latex-extra
+
+ -- Holger Levsen <holger@debian.org>  Mon, 11 Jun 2007 21:20:40 +0100
+
+fai (3.1.8-0.holger.3) unstable; urgency=low
+
+  * Hack around in install_packages so it doesnt depend on libapt-pkg-perl.
+    It stays as a Depends: as alien/rpm doesnt consider this field anyway,
+    and the Depends: is needed on Debian systems.
+
+ -- Holger Levsen <holger@debian.org>  Thu,  3 May 2007 19:29:21 +0200
+
 fai (3.1.8-0.holger.2) unstable; urgency=low
 
   * make svn+ssh work with a username again

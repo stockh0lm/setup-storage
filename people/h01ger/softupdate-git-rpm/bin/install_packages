@@ -32,9 +32,21 @@ $0=~ s#.+/##; # remove path from program name
 
 use strict;
 use Getopt::Std;
-use AptPkg::Config '$_config';
-use AptPkg::System '$_system';
-use AptPkg::Cache;
+use vars qw/$aptpkg_avail/;
+$aptpkg_avail=1;
+	unless (eval 	"require AptPkg::Config") {
+		$aptpkg_avail=-1;
+	}
+	eval 	"require AptPkg::System";
+	eval 	"require AptPkg::Cache";
+my $_config;
+my $_system;
+if ($aptpkg_avail==1) { 
+		eval	'import AptPkg::Config $_config';
+		eval 	'import AptPkg::System $_system';
+		eval 	'import AptPkg::Cache';
+}
+if ($aptpkg_avail==1) { print "this is a debian system\n"; }
 
 # global variables
 our ($opt_d,$opt_l,$opt_L,$opt_v,$opt_h,$opt_t,$opt_m,$opt_p);
@@ -113,11 +125,13 @@ $rootcmd = ($FAI_ROOT eq "/" ) ? '' : "chroot $FAI_ROOT";
 @classes = grep { !/^#|^\s*$/ } split(/[\s\n]+/,$ENV{classes});
 foreach (@classes) { $classisdef{$_}=1;}
 
-$_config->init;                 # initialize AptPkg
-$_config->set("Dir",$FAI_ROOT); # simulate "chroot"
-$_config->{quiet}=2;            # don't show cache initialization messages
-$_system = $_config->system;
-$cache = new AptPkg::Cache;
+if ($aptpkg_avail==1) {
+	$_config->init;                 # initialize AptPkg
+	$_config->set("Dir",$FAI_ROOT); # simulate "chroot"
+	$_config->{quiet}=2;            # don't show cache initialization messages
+	$_system = $_config->system;
+	$cache = new AptPkg::Cache;
+}
 
 # read all package config files
 foreach (@classes) {
@@ -211,14 +225,15 @@ foreach my $entry (@preloadrmlist) {
   unlink $file || warn "Can't remove $file\n";
 }
 
-
-# in case of unconfigured packages because of apt errors
-# retry configuration
-execute("$rootcmd $command{pending}");
-# check if all went right
-execute("$rootcmd $command{dpkgc}");
-# clean apt cache
-execute("$rootcmd $command{clean}");
+if ($aptpkg_avail==1) {
+	# in case of unconfigured packages because of apt errors
+	# retry configuration
+	execute("$rootcmd $command{pending}");
+	# check if all went right
+	execute("$rootcmd $command{dpkgc}");
+	# clean apt cache
+	execute("$rootcmd $command{clean}");
+}
 # - - - - - - - - - - - - - - - - - - - - - - - - - - -
 sub readconfig {
 
