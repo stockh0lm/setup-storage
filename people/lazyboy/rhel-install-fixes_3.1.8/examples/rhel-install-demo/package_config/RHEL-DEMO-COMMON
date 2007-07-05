@@ -1,0 +1,10 @@
+PACKAGES yumi
+less
+lynx
+openssh
+vim-enhanced
+man
+openssh-server
+wget
+screen
+unzip

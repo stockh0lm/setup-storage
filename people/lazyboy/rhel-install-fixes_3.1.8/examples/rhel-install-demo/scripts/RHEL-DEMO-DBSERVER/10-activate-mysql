@@ -1,0 +1,3 @@
+#!/bin/sh
+
+$ROOTCMD chkconfig mysqld on

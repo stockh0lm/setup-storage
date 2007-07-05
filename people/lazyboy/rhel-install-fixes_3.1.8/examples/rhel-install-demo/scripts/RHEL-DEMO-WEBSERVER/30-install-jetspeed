@@ -1,0 +1,7 @@
+#! /bin/bash
+
+$ROOTCMD wget -P/tmp/ http://debmirror/mirrors/binary-packages/jetspeed-2.1-demo-installer.jar
+#yes y > $ROOTCMD /usr/java/latest/bin/java -jar /tmp/jetspeed-2.1-demo-installer.jar
+
+echo "jetspeed install not ready yet"
+exit 1

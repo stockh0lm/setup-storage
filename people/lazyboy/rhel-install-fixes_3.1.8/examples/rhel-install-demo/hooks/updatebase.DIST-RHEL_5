@@ -1,0 +1,7 @@
+#! /bin/sh
+
+# TODO: do things necessary to update yum db!
+mount -o bind /proc $target/proc
+$ROOTCMD yum update
+
+skiptask updatebase

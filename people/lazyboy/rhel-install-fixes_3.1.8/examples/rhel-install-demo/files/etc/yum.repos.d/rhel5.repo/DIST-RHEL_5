@@ -1,0 +1,8 @@
+[base]
+protect=0
+#[RHEL5]
+#protect=1
+name=Red Hat Enterprise Linux 5
+baseurl=http://debmirror/mirrors/rhel/5/Server/
+enabled=1
+gpgcheck=0

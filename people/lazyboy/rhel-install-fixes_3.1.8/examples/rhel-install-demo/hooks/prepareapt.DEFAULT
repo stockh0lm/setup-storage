@@ -1,0 +1,25 @@
+#!/bin/sh
+
+# run prepareapt only for default distribution
+
+if ! [ -z $DISTRIBUTION ]; then
+    echo "$0: skip task prepareapt because we are installing DISTRIBUTION=$DISTRIBUTION"
+    skiptask prepareapt
+fi
+
+if ifclass DEBIAN;then
+    echo "not running hook prepareapt.DEFAULT because we run a debian distribution"
+    exit 0
+fi
+
+# we need these to install packages via network
+[ -f /tmp/etc/resolv.conf ] && cp /tmp/etc/resolv.conf $FAI_ROOT/etc
+[ -f /etc/hosts ] && cp /etc/hosts $FAI_ROOT/etc
+# set hostname in $FAI_ROOT
+if [ -f /var/run/fai//FAI_INSTALLATION_IN_PROGRESS ]; then
+    echo -e "$IPADDR\t$HOSTNAME.$DOMAIN $HOSTNAME" >>$FAI_ROOT/etc/hosts
+    echo $HOSTNAME >$FAI_ROOT/etc/hostname
+fi
+
+touch $FAI_ROOT/etc/mtab
+

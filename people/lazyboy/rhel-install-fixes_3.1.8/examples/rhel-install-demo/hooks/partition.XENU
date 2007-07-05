@@ -1,0 +1,32 @@
+#!/bin/sh
+
+#skiptask
+
+
+[ -f $LOGDIR/our.skip.partition ] && exit 0
+
+for our_cl in $classes; do
+  [ $our_cl = "XENU" ] && continue
+  [ -f $FAI/hooks/partition.$our_cl ] && exit 0
+done
+
+mke2fs -j /dev/hda1 > /dev/null
+mkswap /dev/hda2 > /dev/null
+
+#   mke2fs -j /dev/hda3 > /dev/null
+#   mke2fs -j /dev/hda4 > /dev/null
+#   mke2fs -j /dev/hda5 > /dev/null
+
+cat > /tmp/fai/fstab <<EOF
+/dev/hda1 / ext3 defaults 0 0
+/dev/hda2 none swap sw 0 0
+EOF
+
+#    /dev/hda3 /tmp ext3 defaults 0 0
+#    /dev/hda4 /usr ext3 defaults 0 0
+#    /dev/hda5 /var ext3 defaults 0 0
+#    EOF
+
+
+echo "#!" > $diskvar
+touch $LOGDIR/skip.partition

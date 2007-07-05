@@ -1,0 +1,4 @@
+#! /bin/bash
+
+$ROOTCMD wget -P/tmp http://debmirror/mirrors/binary-packages/jdk-6u1-linux-i586.rpm
+$ROOTCMD rpm -i /tmp/jdk-6u1-linux-i586.rpm

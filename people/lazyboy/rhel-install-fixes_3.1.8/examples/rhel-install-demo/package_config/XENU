@@ -1,0 +1,10 @@
+PACKAGES yumi DIST-RHEL_5
+kernel-xen
+libvirt
+python-libvirt
+
+PACKAGES install DIST_DEFAULT
+ethtool
+libc6-xen
+linux-image-2.6-xen-686
+console-tools-
