@@ -1,4 +1,4 @@
-PACKAGES aptitude
+PACKAGES aptitude DIST-DEBIAN
 xorg xserver-xorg-video-all xserver-xorg-input-all
 ttf-freefont type1inst
 xscreensaver

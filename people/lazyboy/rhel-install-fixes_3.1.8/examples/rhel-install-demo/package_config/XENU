@@ -1,7 +1,6 @@
 PACKAGES yumi DIST-RHEL_5
 kernel-xen
 libvirt
-python-libvirt
 
 PACKAGES install DIST_DEFAULT
 ethtool

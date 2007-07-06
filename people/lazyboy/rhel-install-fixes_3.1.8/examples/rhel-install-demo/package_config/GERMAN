@@ -1,4 +1,4 @@
-PACKAGES aptitude-r
+PACKAGES aptitude-r DIST-DEBIAN
 german
 
 PACKAGES aptitude GNOME
