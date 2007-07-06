@@ -1,0 +1,20 @@
+#! /usr/sbin/cfagent -f
+
+control:
+   any::
+   actionsequence = ( files editfiles )
+   EditFileSize = ( 30000 )
+
+editfiles:
+   any::
+	{ ${target}/opt/tomcat/conf/tomcat-users.xml
+	  LocateLineMatching "<tomcat-users>"
+	  BeginGroupIfNoLineMatching '^ *<role rolename="manager"/>'
+	  	InsertLine '<role rolename="manager"/>'	
+	  EndGroup
+
+	  BeginGroupIfNoLineMatching '^ *<user username="tomcat" password="tomcat" roles="manager"/>$'
+	  	InsertLine '<user username="tomcat" password="tomcat" roles="manager"/>'
+	  EndGroup
+
+	}
