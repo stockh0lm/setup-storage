@@ -32,9 +32,43 @@ $0=~ s#.+/##; # remove path from program name
 
 use strict;
 use Getopt::Std;
-use AptPkg::Config '$_config';
-use AptPkg::System '$_system';
-use AptPkg::Cache;
+use vars qw/$aptpkg_avail/;
+
+my @classes;
+@classes = grep { !/^#|^\s*$/ } split(/[\s\n]+/,$ENV{classes});
+
+#$aptpkg_avail=-1;
+
+#if (eval 	"require AptPkg::Config") {
+#	$aptpkg_avail=1;
+#}
+
+# TODO: even if apt is available, turn it off if target is not a debian
+# system!
+#if ( grep $_ eq 'DIST-DEBIAN', @classes) {
+#    $aptpkg_avail=-1;
+#} elsif ( eval 	"require AptPkg::Config" &&  grep $_ eq 'DIST-DEBIAN', @classes ) {
+if ( eval 	"require AptPkg::Config" &&  grep $_ eq 'DIST-DEBIAN', @classes ) {
+	$aptpkg_avail=1;
+} else {
+    $aptpkg_avail=-1;
+}
+
+
+my $_config;
+my $_system;
+
+if ($aptpkg_avail==1) { 
+    print "this is a debian system\n";
+    eval 	"require AptPkg::System";
+    eval 	"require AptPkg::Cache";
+
+    $_config = $AptPkg::Config::_config;
+    $_system = $AptPkg::System::_system;
+    eval	'import AptPkg::Config $_config';
+    eval 	'import AptPkg::System $_system';
+    eval 	'import AptPkg::Cache';
+}
 
 # global variables
 our ($opt_d,$opt_l,$opt_L,$opt_v,$opt_h,$opt_t,$opt_m,$opt_p);
@@ -45,7 +79,6 @@ our $atype;    # type of action (for apt-get, aptitude,..) that will be performe
 my $test;
 my $verbose;
 my $FAI_ROOT;
-my @classes;
 my $classpath;
 my $rootcmd;
 my @preloadlist;
@@ -110,14 +143,18 @@ my $devnull=">/dev/null" unless $verbose;
 $FAI_ROOT = $ENV{FAI_ROOT};
 $classpath = $opt_p || "$ENV{FAI}/package_config";
 $rootcmd = ($FAI_ROOT eq "/" ) ? '' : "chroot $FAI_ROOT";
-@classes = grep { !/^#|^\s*$/ } split(/[\s\n]+/,$ENV{classes});
+# HENNING: moved up, needed to check if we are installing debian and running
+# on debian
+#@classes = grep { !/^#|^\s*$/ } split(/[\s\n]+/,$ENV{classes});
 foreach (@classes) { $classisdef{$_}=1;}
 
-$_config->init;                 # initialize AptPkg
-$_config->set("Dir",$FAI_ROOT); # simulate "chroot"
-$_config->{quiet}=2;            # don't show cache initialization messages
-$_system = $_config->system;
-$cache = new AptPkg::Cache;
+if ($aptpkg_avail==1) {
+	$_config->init;                 # initialize AptPkg
+	$_config->set("Dir",$FAI_ROOT); # simulate "chroot"
+	$_config->{quiet}=2;            # don't show cache initialization messages
+	$_system = $_config->system;
+	$cache = new AptPkg::Cache;
+}
 
 # read all package config files
 foreach (@classes) {
@@ -211,14 +248,15 @@ foreach my $entry (@preloadrmlist) {
   unlink $file || warn "Can't remove $file\n";
 }
 
-
-# in case of unconfigured packages because of apt errors
-# retry configuration
-execute("$rootcmd $command{pending}");
-# check if all went right
-execute("$rootcmd $command{dpkgc}");
-# clean apt cache
-execute("$rootcmd $command{clean}");
+if ($aptpkg_avail==1) {
+	# in case of unconfigured packages because of apt errors
+	# retry configuration
+	execute("$rootcmd $command{pending}");
+	# check if all went right
+	execute("$rootcmd $command{dpkgc}");
+	# clean apt cache
+	execute("$rootcmd $command{clean}");
+}
 # - - - - - - - - - - - - - - - - - - - - - - - - - - -
 sub readconfig {
 
@@ -341,8 +379,10 @@ sub mkpackagelist {
 
   foreach (reverse @complete) {
     my $pack = $_;
-    if ( /^(.+)[_=+-]$/ and $1 and $cache->exists($1)) {
-      $pack = $1;
+    if ($aptpkg_avail==1) {
+        if ( /^(.+)[_=+-]$/ and $1 and $cache->exists($1)) {
+            $pack = $1;
+        }
     }
     if (! defined ($complete{$pack})) {
       $complete{$pack} = 1;

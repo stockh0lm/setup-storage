@@ -1,3 +1,9 @@
+fai (3.1.8rheldemo0.2.1) unstable; urgency=low
+
+  * add rhel demo example config
+
+ -- Henning Sprang <henning@sprang.de>  Thu,  5 Jul 2007 19:26:51 +0200
+
 fai (3.1.8) unstable; urgency=medium
 
   * conf/NFSROOT: remove unknow package name (closes: 407950)
