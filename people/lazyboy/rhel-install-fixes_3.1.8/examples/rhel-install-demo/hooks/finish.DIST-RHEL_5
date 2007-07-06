@@ -1,2 +1,3 @@
 #! /bin/sh
-umount $target/proc
+$ROOTCMD umount /proc/sys/fs/binfmt_misc/
+$ROOTCMD umount /proc
