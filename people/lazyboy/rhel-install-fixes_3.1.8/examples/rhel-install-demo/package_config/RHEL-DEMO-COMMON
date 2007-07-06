@@ -8,3 +8,5 @@ openssh-server
 wget
 screen
 unzip
+which
+nfs-utils
