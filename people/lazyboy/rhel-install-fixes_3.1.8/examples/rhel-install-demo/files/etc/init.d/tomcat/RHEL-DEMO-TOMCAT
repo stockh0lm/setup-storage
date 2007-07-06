@@ -1,0 +1,63 @@
+#!/bin/bash
+#
+# httpd        Startup script for the Apache HTTP Server
+#
+# chkconfig: - 90 10
+# description: Tomcat Servlet Container
+# processname: tomcat
+# config: /opt/tomcat/conf
+# config: /etc/sysconfig/tomcat
+# pidfile: /var/run/tomcat.pid
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+if [ -f /etc/sysconfig/tomcat ]; then
+        . /etc/sysconfig/tomcat
+fi
+
+# Start httpd in the C locale by default.
+HTTPD_LANG=${HTTPD_LANG-"C"}
+
+start() {
+        echo -n $"Starting $prog: "
+        /opt/tomcat/bin/startup.sh
+}
+
+
+# When stopping httpd a delay of >10 second is required before SIGKILLing the
+# httpd parent; this gives enough time for the httpd parent to SIGKILL any
+# errant children.
+stop() {
+        echo -n $"Stopping $prog: "
+        /opt/tomcat/bin/shutdown.sh
+}
+reload() {
+    echo -n $"Reloading $prog: "
+    /opt/tomcat/bin/shutdown.sh
+    /opt/tomcat/bin/startup.sh
+}
+
+# See how we were called.
+case "$1" in
+  start)
+        start
+        ;;
+  stop)
+        stop
+        ;;
+  status)
+        status $httpd
+        RETVAL=$?
+        ;;
+  restart)
+        stop
+        start
+        ;;
+  *)
+        echo $"Usage: $prog {start|stop|restart}"
+        exit 1
+esac
+
+exit $RETVAL
+
