@@ -1,4 +1,4 @@
 #! /bin/sh
 # make grub directory to get kernel installed
-$ROOTCMD mkdir /boot/grub
+[ -d $target/boot/grub ] || $ROOTCMD mkdir /boot/grub
 $ROOTCMD touch /boot/grub/menu.lst

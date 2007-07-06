@@ -23,13 +23,15 @@ if [ $do_init_tasks -eq 1 ] ; then
 fi
 
 # Make sure everything is configured properly
-echo "Running \"apt-get -f install\" for the last time."
-$ROOTCMD apt-get -f install
+if ifclass DIST-DEBIAN; then
+	echo "Running \"apt-get -f install\" for the last time."
+	$ROOTCMD apt-get -f install
+fi
 
 lskernels=$(echo $target/boot/vmlinu*)
 [ -f ${lskernels%% *} ] || echo "ERROR: No kernel was installed. Have a look at shell.log"
 # copy sources.list
-fcopy -i /etc/apt/sources.list
+ifclass DIST-DEBIAN && fcopy -i /etc/apt/sources.list
 
 exit $error
 
