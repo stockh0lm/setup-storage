@@ -1,0 +1,4 @@
+#! /bin/bash
+
+# when using the alienated rpm, this dir is missing
+$ROOTCMD  mkdir /var/lib/fai/config
