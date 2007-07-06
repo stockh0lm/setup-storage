@@ -1,4 +1,6 @@
 #! /bin/bash
 
+# TODO: only do this if jdk is not already installed!
+
 $ROOTCMD wget -P/tmp http://debmirror/mirrors/binary-packages/jdk-6u1-linux-i586.rpm
 $ROOTCMD rpm -i /tmp/jdk-6u1-linux-i586.rpm

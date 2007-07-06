@@ -1,5 +1,5 @@
 #!/bin/sh
 $ROOTCMD wget -P/tmp http://debmirror/mirrors/binary-packages/phpMyAdmin-2.10.2-english.tar.bz2
-$ROOTCMD tar xvfz /tmp/phpMyAdmin-2.10.2-english.tar.bz2 -C /var/www/html/
+$ROOTCMD tar xfj /tmp/phpMyAdmin-2.10.2-english.tar.bz2 -C /var/www/html/
 $ROOTCMD ln -s /var/www/phpMyAdmin-2.10.2-english /var/www/myadmin
 
