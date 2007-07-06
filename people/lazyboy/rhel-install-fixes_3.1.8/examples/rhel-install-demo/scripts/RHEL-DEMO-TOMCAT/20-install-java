@@ -1,6 +1,15 @@
 #! /bin/bash
 
-# TODO: only do this if jdk is not already installed!
+# only do this if jdk is not already installed!
+# TODO: use a niver way to check for this
 
+if [ ! -z `rpm -q jdk | grep -v "not installed"` ]; then
+	echo "JDK is already installed - exiting"
+	exit 0
+else 
+	echo "is not installed"
+fi
+
+[ -f $target/tmp/jdk-6u1-linux-i586.rpm ] && rm  /tmp/jdk-6u1-linux-i586.rpm
 $ROOTCMD wget -P/tmp http://debmirror/mirrors/binary-packages/jdk-6u1-linux-i586.rpm
 $ROOTCMD rpm -i /tmp/jdk-6u1-linux-i586.rpm

@@ -1,7 +1,20 @@
 #! /bin/bash
 
-$ROOTCMD wget -P/tmp http://debmirror/mirrors/binary-packages/apache-tomcat-6.0.13.tar.gz
-$ROOTCMD tar xfz /tmp/apache-tomcat-6.0.13.tar.gz -C /opt/
+# only if tomcat is not already there
 
+[ ! -d /opt/apache-tomcat-6.0.13 ] && {
+	[ -f /tmp/apache-tomcat-6.0.13.tar.gz ] && rm /tmp/apache-tomcat-6.0.13.tar.gz
+	
+	$ROOTCMD wget -P/tmp http://debmirror/mirrors/binary-packages/apache-tomcat-6.0.13.tar.gz
+	$ROOTCMD tar xfz /tmp/apache-tomcat-6.0.13.tar.gz -C /opt/
+}
+
+[ -e /opt/tomcat ] && rm /opt/tomcat
+
+$ROOTCMD ln -s /opt/apache-tomcat-6.0.13  /opt/tomcat
+
+#[ ! -f /etc/init.d/tomcat6 ] && {
+#	
+#}
 echo "TODO: create a start script, and enable it to be run at system startup"
 #exit 0
