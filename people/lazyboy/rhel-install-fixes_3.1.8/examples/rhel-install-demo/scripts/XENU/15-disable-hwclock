@@ -13,5 +13,8 @@ prefix=$target
 #  Disable the startup scripts from all runlevels.
 #
 # FIXME: only for Debian - what to do in FEDORA?
-chmod -x ${prefix}/etc/init.d/hwclock.sh
+[ -f ${prefix}/etc/init.d/hwclock.sh ] && chmod -x ${prefix}/etc/init.d/hwclock.sh
+
 #chmod -x ${prefix}/etc/init.d/hwclockfirst.sh
+
+exit 0
