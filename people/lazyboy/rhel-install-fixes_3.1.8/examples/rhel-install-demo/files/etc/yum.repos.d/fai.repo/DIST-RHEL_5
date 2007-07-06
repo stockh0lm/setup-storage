@@ -1,0 +1,9 @@
+[fai]
+protect=0
+#[RHEL5]
+#protect=1
+name=Red Hat Enterprise Linux 5
+baseurl=http://debmirror/mirrors/henning-fai-test
+enabled=1
+gpgcheck=0
+
