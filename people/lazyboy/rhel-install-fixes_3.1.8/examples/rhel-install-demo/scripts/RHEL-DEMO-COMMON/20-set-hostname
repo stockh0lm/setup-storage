@@ -1,4 +1,4 @@
-#! /usr/bin/perl -e
+#! /bin/bash
 # set hostname in network config file
 
 fcopy /etc/syconfig/network
