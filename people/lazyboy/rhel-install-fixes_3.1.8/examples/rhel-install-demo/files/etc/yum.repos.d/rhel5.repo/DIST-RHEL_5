@@ -6,3 +6,11 @@ name=Red Hat Enterprise Linux 5
 baseurl=http://debmirror/mirrors/rhel/5/Server/
 enabled=1
 gpgcheck=0
+
+[third-party]
+protect=0
+name=thirdparty
+baseurl=http://debmirror/mirrors/rhel/third-party
+enabled=1
+gpgcheck=0
+
