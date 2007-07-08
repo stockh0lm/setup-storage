@@ -13,8 +13,5 @@
 
 $ROOTCMD ln -s /opt/apache-tomcat-6.0.13  /opt/tomcat
 
-#[ ! -f /etc/init.d/tomcat6 ] && {
-#	
-#}
-echo "TODO: create a start script, and enable it to be run at system startup"
-#exit 0
+fcopy /etc/init.d/tomcat
+$ROOTCMD chkconfig tomcat on
