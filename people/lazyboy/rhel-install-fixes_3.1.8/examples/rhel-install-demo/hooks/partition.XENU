@@ -1,32 +1,27 @@
 #!/bin/sh
 
-#skiptask
-
+# script to create filesystems on a xen block device at install time
+# TODO: automatically check if we have a hda/sda/xvda drives!
 
 [ -f $LOGDIR/our.skip.partition ] && exit 0
 
+DEV_BASE="sd"
+
+# enable having distinct parition hooks for other system types - when another
+# hook for one of the classes of this host exist, not run this one to the end
 for our_cl in $classes; do
   [ $our_cl = "XENU" ] && continue
   [ -f $FAI/hooks/partition.$our_cl ] && exit 0
 done
 
-mke2fs -j /dev/hda1 > /dev/null
-mkswap /dev/hda2 > /dev/null
-
-#   mke2fs -j /dev/hda3 > /dev/null
-#   mke2fs -j /dev/hda4 > /dev/null
-#   mke2fs -j /dev/hda5 > /dev/null
+mke2fs -j /dev/${DEV_BASE}a1 > /dev/null
+mkswap /dev/${DEV_BASE}a2 > /dev/null
 
 cat > /tmp/fai/fstab <<EOF
-/dev/hda1 / ext3 defaults 0 0
-/dev/hda2 none swap sw 0 0
+/dev/${DEV_BASE}a1 / ext3 defaults 0 0
+/dev/${DEV_BASE}a2 none swap sw 0 0
 EOF
 
-#    /dev/hda3 /tmp ext3 defaults 0 0
-#    /dev/hda4 /usr ext3 defaults 0 0
-#    /dev/hda5 /var ext3 defaults 0 0
-#    EOF
-
-
 echo "#!" > $diskvar
-touch $LOGDIR/skip.partition
+skiptask partition
+#touch $LOGDIR/skip.partition
