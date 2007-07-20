@@ -1,0 +1,9 @@
+#
+timeout 5
+default 0
+color cyan/blue white/blue
+
+title RHEL5
+  root (hd0,0)
+  kernel /boot/vmlinuz-2.6.18-8.el5 root=/dev/sda1 ro
+  initrd /boot/initrd-2.6.18-8.el5.img

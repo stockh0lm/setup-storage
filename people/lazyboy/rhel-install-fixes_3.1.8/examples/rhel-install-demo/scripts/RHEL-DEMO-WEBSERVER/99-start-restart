@@ -1,0 +1,16 @@
+#! /bin/bash
+
+# start when softupdate, reboot when already running
+
+# we want ro reboot http when it's running
+if [ ! -z "`ps ax | grep httpd`" ]; then
+	echo "restarting httpd after update"
+        /etc/init.d/httpd restart
+	exit 0
+fi
+
+if [ $FAI_ACTION=="softupdate" ]; then
+	echo "starting httpd after update
+	/etc/init.d/httpd start
+fi
+

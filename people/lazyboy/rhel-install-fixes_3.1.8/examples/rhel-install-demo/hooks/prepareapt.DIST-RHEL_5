@@ -1,5 +1,12 @@
 #! /bin/bash
 
-# TODO: copy all yum files
+# copy all yum files, and make sure Core is installed
+
+
+ifclass RHEL-NETINSTALL && {
+	mount -o bind /proc $target/proc
+	mount -o bind /sys $target/sys
+}
 
 fcopy -r /etc/yum.repos.d/
+$ROOTCMD yum groupinstall -y Core

@@ -4,43 +4,23 @@
 
 # use a list of classes for our demo machine
 case $HOSTNAME in
-    faiserver)
-	echo "FAIBASE DEMO FAISERVER" ;;
-    demohost)
-	echo "FAIBASE DHCPC DEMO" ;;
-    gnomehost)
-	echo "FAIBASE DHCPC DEMO XORG GNOME";;
-    atom*)
-	echo "FAIBASE DHCPC DEMO" ;;
-    rhel5-demo)
-	#echo "DIST-RHEL_5 FAIBASE DHCPC XENU" ;;
-	# TODO: uebersichlicher formatieren
-	echo "DEBUG DIST-RHEL_5 FAIBASE DHCPC"
-	echo "RHEL-DEMO-COMMON RHEL-DEMO-DBSERVER RHEL-DEMO-NAMESERVER RHEL-DEMO-SOFTUPDATE RHEL-DEMO-TOMCAT RHEL-DEMO-WEBSERVER"
-	echo "XENU"
-	;;
     rhel5-demo-web)
 	echo "DEBUG DIST-RHEL_5 FAIBASE DHCPC"
 	echo "RHEL-DEMO-COMMON RHEL-DEMO-SOFTUPDATE RHEL-DEMO-TOMCAT RHEL-DEMO-WEBSERVER"
 	echo "XENU"
 	;;
-
     rhel5-demo-dns)
 	echo "DEBUG DIST-RHEL_5 FAIBASE DHCPC"
 	echo "RHEL-DEMO-COMMON RHEL-DEMO-NAMESERVER RHEL-DEMO-SOFTUPDATE"
-	echo "XENU"
+	echo "RHEL-DEMO-KERNEL RHEL-NETINSTALL"
 	;;
     rhel5-demo-db)
 	echo "DEBUG DIST-RHEL_5 FAIBASE DHCPC"
-	echo "RHEL-DEMO-COMMON RHEL-DEMO-DBSERVER RHEL-DEMO-SOFTUPDATE"
+	echo "RHEL-DEMO-COMMON RHEL-DEMO-DBSERVER RHEL-DEMO-SOFTUPDATE RHEL-DEMO-WEBSERVER"
 	echo "XENU"
 	;;
-
-
-    xen-tools-test)
-	echo "FAIBASE DHCPC XENU" ;;
     *)
-	echo "FAIBASE DHCPC BLA" ;;
+	echo "FAIBASE DHCPC" ;;
 esac
 
 (ifclass I386 || ifclass AMD64) && echo GRUB 

@@ -1,0 +1,6 @@
+#! /bin/bash
+
+umount  $target/proc
+
+umount $target/sys
+

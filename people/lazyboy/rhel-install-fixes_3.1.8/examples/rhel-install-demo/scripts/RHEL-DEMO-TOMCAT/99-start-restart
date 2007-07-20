@@ -1,0 +1,14 @@
+#! /bin/bash
+
+# we want ro reboot tomcat when it's running
+if [ ! -z "`ps ax | grep tomcat`" ]; then 
+	echo "restarting tomcat after update"
+	/etc/init.d/tomcat restart 
+	exit 0
+fi
+
+if [ $FAI_ACTION=="softupdate" ]; then
+	echo "starting tomcat after update"
+	/etc/init.d/tomcat start
+fi
+
