@@ -13,7 +13,12 @@ if ifclass DEBIAN;then
 fi
 
 # we need these to install packages via network
-[ -f /tmp/etc/resolv.conf ] && cp /tmp/etc/resolv.conf $FAI_ROOT/etc
+if [ -f /tmp/etc/resolv.conf ]; then
+	cp /tmp/etc/resolv.conf $FAI_ROOT/etc
+else 
+	cp /etc/resolv.conf $FAI_ROOT/etc
+fi
+
 [ -f /etc/hosts ] && cp /etc/hosts $FAI_ROOT/etc
 # set hostname in $FAI_ROOT
 if [ -f /var/run/fai//FAI_INSTALLATION_IN_PROGRESS ]; then
