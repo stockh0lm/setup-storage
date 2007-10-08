@@ -375,8 +375,9 @@ $FAI::Parser = Parse::RecDescent->new(
             die "mdadm not found in PATH\n";
           $FAI::device = "RAID";
         }
-        | 'lvm'
+        | /^lvm/
         {
+	  ( $FAI::debug > 0 ) and print "Found LVM keyword\n";
           # check, whether lvm tools are available
           ( &FAI::in_path( "lvcreate" ) == 1 ) or 
             die "LVM tools not found in PATH\n";
