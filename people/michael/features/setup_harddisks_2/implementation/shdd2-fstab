@@ -121,8 +121,9 @@ sub generate_fstab
         push @fstab, join( "\t", @fstab_line );
           
         # set the ROOT_PARTITION variable, if this is the mountpoint for /
-        $FAI::disk_var{ "ROOT_PARTITION" } = $device . $p_ref->{"number"} 
-          if ( $p_ref->{"mountpoint"} eq "/" );
+#        $FAI::disk_var{ "ROOT_PARTITION" } = $device . $p_ref->{"number"} 
+	$FAI::disk_var{ "ROOT_PARTITION" } = $fstab_line[0]
+	if ( $p_ref->{"mountpoint"} eq "/" );
         # add to the swaplist, if the filesystem is swap
         $FAI::disk_var{ "SWAPLIST" } .= " " . $device . $p_ref->{"number"} if (
           $p_ref->{"filesystem"} eq "swap" );
