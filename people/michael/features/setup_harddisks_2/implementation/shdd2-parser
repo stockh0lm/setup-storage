@@ -599,8 +599,8 @@ $FAI::Parser = Parse::RecDescent->new(
 	  } 
 	  
 	  my ($min, $max) = split(/-/, $range);
-	  $min   = convert_unit($min);
-	  $max   = convert_unit($max);
+	  $min   = &FAI::convert_unit($min);
+	  $max   = &FAI::convert_unit($max);
 	  $range = "$min-$max";
           # enter the range into the hash
           $FAI::partition_pointer->{ "size" }->{ "range" } = $range;
