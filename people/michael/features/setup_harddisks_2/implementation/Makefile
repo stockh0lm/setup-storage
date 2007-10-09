@@ -23,3 +23,8 @@ install:
 	install -d $(DEST)
 	install -m 444 $(FILES) $(DEST) 
 	install -m 744 $(BIN) $(DESTDIR)/usr/bin
+
+
+# ToDo (bessere) fehlermeldungen wenn parted oder mdadm oder lvm tools streiken
+
+
