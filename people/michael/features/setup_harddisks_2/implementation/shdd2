@@ -44,7 +44,7 @@ use warnings FATAL => qw(uninitialized);
 # TODO list
 # - parted, libparse-recdescent-perl must get installed in nfsroot (add Depends:
 #   to fai-nfsroot package)
-# 
+#
 # - closes #380629, #330915, #277045, #356862, #416633
 # - no-bug: #364763
 #
@@ -63,13 +63,14 @@ use warnings FATAL => qw(uninitialized);
 #   parsing
 ################################################################################
 
-
 package FAI;
 
 # command line parameter handling
 use Getopt::Std;
+
 # the variables for getopt
 our ( $opt_X, $opt_f );
+
 # parse the command line
 &getopts('Xf:') || die "
 USAGE: [-X]                     no test, your harddisks will be formated
@@ -77,7 +78,7 @@ USAGE: [-X]                     no test, your harddisks will be formated
        [-f<config-filename>]    default: parse classes
 ";
 
-# $disklist must be provided by the environment 
+# $disklist must be provided by the environment
 defined( $ENV{disklist} ) or die "Environment variable disklist is not set";
 
 ################################################################################
@@ -86,8 +87,8 @@ defined( $ENV{disklist} ) or die "Environment variable disklist is not set";
 #
 ################################################################################
 $FAI::no_dry_run = 0;
-( $opt_X ) and $FAI::no_dry_run = 1;
-( $opt_X ) or warn "shdd2 is running in test-only mode!\n";
+($opt_X) and $FAI::no_dry_run = 1;
+($opt_X) or warn "shdd2 is running in test-only mode!\n";
 
 # include all subparts
 require "shdd2-init";
@@ -101,25 +102,26 @@ require "shdd2-exec";
 
 # the config source file
 my $config_file = undef;
+
 # use the config file, if given
-if ( $opt_f )
+if ($opt_f)
 {
-  open($config_file, $opt_f) or die
-    "Failed to open config file $opt_f\n";
+  open( $config_file, $opt_f ) or die "Failed to open config file $opt_f\n";
 }
+
 # see which class file to use
 else
 {
-  foreach my $classfile (reverse split(/\s+/,$ENV{"classes"}))
+  foreach my $classfile ( reverse split( /\s+/, $ENV{"classes"} ) )
   {
     next unless ( -r "$ENV{'FAI'}/disk_config/$classfile" );
-    open($config_file, "$ENV{'FAI'}/disk_config/$classfile");
+    open( $config_file, "$ENV{'FAI'}/disk_config/$classfile" );
     last;
   }
 }
 
 # if we could not find any matching class file, bail out
-defined( $config_file ) or die "No matching disk_config found\n";
+defined($config_file) or die "No matching disk_config found\n";
 
 # start the parsing - thereby $FAI::configs is filled
 &FAI::run_parser($config_file);
@@ -141,19 +143,22 @@ defined( $config_file ) or die "No matching disk_config found\n";
 use Data::Dumper;
 
 # debugging only: print the current contents of $FAI::current_config
-if ( $FAI::debug )
+if ($FAI::debug)
 {
   print "Current disk layout\n";
+
   # make sure perl doesn't warn about it being used only once
   our %current_config;
   print Dumper \%current_config;
-  
+
   print "Current LVM layout\n";
+
   # make sure perl doesn't warn about it being used only once
   our %current_lvm_config;
   print Dumper \%current_lvm_config;
- 
+
   print "Current RAID layout\n";
+
   # make sure perl doesn't warn about it being used only once
   our %current_raid_config;
   print Dumper \%current_raid_config;
@@ -165,7 +170,7 @@ if ( $FAI::debug )
 &FAI::compute_lv_sizes;
 
 # debugging only: print the current contents of $FAI::configs
-if ( $FAI::debug )
+if ($FAI::debug)
 {
   print "Desired disk layout\n";
   print Dumper \%FAI::configs;
@@ -178,38 +183,39 @@ if ( $FAI::debug )
 
 # run all commands
 # debugging only: print the command script
-( $FAI::debug ) and print "$_\n" foreach ( @FAI::commands );
+($FAI::debug) and print "$_\n" foreach (@FAI::commands);
+
 # run the command (if $FAI::no_dry_run is set)
-&FAI::execute_command_std($_) foreach ( @FAI::commands );
+&FAI::execute_command_std($_) foreach (@FAI::commands);
 
 # generate the proposed fstab contents
 my @fstab = &FAI::generate_fstab( \%FAI::configs );
 
 # debugging only; print fstab
-( $FAI::debug ) and print "$_\n" foreach (@fstab);
+($FAI::debug) and print "$_\n" foreach (@fstab);
 
 # write the proposed contents of fstab to $LOGDIR/fstab, if $FAI::no_dry_run is set
-if ( $FAI::no_dry_run )
+if ($FAI::no_dry_run)
 {
+
   # write fstab to $LOGDIR/fstab
-  open(FSTAB, ">$ENV{LOGDIR}/fstab") or die 
-    "Failed to open $ENV{LOGDIR}/fstab for writing\n";
+  open( FSTAB, ">$ENV{LOGDIR}/fstab" )
+    or die "Failed to open $ENV{LOGDIR}/fstab for writing\n";
   print FSTAB "$_\n" foreach (@fstab);
   close FSTAB;
 }
 
 # write variables to $LOGDIR/disk_var.sh
 # debugging
-( $FAI::debug ) and print "$_=$FAI::disk_var{$_}\n" 
+($FAI::debug) and print "$_=$FAI::disk_var{$_}\n"
   foreach ( keys %FAI::disk_var );
+
 # do it, if $FAI::no_dry_run is set
-if ( $FAI::no_dry_run )
+if ($FAI::no_dry_run)
 {
-  open(DISK_VAR, ">$ENV{LOGDIR}/disk_var.sh") or die 
-    "Unable to write to file $ENV{LOGDIR}/disk_var.sh\n";
-  print DISK_VAR "$_=$FAI::disk_var{$_}\n" 
-    foreach ( keys %FAI::disk_var );
+  open( DISK_VAR, ">$ENV{LOGDIR}/disk_var.sh" )
+    or die "Unable to write to file $ENV{LOGDIR}/disk_var.sh\n";
+  print DISK_VAR "$_=$FAI::disk_var{$_}\n" foreach ( keys %FAI::disk_var );
   close DISK_VAR;
 }
-
 

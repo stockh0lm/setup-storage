@@ -79,23 +79,26 @@ $FAI::error_codes = [
   {
     error   => "parted_4",
     message => "parted not found\n",
-    stderr_regex => ".*(parted: command not found|/sbin/parted: No such file or directory)",
+    stderr_regex =>
+      ".*(parted: command not found|/sbin/parted: No such file or directory)",
     stdout_regex => "",
     program      => "parted",
     response     => "die"
   },
   {
-    error   => "parted_5",
-    message => "Parted was unable to create the partition\n",
+    error        => "parted_5",
+    message      => "Parted was unable to create the partition\n",
     stderr_regex => "Warning: You requested a partition from .* to .*\\.\$",
     stdout_regex => "",
     program      => "parted",
     response     => \&FAI::restore_partition_table,
   },
   {
-    error   => "mkfs.xfs_1",
-    message => "mkfs.xfs refused to create a filesystem. Probably you should add -f to the mkfs options in your disk_config file.\n",
-    stderr_regex => "mkfs.xfs: /dev/.* appears to contain an existing filesystem",
+    error => "mkfs.xfs_1",
+    message =>
+"mkfs.xfs refused to create a filesystem. Probably you should add -f to the mkfs options in your disk_config file.\n",
+    stderr_regex =>
+      "mkfs.xfs: /dev/.* appears to contain an existing filesystem",
     stdout_regex => "",
     program      => "mkfs.xfs",
     response     => "die",
@@ -115,8 +118,9 @@ sub get_error_message
 {
   my ($error) = @_;
   my @treffer = grep { $_->{error} eq "$error" } @$FAI::error_codes;
+
   # returns the first found error message.
-  return $treffer[ 0 ]->{'message'};
+  return $treffer[0]->{'message'};
 }
 
 ################################################################################
@@ -133,8 +137,9 @@ sub get_error
 {
   my ( $error, $field ) = @_;
   my @treffer = grep { $_->{error} eq "$error" } @$FAI::error_codes;
+
   # returns the first found error message.
-  return $treffer[ 0 ]->{$field};
+  return $treffer[0]->{$field};
 }
 ################################################################################
 #
@@ -162,7 +167,7 @@ sub execute_command_std    #execute command with standard error handling
     my $response = &get_error( $err, "response" );
     my $message  = &get_error( $err, "message" );
 
-    $response->() if ( ref( $response ) );
+    $response->() if ( ref($response) );
 
     die $message if ( $response eq "die" );
 
@@ -203,10 +208,12 @@ sub execute_command
   ( my $stdout_fh, my $stdout_filename ) = File::Temp::tempfile( UNLINK => 1 );
 
   # do only execute the given command, when in no_dry_mode
-  if ( $FAI::no_dry_run )
+  if ($FAI::no_dry_run)
   {
-    
-    ( $FAI::debug ) and print "(CMD) $command 1> $stdout_filename 2> $stderr_filename\n";
+
+    ($FAI::debug)
+      and print "(CMD) $command 1> $stdout_filename 2> $stderr_filename\n";
+
     # execute the bash command, write stderr and stdout into the testfiles
     `$command 1> $stdout_filename 2> $stderr_filename`;
   }
@@ -223,8 +230,8 @@ sub execute_command
   close($stderr_fh);
   close($stdout_fh);
 
-  ( $FAI::debug ) and print "(STDERR) $_" foreach ( @stderr );
-  ( $FAI::debug ) and print "(STDOUT) $_" foreach ( @stdout );
+  ($FAI::debug) and print "(STDERR) $_" foreach (@stderr);
+  ($FAI::debug) and print "(STDOUT) $_" foreach (@stdout);
 
   #if the stderr contains information, get the first line for error recognition
   $stderr_line = $stderr[0] if ( scalar(@stderr) > 0 );

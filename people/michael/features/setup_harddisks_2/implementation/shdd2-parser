@@ -150,7 +150,7 @@ sub init_disk_config
   {
 
     # $disk-1 must be a valid index in the map of all disks in the system
-    ( scalar( @FAI::disks ) >= $disk )
+    ( scalar(@FAI::disks) >= $disk )
       or die "this system does not have a physical disk $disk\n";
 
     # fetch the (short) device name
@@ -667,7 +667,7 @@ $FAI::Parser = Parse::RecDescent->new(
 ################################################################################
 sub run_parser
 {
-  my ( $IN ) = @_;
+  my ($IN) = @_;
 
   # read <$IN> to a single string (not a list), thus $/ has to be unset
   my $ifs = $/;
@@ -679,8 +679,8 @@ sub run_parser
   ( $FAI::debug > 0 ) and print "Input was:\n" . $input;
 
   # check for old-style configuration files
-  ( $input =~ m{(^|\n)[^\n#]+;} ) and die 
-    "Old style configuration files are not supported\n";
+  ( $input =~ m{(^|\n)[^\n#]+;} )
+    and die "Old style configuration files are not supported\n";
 
   # attempt to parse $input - any error will lead to termination
   defined $FAI::Parser->file($input) or die "Syntax error\n";
