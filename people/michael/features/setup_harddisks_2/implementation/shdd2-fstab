@@ -210,6 +210,8 @@ sub generate_fstab
 
   # cleanup the swaplist (remove leading space)
   $FAI::disk_var{ "SWAPLIST" } =~ s/^\s+//;
+  # quote the entries of SWAPLIST
+  $FAI::disk_var{ "SWAPLIST" } = '"' . $FAI::disk_var{ "SWAPLIST" } . '"';
 
   # sort the lines in @fstab to enable all sub mounts
   for ( my $i = 0; $i < scalar( @fstab ); $i++ )
