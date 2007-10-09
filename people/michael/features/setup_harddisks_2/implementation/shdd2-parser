@@ -84,9 +84,10 @@ use strict;
 # name ::= [^/[:space:]]+
 #          /* lvm volume group name */
 #
-# size ::= [[:digit:]]+%?(-([[:digit:]]+%?)?)?(:resize)?
-#          /* size in megabytes or %, possibly given as a range; physical
-#           * partitions or lvm logical volumes only */
+# size ::= [[:digit:]]+[kMGTP%]?(-([[:digit:]]+[kMGTP%]?)?)?(:resize)?
+#          /* size in kilo, mega (default), giga, tera or petabytes or %,
+#           * possibly given as a range; physical
+#           * partitions or lvm logical volumes only; */
 #          | -[[:digit:]]+%?(:resize)?
 #          /* size in megabytes or % given as upper limit; physical partitions
 #           * or lvm logical volumes only */
@@ -343,6 +344,43 @@ sub init_part_config
     or $FAI::partition_pointer->{"size"}->{"resize"} = 0;
 }
 
+################################################################################
+#
+# @brief This function converts different sizes to Mbyte
+#
+# @param $val is the number with its unit
+#
+################################################################################
+sub convert_units
+{
+  my ($val) = @_;
+  $val =~ /(\d+)([kMGTP%]?)/;
+  unless ( $2 eq "%" )
+  {
+    if ( $2 eq "k" )
+    {
+      $val *= ( 1 / 1024 );
+    }
+    elsif ( $2 eq "M" )
+    {
+      $val *= 1;
+    }
+    elsif ( $2 eq "G" )
+    {
+      $val *= 1024;
+    }
+    elsif ( $2 eq "T" )
+    {
+      $val *= ( 1024 * 1024 );
+    }
+    elsif ( $2 eq "P" )
+    {
+      $val *= ( 1024 * 1024 * 1024 );
+    }
+  }
+  return $val;
+}
+
 # have RecDescent do proper error reporting
 $::RD_HINT = 1;
 
@@ -544,7 +582,7 @@ $FAI::Parser = Parse::RecDescent->new(
           1;
         }
 
-    size: /^(\d+%?(-(\d+%?)?)?)(:resize)?\s+/
+    size: /^(\d+[kMGTP%]?(-(\d+[kMGTP%]?)?)?)(:resize)?\s+/
         {
           # complete the size specification to be a range in all cases
           my $range = $1;
@@ -558,7 +596,12 @@ $FAI::Parser = Parse::RecDescent->new(
           {
             # range has no upper limit, assume the whole disk
             $range = $range . "100%";
-          }
+	  } 
+	  
+	  my ($min, $max) = split(/-/, $range);
+	  $min   = convert_unit($min);
+	  $max   = convert_unit($max);
+	  $range = "$min-$max";
           # enter the range into the hash
           $FAI::partition_pointer->{ "size" }->{ "range" } = $range;
           # set the resize flag, if required
