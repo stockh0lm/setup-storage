@@ -45,7 +45,7 @@ use warnings FATAL => qw(uninitialized);
 # - parted, libparse-recdescent-perl must get installed in nfsroot (add Depends:
 #   to fai-nfsroot package)
 # 
-# - closes #380629, #330915, #277045, #356862
+# - closes #380629, #330915, #277045, #356862, #416633
 # - no-bug: #364763
 #
 # - auto mode (something like auto:server, auto:desktop?)
@@ -53,9 +53,14 @@ use warnings FATAL => qw(uninitialized);
 #
 # - resize should imply resizing the filesystem as well (unless this is done by
 #   parted already, needs to be checked)
+# - LVMs definitely require resizing the filesystem
 # - more error messages must be caught by shdd2-exec
 # - how to detect old-style config files? migration strategies?
 # - implement disklabels other than msdos and gpt
+# - the RAID commands are surely incomplete and lack any management of
+#   unanticipated situations
+# - try to get libparted-swig-perl and use that one instead of the manual
+#   parsing
 ################################################################################
 
 

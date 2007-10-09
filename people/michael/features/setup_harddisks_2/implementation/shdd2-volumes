@@ -376,7 +376,7 @@ sub get_current_lvm
   # parse the output line by line and call vgdisplay -v <VG>
   foreach my $line ( @vgdisplay_print )
   {
-    ( $line =~ /^\s*"(\S+)"\s+\d+\.\d+ GB\s+\[\d+\.\d+ GB\s+used \/ \d+\.\d+ GB\s+free\]$/ )
+    ( $line =~ /^\s*"(\S+)"\s+\d+\.\d+ [MGT]B\s+\[\d+\.\d+ [MGT]B\s+used \/ \d+\.\d+ [MGT]B\s+free\]$/ )
       or die "Unexpected vgdisplay output $line";
 
     # the name of the volume group

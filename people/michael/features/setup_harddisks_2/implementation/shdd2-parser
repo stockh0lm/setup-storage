@@ -448,7 +448,7 @@ $FAI::Parser = Parse::RecDescent->new(
           $FAI::configs{ $FAI::device }{ "fstabkey" } = $1;
         }
 
-    volume: 'vg' name devices
+    volume: /^vg\s+/ name devices
         | /^raid([0156])\s+/
         {
           # make sure that this is a RAID configuration
