@@ -25,6 +25,6 @@ install:
 	install -m 744 $(BIN) $(DESTDIR)/usr/bin
 
 
-# ToDo (bessere) fehlermeldungen wenn parted oder mdadm oder lvm tools streiken
+# TODO (bessere) fehlermeldungen wenn parted oder mdadm oder lvm tools streiken
 
 

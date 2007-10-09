@@ -141,8 +141,7 @@ sub generate_fstab
    # join the columns of one line with tabs, and push it to our fstab line array
         push @fstab, join( "\t", @fstab_line );
 
-      # set the ROOT_PARTITION variable, if this is the mountpoint for /
-      #        $FAI::disk_var{ "ROOT_PARTITION" } = $device . $p_ref->{"number"}
+        # set the ROOT_PARTITION variable, if this is the mountpoint for /
         $FAI::disk_var{"ROOT_PARTITION"} = $fstab_line[0]
           if ( $p_ref->{"mountpoint"} eq "/" );
 
