@@ -82,7 +82,7 @@ sub get_current_disks
     {
 
       # if there is no disk configuration, write an msdos disklabel
-      if ( !defined( $FAI::configs{$disk}{"disklabel"} ) )
+      if ( !defined( $FAI::configs{"PHY_$disk"}{"disklabel"} ) )
       {
 
         # write the disk label as configured
@@ -97,7 +97,7 @@ sub get_current_disks
         $error =
           &FAI::execute_command( $FAI::system_commands{"parted"}
             . " $disk mklabel "
-            . $FAI::configs{$disk}{"disklabel"} );
+            . $FAI::configs{"PHY_$disk"}{"disklabel"} );
       }
 
       # set no_dry_run to perform read-only commands always
