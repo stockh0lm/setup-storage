@@ -591,7 +591,15 @@ $FAI::Parser = Parse::RecDescent->new(
             $dev = $1;
             # make $dev a full path name; can't validate device name yet as it
             # might be created later on
-            ( $dev =~ m{^/} ) or $dev = "/dev/$dev";
+            unless ( $dev =~ m{^/} ) {
+		if ( $dev =~ m/^disk(\d+)\.(\d+)/ ) {
+		    my $short_dev = $FAI::disks[ $1 - 1 ];
+		    $dev = "/dev/$short_dev$2";
+		}
+		else {
+		    $dev = "/dev/$dev";
+		}
+	    }
             # options are only valid for RAID
             defined( $2 ) and ( $FAI::device ne "RAID" ) and die "Option $2 invalid in a non-RAID context\n";
             if( $FAI::device eq "RAID" )
