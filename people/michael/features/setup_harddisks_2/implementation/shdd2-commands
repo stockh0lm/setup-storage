@@ -110,6 +110,29 @@ sub build_raid_commands
       # the list of RAID devices
       my @devs = keys %{ $FAI::configs{$config}{"volumes"}{$id}{"devices"} };
 
+      # set proper partition types for RAID
+      foreach my $d (@devs)
+      {
+        # skip devices marked missing
+        next if( 1 ==
+          $FAI::configs{$config}{"volumes"}{$id}{"devices"}{$d}{"missing"} );
+        # only match physical partitions (this string of matchings is hopefully complete)
+        next unless( $d =~
+          m{^/dev/(cciss/c\dd\dp|ida/c\dd\dp|rd/c\dd\dp|ataraid/d\dp|sd[a-t]|hd[a-t])(\d+)$} );
+        my $disk = "/dev/$1";
+        my $part_no = $2;
+        # in case the name was /dev/cciss/c0d1p or the like, remove the trailing
+        # p to get the disk name
+        $disk =~ s/(\d)p$/$1/;
+        # make sure this device really exists (we can't check for the partition
+        # as that may be created later on
+        ( -b $disk ) or die "Specified disk $disk does not exist in this system!\n";
+        # set the raid flag
+        push @FAI::commands,
+          "$FAI::system_commands{'parted'} $disk set "
+          . $part_no . " raid on";
+      }
+      
       # create the command
       push @FAI::commands,
         "yes | mdadm --create /dev/md$id --level=$level "
@@ -162,6 +185,26 @@ sub build_lvm_commands
       # preserved or resized volumes must exist already
       defined( $FAI::current_lvm_config{$vg}{"volumes"}{$lv} )
         or die "/dev/$vg/$lv can't be preserved, it does not exist.\n";
+    }
+
+    # set proper partition types for LVM
+    foreach my $d (keys %{ $FAI::configs{$config}{"devices"} })
+    {
+      # only match physical partitions (this string of matchings is hopefully complete)
+      next unless( $d =~
+        m{^/dev/(cciss/c\dd\dp|ida/c\dd\dp|rd/c\dd\dp|ataraid/d\dp|sd[a-t]|hd[a-t])(\d+)$} );
+      my $disk = "/dev/$1";
+      my $part_no = $2;
+      # in case the name was /dev/cciss/c0d1p or the like, remove the trailing
+      # p to get the disk name
+      $disk =~ s/(\d)p$/$1/;
+      # make sure this device really exists (we can't check for the partition
+      # as that may be created later on
+      ( -b $disk ) or die "Specified disk $disk does not exist in this system!\n";
+      # set the lvm flag
+      push @FAI::commands,
+        "$FAI::system_commands{'parted'} $disk set "
+        . $part_no . " lvm on";
     }
 
     # create the volume group, if it doesn't exist already
