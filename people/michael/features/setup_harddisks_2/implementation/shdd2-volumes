@@ -379,18 +379,19 @@ sub get_current_lvm
   $FAI::no_dry_run = 1;
 
   # try to obtain the list of volume groups
-  my $error = &FAI::execute_command_std( "vgdisplay -s", \@vgdisplay_print, 0 );
+  my $error =
+    &FAI::execute_command_std( "vgdisplay --units m -s", \@vgdisplay_print, 0 );
 
   # the expected output (if any) contains lines like the following
   #
   # $ vgdisplay -s
-  #   "XENU" 453.36 GB [451.93 GB used / 1.43 GB free]
+  #   "XENU" 453.36 MB [451.93 MB used / 1.43 MB free]
 
   # parse the output line by line and call vgdisplay -v <VG>
   foreach my $line (@vgdisplay_print)
   {
     ( $line =~
-/^\s*"(\S+)"\s+\d+\.\d+ [MGT]B\s+\[\d+\.\d+ [MGT]B\s+used \/ \d+\.\d+ [MGT]B\s+free\]$/
+/^\s*"(\S+)"\s+\d+\.\d+ MB\s+\[\d+\.\d+ MB\s+used \/ \d+\.\d+ MB\s+free\]$/
     ) or die "Unexpected vgdisplay output $line";
 
     # the name of the volume group
@@ -403,8 +404,8 @@ sub get_current_lvm
     my @vgdisplay_v_print = ();
 
     # try to obtain the detailed information for the volume group $vg
-    my $error =
-      &FAI::execute_command_std( "vgdisplay -v $vg", \@vgdisplay_v_print, 0 );
+    my $error = &FAI::execute_command_std( "vgdisplay --units m -v $vg",
+      \@vgdisplay_v_print, 0 );
 
     # the expected output (if any) looks like this:
     # $ vgdisplay -v XENU
@@ -424,11 +425,11 @@ sub get_current_lvm
     #   Max PV                0
     #   Cur PV                4
     #   Act PV                4
-    #   VG Size               453.36 GB
+    #   VG Size               453.36 MB
     #   PE Size               4.00 MB
     #   Total PE              116060
-    #   Alloc PE / Size       115693 / 451.93 GB
-    #   Free  PE / Size       367 / 1.43 GB
+    #   Alloc PE / Size       115693 / 451.93 MB
+    #   Free  PE / Size       367 / 1.43 MB
     #   VG UUID               09JCPv-v2RU-NWEZ-ilNA-mNLk-Scw3-aURtE6
     #
     #   --- Logical volume ---
@@ -479,43 +480,28 @@ sub get_current_lvm
       {
 
         # for a volume group only the size is needed
-        if ( $line_v =~ /^\s*Alloc PE \/ Size\s+\d+ \/ (\d+\.\d+) ([MG]B)\s*$/ )
-        {
-
-          # extract the floatingpoint value
-          $FAI::current_lvm_config{$vg}{"size"} = $1;
-
-          # make it megabytes
-          $FAI::current_lvm_config{$vg}{"size"} *= 1024 if ( $2 eq "GB" );
-        }
+        # extract the floatingpoint value
+        $FAI::current_lvm_config{$vg}{"size"} = $1
+          if ( $line_v =~ /^\s*Alloc PE \/ Size\s+\d+ \/ (\d+\.\d+) MB\s*$/ );
       }
       elsif ( $mode eq "lv" )
       {
 
         # we need the name and the size of each existing logical volume
-        if ( $line_v =~ /^\s*LV Name\s+\/dev\/\Q$vg\E\/(\S+)\s*$/ )
-        {
-          $lv_name = $1;
-        }
-        elsif ( $line_v =~ /^\s*LV Size\s+(\d+\.\d+) ([MG]B)\s*$/ )
-        {
+        $lv_name = $1
+          if ( $line_v =~ /^\s*LV Name\s+\/dev\/\Q$vg\E\/(\S+)\s*$/ );
 
-          # extract the floatingpoint value
-          $FAI::current_lvm_config{$vg}{"volumes"}{$lv_name}{"size"} = $1;
-
-          # make it megabytes
-          $FAI::current_lvm_config{$vg}{"volumes"}{$lv_name}{"size"} *= 1024
-            if ( $2 eq "GB" );
-        }
+        # the size of the logical volume
+        # extract the floatingpoint value
+        $FAI::current_lvm_config{$vg}{"volumes"}{$lv_name}{"size"} = $1
+          if ( $line_v =~ /^\s*LV Size\s+(\d+\.\d+) MB\s*$/ );
       }
       elsif ( $mode eq "pv" )
       {
 
         # get the physical devices that are part of this volume group
-        if ( $line_v =~ /^\s*PV Name\s+(\S+)\s*$/ )
-        {
-          push @{ $FAI::current_lvm_config{$vg}{"physical_volumes"} }, $1;
-        }
+        push @{ $FAI::current_lvm_config{$vg}{"physical_volumes"} }, $1
+          if ( $line_v =~ /^\s*PV Name\s+(\S+)\s*$/ );
       }
 
     }
