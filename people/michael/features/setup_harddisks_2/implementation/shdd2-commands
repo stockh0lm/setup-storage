@@ -132,6 +132,8 @@ sub build_raid_commands
           "$FAI::system_commands{'parted'} $disk set "
           . $part_no . " raid on";
       }
+      # sleep a little to wait for udev to set up all devices
+      push @FAI::commands, "sleep 1";
       
       # create the command
       push @FAI::commands,
@@ -206,6 +208,8 @@ sub build_lvm_commands
         "$FAI::system_commands{'parted'} $disk set "
         . $part_no . " lvm on";
     }
+    # sleep a little to wait for udev to set up all devices
+    push @FAI::commands, "sleep 1";
 
     # create the volume group, if it doesn't exist already
     if ( !defined( $FAI::current_lvm_config{$vg} ) )
