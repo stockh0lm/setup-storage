@@ -167,8 +167,17 @@ sub generate_fstab
         # each line is a list of values
         my @fstab_line = ();
 
-        # write the logical volume path as the first entry
-        push @fstab_line, "/dev/$device/$l";
+        # resolve the symlink to the real device
+        # and write it as the first entry
+        &execute_command_std(
+          "readlink -f /dev/$device/$l", \@fstab_line, 0 );
+        
+        # remove the newline
+        chomp( $fstab_line[0] );
+
+        # make sure we got back a real device
+        ( $FAI::no_dry_run == 0 || -b $fstab_line[0] ) 
+          or die "Failed to resolve /dev/$device/$l\n";
 
         # next is the mountpoint
         push @fstab_line, $l_ref->{"mountpoint"};
@@ -190,11 +199,11 @@ sub generate_fstab
         push @fstab, join( "\t", @fstab_line );
 
         # set the ROOT_PARTITION variable, if this is the mountpoint for /
-        $FAI::disk_var{"ROOT_PARTITION"} = "/dev/$device/$l"
+        $FAI::disk_var{"ROOT_PARTITION"} = $fstab_line[0]
           if ( $l_ref->{"mountpoint"} eq "/" );
 
         # add to the swaplist, if the filesystem is swap
-        $FAI::disk_var{"SWAPLIST"} .= " /dev/$device/$l"
+        $FAI::disk_var{"SWAPLIST"} .= " " . $fstab_line[0]
           if ( $l_ref->{"filesystem"} eq "swap" );
       }
     }
