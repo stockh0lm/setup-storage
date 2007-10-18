@@ -1,0 +1,133 @@
+#!/usr/bin/perl
+# HG: create a reference of all classes referenced in the fai logfiles
+#     run this script in the FAI logdir on the logserver
+#     it extracts all references to classes and prints them on stdout
+#     Format:
+#       class: $classname
+#         $hostname:$date
+#         ...
+
+use strict;
+use warnings;
+use Getopt::Std;
+use File::Find;
+use File::Basename;
+
+my $log_topdir;
+our ($opt_F,$opt_h);
+
+# Dirs within the logdirs to be ignored
+my @ignore_dirs = qw'backup ssh .ssh';
+
+# Hash of array-refs
+#     keys: classes
+#   values: list of places where the classes are referenced
+my %config_classes;
+
+# add a location to %config_classes
+sub add_class_ref {
+	my $class = shift;
+	my $location = shift;
+
+	# strip heading/tailing nonword-characters
+	$class =~ s#^\W*([\w-]+)\W*$#$1#;
+	push @{$config_classes{$class}},$location; 
+}
+
+# scan $logfdir/$hostname/FAI_CLASSES for references on classes
+sub scan_log {
+	sub read_class_file {
+		my $dir=shift;
+		my $fname=shift;
+		my $fh;
+		
+		if ($dir =~ m#(^|/)([^/]+)/\w+-(\d+)_(\d+)$#) {
+			my $host=$2;
+			my $date=$3;
+			my $time=$4;
+			
+			open $fh,$fname;
+			while (<$fh>) {
+				s/#.*//;
+				chomp;
+				my @classes=split;
+				foreach (@classes) {
+					add_class_ref($_,"$date $host");
+				}
+			}
+			close $fh;
+		}
+	}
+	my %ignoredirs;
+	map $ignoredirs{$_}=1,@ignore_dirs;
+
+	File::Find::find({
+		wanted=>sub{
+			if (-f) {
+				if (m#^FAI_CLASSES$#) {
+					read_class_file($File::Find::dir,$_);
+				}
+			}
+		},
+		# remove dirs-to-ignore in preprocess step
+		preprocess=>sub{grep ! (-d and exists($ignoredirs{$_}) or m#^(last|fai\.)#),@_}},
+		$log_topdir);
+}
+
+# print the classes and the places referencing them to stdout (alphanum sorted)
+sub dump_class_refs_full {
+	foreach my $class (sort keys %config_classes) {
+		print "class: $class\n";
+		my %last_seen;
+		my @output;
+
+		# show only the last time, when a host had a class
+		foreach (sort @{$config_classes{$class}}) {
+			# array elements are "$date $host"
+			my ($date,$host)=split;
+			# as we are walking time-sorted through the list,
+			# $last_seen{$host} will contain "$last-seen-date $host"
+			# at the end of this loop
+			$last_seen{$host}=$_;
+		}
+		# print out a list, indented with two spaces, sorted by date and hostname
+		# of the last-seen data
+		print "  ".join("\n  ",sort values %last_seen)."\n";
+	}
+}
+
+# print only the classes and the dates they were seen the last time
+sub dump_class_refs_last_seen {
+	my @refs;
+	foreach my $class (sort keys %config_classes) {
+		$_=(sort @{$config_classes{$class}})[-1];
+		s# .*$##;
+		push @refs,"$_ $class";
+	}
+	foreach my $class_seen (sort @refs) {
+		print "$class_seen\n";
+	}
+}
+sub HELP_MESSAGE {
+	my $name = basename($0);
+	print << "EOF";
+Usage: $name [OPTION] ... <fai-log-topdir>
+
+Options:
+    -F print a full listing of all dates on all hosts when a class was found
+EOF
+	exit 1;
+}
+
+getopts('Fh');
+HELP_MESSAGE() unless ($ARGV[0]);
+HELP_MESSAGE() if ($opt_h);
+
+$log_topdir=$ARGV[0];
+scan_log();
+
+if ($opt_F) {
+	dump_class_refs_full();
+} else {
+	dump_class_refs_last_seen();
+}
