@@ -8,8 +8,12 @@
 #         ...
 
 use strict;
+use Getopt::Std;
 use File::Find;
 use File::Basename;
+
+# Command line options
+our $opt_h;
 
 # Dirs used for revision control system's metadata
 my @rcs_dirs = qw'CVS .svn .arch-ids {arch}';
@@ -275,7 +279,26 @@ sub dump_class_refs {
 	}
 }
 
-die "run this script within the fai config space" unless (-d "class");
+sub HELP_MESSAGE {
+	my $name = basename($0);
+	print << "EOF";
+Usage: $name <fai-configdir>
+
+EOF
+	exit 1;
+}
+
+
+# Main program
+
+getopts('h');
+HELP_MESSAGE() if ($opt_h);
+HELP_MESSAGE() unless ($ARGV[0]);
+if (! -d "$ARGV[0]/class") {
+	print STDERR "$ARGV[0]/class does not exist. Is $ARGV[0] really a FAI configdir?\n";
+	exit 1;
+}
+chdir $ARGV[0];
 
 scan_class();
 scan_files();
