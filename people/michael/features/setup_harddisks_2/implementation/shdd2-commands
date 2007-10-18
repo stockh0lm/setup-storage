@@ -151,6 +151,28 @@ sub build_raid_commands
 
 ################################################################################
 #
+# @brief Erase the LVM signature from a list of devices that should be prestine
+# in order to avoid confusion of the lvm tools
+#
+# The list is @FAI::commands
+#
+################################################################################
+sub erase_lvm_signature
+{
+    my( $devices_aref ) = @_;
+      # first remove the dm_mod module to prevent ghost lvm volumes 
+      # from existing
+      push @FAI::commands, "modprobe -r dm_mod";
+      # zero out (broken?) lvm signatures
+      push @FAI::commands, "dd if=/dev/zero of=$_ bs=1 count=1"
+        foreach ( @{$devices_aref} );
+      # reload module
+      push @FAI::commands, "modprobe dm_mod";
+
+}
+
+################################################################################
+#
 # @brief Using the configurations from %FAI::configs, a list of commands is
 # built to setup the LVM
 #
@@ -215,11 +237,11 @@ sub build_lvm_commands
     if ( !defined( $FAI::current_lvm_config{$vg} ) )
     {
 
-      # create all the devices, unless they already exist (then, pvdisplay will
-      # succeed)
-      push @FAI::commands, "pvdisplay $_ || pvcreate $_"
-        foreach ( keys %{ $FAI::configs{$config}{"devices"} } );
-
+      # create all the devices
+      my @devices = keys %{ $FAI::configs{$config}{"devices"} };
+      &FAI::erase_lvm_signature(\@devices);
+      push @FAI::commands, "pvcreate $_"
+        foreach ( @devices );
       # create the volume group
       push @FAI::commands, "vgcreate $vg "
         . join( " ", keys %{ $FAI::configs{$config}{"devices"} } );
@@ -235,11 +257,14 @@ sub build_lvm_commands
 
       # create an undefined entry for each new device
       @new_devs{ keys %{ $FAI::configs{$config}{"devices"} } } = ();
-
-      # create all the devices, unless they already exist (then, pvdisplay will
-      # succeed)
-      push @FAI::commands, "pvdisplay $_ || pvcreate $_"
-        foreach ( keys %new_devs );
+      
+      my @new_devices = keys %new_devs;
+      
+      erase_lvm_signature( \keys %new_devices );
+      
+      # create all the devices
+      push @FAI::commands, "pvcreate $_"
+        foreach ( @new_devices );
 
       # extend the volume group by the new devices (includes the current ones)
       push @FAI::commands, "vgextend $vg " . join( " ", keys %new_devs );
