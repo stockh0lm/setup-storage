@@ -162,12 +162,16 @@ sub erase_lvm_signature
     my( $devices_aref ) = @_;
       # first remove the dm_mod module to prevent ghost lvm volumes 
       # from existing
-      push @FAI::commands, "modprobe -r dm_mod";
+#      push @FAI::commands, "modprobe -r dm_mod";
       # zero out (broken?) lvm signatures
-      push @FAI::commands, "dd if=/dev/zero of=$_ bs=1 count=1"
-        foreach ( @{$devices_aref} );
+#      push @FAI::commands, "dd if=/dev/zero of=$_ bs=1 count=1"
+#        foreach ( @{$devices_aref} );
+    my $device_list = join(" ", (@{$devices_aref}) );
+    ( $FAI::debug > 0 ) and print "list of erased devices: $device_list\n"; 
+    push @FAI::commands, "pvremove -ff -y $device_list";
+
       # reload module
-      push @FAI::commands, "modprobe dm_mod";
+#      push @FAI::commands, "modprobe dm_mod";
 
 }
 

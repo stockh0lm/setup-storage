@@ -360,23 +360,23 @@ sub convert_unit
   {
     if ( $2 eq "k" )
     {
-      $val *= ( 1 / 1024 );
+      $val = $1 ( 1 / 1024 );
     }
     elsif ( $2 eq "M" )
     {
-      $val *= 1;
+      $val = $1;
     }
     elsif ( $2 eq "G" )
     {
-      $val *= 1024;
+      $val = $1 * 1024;
     }
     elsif ( $2 eq "T" )
     {
-      $val *= ( 1024 * 1024 );
+      $val = $1 * ( 1024 * 1024 );
     }
     elsif ( $2 eq "P" )
     {
-      $val *= ( 1024 * 1024 * 1024 );
+      $val = $1 * ( 1024 * 1024 * 1024 );
     }
   }
   return $val;
