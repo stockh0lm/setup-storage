@@ -16,7 +16,7 @@ use File::Basename;
 our $opt_h;
 
 # Dirs used for revision control system's metadata
-my @rcs_dirs = qw'CVS .svn .arch-ids {arch}';
+my @rcs_dirs = qw'CVS .svn .arch-ids {arch} .git';
 
 # Hash of array-refs
 #     keys: classes
