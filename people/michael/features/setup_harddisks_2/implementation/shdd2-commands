@@ -260,7 +260,7 @@ sub build_lvm_commands
       
       my @new_devices = keys %new_devs;
       
-      erase_lvm_signature( \keys %new_devices );
+      erase_lvm_signature( \@new_devices );
       
       # create all the devices
       push @FAI::commands, "pvcreate $_"
