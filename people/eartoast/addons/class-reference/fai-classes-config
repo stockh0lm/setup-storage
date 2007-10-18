@@ -1,0 +1,287 @@
+#!/usr/bin/perl
+# HG: create a reference of all classes used in a fai config
+#     run this script in the FAI config topdir
+#     it extracts all references to classes and prints them on stdout
+#     Format:
+#       class: $classname
+#         $filename[:linenumber]
+#         ...
+
+use strict;
+use File::Find;
+use File::Basename;
+
+# Dirs used for revision control system's metadata
+my @rcs_dirs = qw'CVS .svn .arch-ids {arch}';
+
+# Hash of array-refs
+#     keys: classes
+#   values: list of places where the classes are referenced
+my %config_classes;
+
+# add a location to %config_classes
+sub add_class_ref {
+	my $class = shift;
+	my $location = shift;
+
+	# strip heading/tailing nonword-characters
+	$class =~ s#^\W*([\w-]+)\W*$#$1#;
+	push @{$config_classes{$class}},$location; 
+}
+
+# generic subroutine to parse scripts for class references
+sub parse_script {
+	my $dir=shift;
+	my $fname=shift;
+	my $fh;
+	open $fh,$fname;
+	chomp (my $interpreter=<$fh>);
+	
+	if ($interpreter =~ s/^#!//) {
+		$interpreter = basename($interpreter);
+	} else {
+		# files without a shebang are assumed to be shellscripts
+		$interpreter = 'bash';
+	}
+	
+	# for the time being, only parse shellscripts
+	if ($interpreter =~ m#^(bash|sh|dash)#) {
+		while (<$fh>) {
+			# remove comments, skip over empty lines
+			s/#.*$//;
+			chomp;
+			next if (/^$/);
+			# extract class references from 'ifclass' calls
+			while (m#(^|\W)ifclass\s+(\S+)#g) {
+				add_class_ref($2,"$dir/$fname:$."); 
+			}
+		}
+	} else {
+		print STDERR "unknown interpreter $interpreter in $dir/$fname\n";
+	}
+	close($fh);
+}
+
+# scan the $FAI/files hierarchy for classes
+sub scan_files {
+	# file-modes can contain classes
+	sub parse_filemodes {
+		my $dir=shift;
+		my $fname=shift;
+		my $fh;
+		open $fh,$fname;
+		while (<$fh>) {
+			s/#.*$//;
+			chomp;
+			my ($user,$grp,$mode,$class) = split;
+			add_class_ref($class,"$dir/$fname:$.") if ($class); 
+		}
+		close($fh);
+	}
+
+	# put dirs to ignore when recursing into a hash
+	my %ignoredirs;
+	map $ignoredirs{$_}=1,@rcs_dirs;
+
+	# hardcoded list of files to ignore
+	my $ignore_files='^(fcopy.info|censored|make-passwd|zedv_webctl.sh|ZEDV-README|ZEDV-ifhp.conf.sample|ZEDV-ifhp.local)$';
+
+	File::Find::find({
+		wanted=>sub{
+			# check only files
+			if (-f) {
+				if    ($_ eq 'postinst')       { parse_script($File::Find::dir,$_); }
+				elsif ($_ eq 'file-modes')     { parse_filemodes($File::Find::dir,$_); }
+				elsif ($_ =~ m#$ignore_files#o) { }
+				else  {
+					add_class_ref($_,"$File::Find::dir/$_"); 
+				}
+			}
+		},
+		# remove dirs-to-ignore in preprocess-step
+		preprocess=>sub{grep ! (-d and exists($ignoredirs{$_})),@_}},
+		"files");
+}
+
+# scan the $FAI/scripts hierarchy for classes
+sub scan_scripts {
+	my %ignoredirs;
+	map $ignoredirs{$_}=1,@rcs_dirs;
+
+	# no files to ignore so far here...
+	my $ignore_files='^$';
+
+	File::Find::find({
+		wanted=>sub{
+			# check only files
+			if (-f) {
+				# the number of slashes in the name is the depth
+				#   use list context in re match to get this number
+				my $depth= () = $File::Find::name =~ m#/#g;
+				if ($_ =~ m#$ignore_files#o) { }
+				else  {	
+					if ($depth == 1) {
+						# files at depth=1 are classnames
+						add_class_ref($_,$File::Find::name);
+					} elsif ($depth == 2) {
+						# files at depth=2 are numbered files in a classnamed dir
+						add_class_ref(basename($File::Find::dir),$File::Find::name);
+					}
+					# check script for additional class references
+					parse_script($File::Find::dir,$_); 
+				}
+			}
+		},
+		# remove dirs-to-ignore in preprocess step
+		preprocess=>sub{grep ! (-d and exists($ignoredirs{$_})),@_}},
+		"scripts");
+}
+
+# scan the $FAI/hooks/* for classes
+sub scan_hooks {
+	my %ignoredirs;
+	map $ignoredirs{$_}=1,@rcs_dirs;
+	my $ignore_files='^$';
+
+	File::Find::find({
+		wanted=>sub{
+			# check only files
+			if (-f) {
+				my $depth= () = $File::Find::name =~ m#/#g;
+				if ($_ =~ m#$ignore_files#o) { }
+				else  {	
+					if ($depth == 1) {
+						# files at depth=1 are $taskname.$class[.source]
+						m#\.([^\.]+)(\.source|)$#;
+						add_class_ref($1,$File::Find::name);
+					}
+					# just-in-case that there's a script in a subdir
+					parse_script($File::Find::dir,$_); 
+				}
+			}
+		},
+		# remove dirs-to-ignore in preprocess step
+		preprocess=>sub{grep ! (-d and exists($ignoredirs{$_})),@_}},
+		"hooks");
+}
+
+# scan the $FAI/package_config/* for classes
+sub scan_package_config {
+	# parse package conf for 'PACKAGES install [$class...]'
+	sub parse_package_config {
+		my $dir=shift;
+		my $fname=shift;
+		my $fh;
+		open $fh,$fname;
+		while (<$fh>) {
+			s/#.*$//;
+			chomp;
+			next if (/^$/);
+			if (m#^PACKAGES\s+\S+(.*)$#) {
+				$_=$1;
+				my @classes=split;
+				foreach (@classes) {
+					add_class_ref($_,"$dir/$fname:$.");
+				}
+			}
+		}
+		close($fh);
+	}
+
+	my %ignoredirs;
+	map $ignoredirs{$_}=1,@rcs_dirs;
+	my $ignore_files='^$';
+
+	File::Find::find({
+		wanted=>sub{
+			# check only files
+			if (-f) {
+				my $depth= () = $File::Find::name =~ m#/#g;
+				if ($_ =~ m#$ignore_files#) { }
+				else  {	
+					if ($depth == 1) {
+						# package_config/$class
+						add_class_ref($_,$File::Find::name);
+						# could reference other classes in 'PACKAGES install'
+						parse_package_config($File::Find::dir,$_); 
+					}
+				}
+			}
+		},
+		# remove dirs-to-ignore in preprocess step
+		preprocess=>sub{grep ! (-d and exists($ignoredirs{$_})),@_}},
+		"package_config");
+}
+
+# generic dir parser extracting classes from $dir/$class and $dir/$class/*
+sub scan_dir {
+	my %ignoredirs;
+	map $ignoredirs{$_}=1,@rcs_dirs;
+	my $ignore_files='^$';
+
+	File::Find::find({
+		wanted=>sub{
+			if (-f) {
+				my $depth= () = $File::Find::name =~ m#/#g;
+				if ($_ =~ m#$ignore_files#) { }
+				else  {	
+					if ($depth == 1) {
+						add_class_ref($_,$File::Find::name);
+					} elsif ($depth == 2) {
+						add_class_ref(basename($File::Find::dir),$File::Find::name);
+					}
+				}
+			}
+		},
+		# remove dirs-to-ignore in preprocess step
+		preprocess=>sub{grep ! (-d and exists($ignoredirs{$_})),@_}},
+		@_);
+}
+
+# scan $FAI/class/* for references on other classes
+sub scan_class {
+	my %ignoredirs;
+	map $ignoredirs{$_}=1,@rcs_dirs;
+	my $ignore_files='^$';
+
+	File::Find::find({
+		wanted=>sub{
+			if (-f) {
+				my $depth= () = $File::Find::name =~ m#/#g;
+				if ($_ =~ m#$ignore_files#) { }
+				else  {	
+					if ($depth == 1) {
+						if    (m#^\d+#) { }
+						elsif (m#^([^\.]+)\.var$#) {
+							add_class_ref($1,$File::Find::name);
+						}
+						parse_script($File::Find::dir,$_); 
+					}
+				}
+			}
+		},
+		# remove dirs-to-ignore in preprocess step
+		preprocess=>sub{grep ! (-d and exists($ignoredirs{$_})),@_}},
+		"class");
+}
+
+# print the classes and the places referencing them to stdout (alphanum sorted)
+sub dump_class_refs {
+	foreach my $class (sort keys %config_classes) {
+		print "class: $class\n";
+		foreach my $file (sort @{$config_classes{$class}}) {
+			print "  $file\n";
+		}
+	}
+}
+
+die "run this script within the fai config space" unless (-d "class");
+
+scan_class();
+scan_files();
+scan_scripts();
+scan_hooks();
+scan_dir("debconf","disk_config");
+scan_package_config();
+
+dump_class_refs();
