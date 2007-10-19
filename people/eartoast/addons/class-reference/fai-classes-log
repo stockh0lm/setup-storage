@@ -14,7 +14,8 @@ use File::Find;
 use File::Basename;
 
 my $log_topdir;
-our ($opt_F,$opt_h);
+my $listingtype;
+our ($opt_h);
 
 # Dirs within the logdirs to be ignored
 my @ignore_dirs = qw'backup ssh .ssh';
@@ -74,8 +75,19 @@ sub scan_log {
 		$log_topdir);
 }
 
-# print the classes and the places referencing them to stdout (alphanum sorted)
+# print the classes and the places referencing them
 sub dump_class_refs_full {
+	foreach my $class (sort keys %config_classes) {
+		print "class: $class\n";
+		foreach my $file (sort @{$config_classes{$class}}) {
+			print "  $file\n";
+		}
+	}
+}
+
+# print the classes and the hosts in them with the respective last-seen times
+sub dump_class_refs_host_last_seen {
+	my $type = shift;
 	foreach my $class (sort keys %config_classes) {
 		print "class: $class\n";
 		my %last_seen;
@@ -111,23 +123,33 @@ sub dump_class_refs_last_seen {
 sub HELP_MESSAGE {
 	my $name = basename($0);
 	print << "EOF";
-Usage: $name [OPTION] ... <fai-log-topdir>
+Usage: $name <listingtype> <fai-log-topdir>
 
-Options:
-    -F print a full listing of all dates on all hosts when a class was found
+listingtypes:
+  last_seen
+    just class and last-seen-date
+  host_last_seen
+    hostname and the date this class was last seen on it
+  full
+    all times a class was defined by any host, together with the hostnames
 EOF
 	exit 1;
 }
 
-getopts('Fh');
-HELP_MESSAGE() unless ($ARGV[0]);
+getopts('h');
 HELP_MESSAGE() if ($opt_h);
+HELP_MESSAGE() if ($#ARGV < 1);
 
-$log_topdir=$ARGV[0];
+$listingtype=$ARGV[0];
+$log_topdir=$ARGV[1];
 scan_log();
 
-if ($opt_F) {
+if ($listingtype eq "full") {
 	dump_class_refs_full();
-} else {
+} elsif ($listingtype eq "last_seen") {
 	dump_class_refs_last_seen();
+} elsif ($listingtype eq "host_last_seen") {
+	dump_class_refs_host_last_seen();
+} else {
+	HELP_MESSAGE();
 }
