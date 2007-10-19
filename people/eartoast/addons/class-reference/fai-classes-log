@@ -78,9 +78,20 @@ sub scan_log {
 # print the classes and the places referencing them
 sub dump_class_refs_full {
 	foreach my $class (sort keys %config_classes) {
-		print "class: $class\n";
-		foreach my $file (sort @{$config_classes{$class}}) {
-			print "  $file\n";
+		print "$class\n";
+		my $lastdate='';
+		my $lasthost='';
+		foreach (sort @{$config_classes{$class}}) {
+			my ($date,$host)=split;
+			if ($date ne $lastdate) {
+				print "\t$date\n";
+				$lastdate=$date;
+				$lasthost='';
+			}
+			if ($host ne $lasthost) {
+				print "\t\t$host\n";
+				$lasthost=$host;
+			}
 		}
 	}
 }
@@ -89,7 +100,7 @@ sub dump_class_refs_full {
 sub dump_class_refs_host_last_seen {
 	my $type = shift;
 	foreach my $class (sort keys %config_classes) {
-		print "class: $class\n";
+		print "$class\n";
 		my %last_seen;
 		my @output;
 
@@ -104,7 +115,21 @@ sub dump_class_refs_host_last_seen {
 		}
 		# print out a list, indented with two spaces, sorted by date and hostname
 		# of the last-seen data
-		print "  ".join("\n  ",sort values %last_seen)."\n";
+		#print "  ".join("\n  ",sort values %last_seen)."\n";
+		my $lastdate='';
+		my $lasthost='';
+		foreach (sort values %last_seen) {
+			my ($date,$host)=split;
+			if ($date ne $lastdate) {
+				print "\t$date\n";
+				$lastdate=$date;
+				$lasthost='';
+			}
+			if ($host ne $lasthost) {
+				print "\t\t$host\n";
+				$lasthost=$host;
+			}
+		}
 	}
 }
 
@@ -116,8 +141,14 @@ sub dump_class_refs_last_seen {
 		s# .*$##;
 		push @refs,"$_ $class";
 	}
-	foreach my $class_seen (sort @refs) {
-		print "$class_seen\n";
+	my $lastdate='';
+	foreach (sort @refs) {
+		my ($date,$class)=split;
+		if ($date ne $lastdate) {
+			print "$date\n";
+			$lastdate=$date;
+		}
+		print "\t$class\n";
 	}
 }
 sub HELP_MESSAGE {
