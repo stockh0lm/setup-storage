@@ -1,0 +1,111 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+use File::Basename;
+use Getopt::Std;
+
+my %classes_log;
+my %classes_config;
+our ($opt_u,$opt_a);
+
+my $print_unused;
+
+sub read_log {
+	my $fname=shift;
+	my $fh;
+	open $fh,$fname;
+
+	while (<$fh>) {
+		s/#.*$//;
+		chomp;
+		next if m#^$#;
+		my ($last_seen,$class) = split;
+		$classes_log{$class} = $last_seen;
+	}
+	
+	close $fname;
+}
+
+sub read_config {
+	my $fname=shift;
+	my $fh;
+	open $fh,$fname;
+	my $class;
+	my @accum;
+
+	while (<$fh>) {
+		s/#.*$//;
+		chomp;
+		next if m#^$#;
+		
+		if (m#^class: (.*)$#) {
+			if ($class) {
+				@{$classes_config{$class}}=@accum;
+				@accum=();
+			}
+			$class=$1;
+		} else {
+			s#\s##g;
+			push @accum,$_;
+		}
+	}
+	
+	close $fname;
+
+	if ($class) {
+		@{$classes_config{$class}}=@accum;
+	}
+}
+
+sub print_config_alpha {
+	my %seen_class;
+	foreach my $class (sort keys %classes_config) {
+		$seen_class{$class}=1;
+		my $date=$classes_log{$class} || 'never';
+		print "class: $class $date\n";
+		foreach my $file (sort @{$classes_config{$class}}) {
+			print "  $file\n";
+		}
+	}
+	if ($print_unused) {
+		my @unused = grep { ! defined($seen_class{$_}) } sort keys %classes_log;
+		if (@unused) {
+			print "classes without config files:\n";
+			foreach (@unused) {
+				print "  $_ " . $classes_log{$_} . "\n";
+			}
+		}
+	}
+}
+
+sub print_config_time {
+	my %fakelog=%classes_log;
+	foreach my $class (keys %classes_config) {
+		$fakelog{$class}='00000000' unless (exists($fakelog{$class}));
+	}
+	my @bytime = sort map { $_=$fakelog{$_} . " $_" } keys %fakelog;
+	foreach (@bytime) {
+		m#(\d+) (.*)$#;
+		my $date=$1;
+		my $class=$2;
+		print "class: $class $date\n" if (exists($classes_config{$class}) || $print_unused);
+		if (exists($classes_config{$class})) {
+			foreach my $file (sort @{$classes_config{$class}}) {
+				print "  $file\n";
+			}
+		}
+	}
+}
+getopts("ua");
+$print_unused=$opt_u;
+
+die "Usage: " . basename($0) . " <zedv_fai-classes-config.txt> <zedv_fai-classes-log.txt>\n" if ($#ARGV<1);
+
+read_config($ARGV[0]);
+read_log($ARGV[1]);
+
+if ($opt_a) {
+	print_config_alpha();
+} else {
+	print_config_time();
+}
