@@ -3,9 +3,7 @@
 #     run this script in the FAI config topdir
 #     it extracts all references to classes and prints them on stdout
 #     Format:
-#       class: $classname
-#         $filename[:linenumber]
-#         ...
+#       $classname $filename[:linenumber]
 
 use strict;
 use Getopt::Std;
@@ -272,9 +270,8 @@ sub scan_class {
 # print the classes and the places referencing them to stdout (alphanum sorted)
 sub dump_class_refs {
 	foreach my $class (sort keys %config_classes) {
-		print "class: $class\n";
 		foreach my $file (sort @{$config_classes{$class}}) {
-			print "  $file\n";
+			print "$class  $file\n";
 		}
 	}
 }
