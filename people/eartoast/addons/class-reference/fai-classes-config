@@ -58,6 +58,24 @@ sub parse_script {
 				add_class_ref($2,"$dir/$fname:$."); 
 			}
 		}
+	} elsif ($interpreter =~ m#^(cfengine|cfagent)#) {
+		while (<$fh>) {
+			# remove comments, skip over empty lines
+			s/#.*$//;
+			chomp;
+			next if (/^$/);
+			# extract class references
+			my $line=$.;
+			if (m#(\S+)::(\s|$)#) {
+				$_=$1;
+				# split at class relation characters
+				s/[\.\!\|\(\)]+/ /g;
+				s/^\s+//g;
+				my @now_classes=grep { ! /^any$/ } split;
+				# add reference to the class list
+				map {add_class_ref($_,"$dir/$fname:$.");} @now_classes;
+			}
+		}
 	} else {
 		print STDERR "unknown interpreter $interpreter in $dir/$fname\n";
 	}
