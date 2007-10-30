@@ -1,0 +1,5 @@
+Todo for the template:
+
+	1. Add template for every type of intput field.
+	2. Test browsers: epiphany-browser, konqeror, opera, icewasel, elinks (vga mode).
+	3. Add additional ajax support for input fields, sunch as drag and drop support.
