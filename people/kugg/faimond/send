@@ -1,0 +1,11 @@
+#! /usr/bin/perl
+
+$|=1;
+
+while ($f=<>) {
+#  open (O, ">>g");
+#  print O $f;
+  print  $f;
+#  close G;
+  sleep 1
+}
