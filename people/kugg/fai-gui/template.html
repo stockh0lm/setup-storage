@@ -1,66 +1,99 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-<HTML>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" dir="ltr" lang="en">
+	<head>
+		<title>FAI-GUI TEMPLATE</title>
+		<link rel="StyleSheet" href="template_style.css" type="text/css" />
+		<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+	</head>
 
-	<HEAD>
-		<TITLE>FAI-GUI TEMPLATE</TITLE>
-		<LINK rel="StyleSheet" href="template_style.css" type="text/css">
-	</HEAD>
+	<body>
+		<div id="top_field">
+			<ul id="top_bar_list">
+				<li><a href="">Docs</a></li>
+				<li><a href="">Bugs</a></li>
+				<li><a href="">Fai-Wiki</a></li>
+			</ul>
+		</div>
+		<div id="searchbar">
+			<form class="searchform" action="http://google.uni-koeln.de/search?">
+				<fieldset class="searchform">
+					<input type="text" name="q" id="search" />
+					<input type="submit" value="Search" id="submit" />
+				</fieldset>
+			</form>
+		</div>
 
-	<BODY>
-		<SPAN id="top_field">
-			<UL id="top_bar_list">
-				<LI><A href="">Docs</A></LI>
-				<LI><A href="">Bugs</A></LI>
-				<LI><A href="">Fai-Wiki</A></LI>
-				<LI>
-					<FORM id="searchform" action="http://google.uni-koeln.de/search?"><LABEL ACCESSKEY="s">
-						<INPUT type="text" name="q" id="search" />
-						<INPUT type="submit" value="Search" id="submit" />
-					</LABEL></FORM>
-				</LI>
-			</UL>
-		</SPAN>
 
-		<DIV id="main_field">
-			<DIV id="upper">
-				<DIV id="upper_left_shadow"></DIV>
-				<DIV id="upper_shadow">
+		<div id="main_field">
+			<div id="upper">
+				<div id="upper_left_shadow"></div>
+				<div id="upper_shadow">
 						
-					<TABLE id="menu_list">
-						<TR>
-						<TD class="menu_item"><A HREF="template.html"><P><IMG src="icn_classes_small.png" /></P><P>CLASSES</P></IMG></A></TD>
-						<TD class="menu_item"><A HREF="template.html"><P><IMG src="icn_hosts_small.png" /></P><P>HOSTS</P></A></TD>
-						<TD class="menu_item"><A HREF="template.html"><P><IMG src="icn_help_small.png" /></P><P>HELP</P></A></TD>
-						<TD class="menu_item"><A HREF="template.html"><P><IMG src="icn_overview_small.png" /></P><P>OVERVIEW</P></A></TD>
-						<TD class="menu_item"><A HREF="template.html"><P><IMG src="icn_logs_small.png" /></P><P>LOGS</P></A></TD>
-						<TD class="menu_item"><A HREF="template.html"><P><IMG src="icn_statistics_small.png"/></P><P>STATISTICS</P></A></TD>
+					<table id="menu_list">
+						<tr>
 
+						<td class="menu_item">
+							<a href="template.html"><img src="icn_classes_small.png" alt="Edit, Add and remove classes" /></a>
+							<p><a href="template.html">CLASSES</a></p>
+						</td>
 
-						</TR>
-					</TABLE>
-					
-				</DIV>
-				<DIV id="upper_right_shadow"></DIV>
-				<!--<TD id="extra_gradient"></TD>-->
-			</DIV>
-			<DIV id="lower">
-				<DIV id="left_shadow"></DIV>
+                                                <td class="menu_item">
+                                                        <a href="template.html"><img src="icn_hosts_small.png" alt="Edit, Add and hosts" /></a>
+                                                        <p><a href="template.html">HOSTS</a></p>
+                                                </td>
+
+                                                <td class="menu_item">
+							<a href="template.html"><img src="icn_help_small.png" alt="Getting help!" /></a>
+							<p><a href="template.html">HELP</a></p>
+                                                </td>
+
+                                                <td class="menu_item">
+							<a href="template.html"><img src="icn_logs_small.png" alt="Browse your logs" /></a>
+							<p><a href="template.html">LOGS</a></p>
+                                                </td>
+
+                                                <td class="menu_item">
+							<a href="template.html"><img src="icn_statistics_small.png" alt="Collect statistics about your FAI setup." /></a>
+							<p><a href="template.html">STATISTICS</a></p>
+                                                </td>
+					</tr>
+					</table>
+				</div>
+				<div id="upper_right_shadow"></div>
+			</div>
+			<div id="lower">
+				<div id="left_shadow"></div>
 				
-				<DIV id="content"><BR />
-					<DIV id="intro_box">
-						Welcome to Fully Automated Installation!<BR/><BR/>
-							With this interface you may set up the following configuration for FAI.
-					</DIV>
-								<A href="classes"><SPAN class="icon"><P><IMG src="icn_classes_small.png" /></P><P>Classes</P></SPAN></A>
-								<A href="hosts"><SPAN class="icon"><P><IMG src="icn_hosts_small.png" /></P><P>Hosts</P></SPAN></A>
-								<A href="scripts"><SPAN class="icon"><P><IMG src="icn_scripts_small.png" /></P><P>Scripts</P></SPAN></A>
-								<A href="help"><SPAN class="icon"><P><IMG src="icn_help_small.png" /></P><P>Help</P></SPAN></A>
-								<A href="packages"><SPAN class="icon"><P><IMG src="icn_package_small.png" /></P><P>Packages</P></SPAN></A>
-								<A href="host"><SPAN class="icon"><P><IMG src="icn_host_small.png" /></P><P>Host</P></SPAN></A>
-				</DIV>
-				<DIV id="right_shadow"></DIV>
-				<!--<TD id="fillout">&pnsb;</TD>-->
-			</DIV>
-		</DIV>
-	</BODY>
-</HTML>
+				<div id="content"><br />
+					<div id="intro_box">
+						Welcome to Fully Automated Installation!<br/><br/>
+						With this interface you may set up the following configuration for FAI.
+					</div>
+
+					<div class="icon"><img src="icn_classes_small.png" alt="Classes" /><p><a href="classes">Classes</a></p></div>
+					<div class="icon"><img src="icn_hosts_small.png" alt="Hosts" /><p><a href="hosts">Hosts</a></p></div>
+					<div class="icon"><img src="icn_scripts_small.png" alt="Scripts" /><p><a href="scripts">Scripts</a></p></div>
+					<div class="icon"><img src="icn_help_small.png" alt="Help" /><p><a href="help">Help</a></p></div>
+					<div class="icon"><img src="icn_package_small.png" alt="Packages" /><p><a href="packages">Packages</a></p></div>
+					<div class="icon"><img src="icn_host_small.png" alt="host" /><p><a href="host">Host</a></p></div>
+				</div>
+				<div id="right_shadow"></div>
+			</div>
+		</div>
+		<div id="validation">
+		<p>
+			<a href="http://validator.w3.org/check?uri=referer">
+				<img style="border:0;width:88px;height:31px" src="http://www.w3.org/Icons/valid-xhtml10-blue" alt="Valid XHTML 1.0 Strict" />
+			</a>
+  		</p>
+
+		<p>
+			<a href="http://jigsaw.w3.org/css-validator/">
+ 				<img style="border:0;width:88px;height:31px" src="http://jigsaw.w3.org/css-validator/images/vcss" alt="Valid CSS!" />
+ 			</a>
+		</p>
+		</div>
+	
+	</body>
+</html>

@@ -5,7 +5,7 @@ body {
 	margin:0px;
 }
 
-span#top_field {
+#top_field {
 	position:absolute;
 	left:0px;
 	top:0px;
@@ -29,13 +29,13 @@ span#top_field {
 	font-size:0.9em; 
 	width:150px;
 }
-UL#top_bar_list {
+ul#top_bar_list {
 	margin:0px;
 	padding:0px;
 	padding-top:3px;
 	min-width:860px;
 }
-LI {
+li {
 	
 	display: inline;
  	padding: 2em;
@@ -44,13 +44,19 @@ LI {
 }
 
 
-LI A {
+li a {
 	text-decoration:none;
 	color: gray;
 }
+#searchbar {
+	position: absolute;
+	top:0px;
+	right:0px;
 
-#searchform {
+}
+.searchform {
 	display: inline;
+	border:0px;
 }
 
 #main_field {
@@ -62,7 +68,7 @@ LI A {
 	min-width:860px;
 }
 
-DIV#upper_shadow {
+div#upper_shadow {
         height:127px;
         border: 0px;
         padding:0px;
@@ -73,7 +79,7 @@ DIV#upper_shadow {
 	max-height:127px;
 }
 
-DIV#upper_left_shadow {
+div#upper_left_shadow {
         background: url('upper_left_shadow.png') no-repeat;
         width:199px;
         height:127px;
@@ -81,7 +87,7 @@ DIV#upper_left_shadow {
         float:left;
 }
 
-DIV#upper_right_shadow {
+div#upper_right_shadow {
         background: url('upper_right_shadow.png') no-repeat;
 	width:199px;
 	height:127px;
@@ -116,7 +122,7 @@ DIV#upper_right_shadow {
 td.menu_item p {
 	line-height:0px;
 	font-size: smaller;
-	text-align:bottom;
+	text-align:center;
 }
 
 td.menu_item img {
@@ -126,14 +132,13 @@ td.menu_item img {
 .menu_item:hover {
 	background:url('upper_shadow4.png') top repeat-x;
 	border-bottom: 5px solid #f6f0d0;
-	text-decoration: underline;
 	
 }
 .menu_item a {
 	text-decoration:none;
 	text-transform: capitalize;
 	color: gray;
-	font-size:10;
+	font-size:smaller;
 }
 .menu_item a:hover {
         text-decoration:underline;
@@ -141,17 +146,17 @@ td.menu_item img {
 	text-transform: capitalize;
 }
 
-DIV#upper {
+div#upper {
 	width:100%;
 	clear:left;
 	display:inline;
 }
-DIV#lower {
+div#lower {
 	width:100%;
 	clear:left;
 }
 
-DIV#intro_box {
+div#intro_box {
 	margin-left:220px;
 	margin-right:220px;
 	padding: 5px;
@@ -160,11 +165,11 @@ DIV#intro_box {
 	color:black;
 }
 
-DIV#content {
+div#content {
 	margin: 0px 0px -199px;
 }
 
-span.icon {
+.icon {
 	border:1px solid silver;
 	margin: 0.5em;
 	padding: 0.5em;
@@ -173,27 +178,26 @@ span.icon {
 	background: #dfdfff;
 	color: #000;
 }
-span.icon:hover {
+.icon:hover {
         border:1px solid #ddf;
         margin: 0.5em;
         padding: 0.5em;
         float:left;
         position:relative;
 	background: #eef;
-	text-decoration:underline;
 }
 
-span.icon img {	
+.icon img {	
 	border:0px;
 }
-span.icon p {
+.icon p {
 	font-style:italic;
 	font-size: smaller;
 	text-indent:0;
 	text-align:center;	
 }
 
-DIV#left_shadow {
+div#left_shadow {
         background: url('left_shadow.png') no-repeat;
         height:490px;
 	width:200px;
@@ -203,7 +207,7 @@ DIV#left_shadow {
         float:left;
 }
 
-DIV#right_shadow {
+div#right_shadow {
         background: url('right_shadow.png') no-repeat;
         height:490px;
         width:199px;
@@ -215,4 +219,10 @@ DIV#right_shadow {
 	right: 0px; 
 	margin-left: auto; 
 	float: right;
+}
+
+#validation {
+	position:absolute;
+	bottom:10px;
+	right:10px;
 }
