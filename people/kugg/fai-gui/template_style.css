@@ -157,8 +157,8 @@ div#lower {
 }
 
 div#intro_box {
-	margin-left:220px;
-	margin-right:220px;
+	margin-left:0.5em;
+	margin-right:0.5em;
 	padding: 5px;
 	border:1px solid silver;
 	background-color: #f6f0d0;
@@ -167,6 +167,12 @@ div#intro_box {
 
 div#content {
 	margin: 0px 0px -199px;
+	/*860-(199*2)*/
+	min-width:462px;
+	position:absolute;
+        left:199px;
+        right:199px;
+        top:127px;
 }
 
 .icon {
@@ -213,11 +219,6 @@ div#right_shadow {
         width:199px;
         border:0px;
         padding:0px;
-/*	position: static;*/
-	position: absolute;
-	top: 127px; 
-	right: 0px; 
-	margin-left: auto; 
 	float: right;
 }
 
