@@ -1,7 +1,10 @@
 body {
 	font-family: verdana;
 	font-size: 100%;
-	background: url("bodyfade.png") repeat-x;
+	background: url("bgfade.png") repeat-x bottom #def;
+	background-position: 0% 100%;
+	background-attachment: fixed;
+	
 	margin:0px;
 }
 
@@ -21,13 +24,18 @@ body {
 	vertical-align:top;
 }
 	
-#submit, #search {
+input, #search {
 	background-color:#ffffff; 
 	border:1px 
 	solid #cccccc; 
 	color:#505050; 
 	font-size:0.9em; 
 	width:150px;
+}
+input, #hint {
+	background-color:#ffffff;
+	border:0px;
+	
 }
 ul#top_bar_list {
 	margin:0px;

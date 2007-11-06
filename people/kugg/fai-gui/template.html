@@ -6,6 +6,7 @@
 		<link rel="StyleSheet" href="template_style.css" type="text/css" />
 		<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 		<script type="text/javascript" src="styleswitch.js"></script>
+		<script type="text/javascript" src="search.js"></script>
 	</head>
 
 	<body>
@@ -19,8 +20,8 @@
 		<div id="searchbar">
 			<form class="searchform" action="http://google.uni-koeln.de/search?">
 				<fieldset class="searchform">
-					<input type="text" name="q" id="search" />
-					<input type="submit" value="Search" id="submit" />
+					<input type="text" name="q" id="search" value="Search..." onkeyup="ajaxSearch(this.value);" onblur="hideSoon(this.name);" onclick="highlight('search');" />
+					<br/><a id="hint" onclick="" href="http://google.uni-koeln.de/search?"></a>
 				</fieldset>
 			</form>
 		</div>
