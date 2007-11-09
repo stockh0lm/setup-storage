@@ -240,6 +240,46 @@ div#right_shadow {
         padding:0px;
 	float: right;
 }
+/*View: picker*/
+.input_section {
+        float:left;
+        position:relative;
+}
+
+.input_section select {
+background-color:#f6f0d0;
+
+}
+
+select {
+width: 300px;
+border: 1px solid black;
+}
+
+
+.vr {
+        border-left: 2px solid black;
+        height:210px;
+        width:10px;
+        margin-left:10px;
+        float:left;
+        position:relative;
+
+}
+
+#leftarrow {
+	text-align:left;
+	border-top:0px;
+}
+#rightarrow {
+	text-align:right;
+	border-top:0px;
+	position:absolute;
+	right:0px;
+}
+.clickable {
+        border:1px solid black;
+}
 
 #validation {
 	position:absolute;

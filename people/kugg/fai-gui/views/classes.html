@@ -1,49 +1,11 @@
 <html>
 
+<head>
+<link rel="StyleSheet" href="../template_style.css" type="text/css" />
+<script type="text/javascript" src="views.js" ></script>
+</head>
+
 <body>
-
-<style type="text/css">
-.input_section {
-	float:left;
-	position:relative;
-}
-.vr {
-	border-left: 2px solid black;
-	height:210px;
-	width:10px;
-	margin-left:10px;
-	float:left;
-	position:relative;
-
-}
-select {
-width: 300px;
-border: 1px solid black;
-}
-
-</style>
-  <script language="JavaScript">
-
-   function AddEnable() {
-		var enabled_classes=document.getElementById("enabled_classes");
-		var availible_classes=document.getElementById("availible_classes");
-
-		var new_option=document.createElement('option');
-		new_option.text=availible_classes.options[availible_classes.selectedIndex].value;
-		enabled_classes.add(new_option,null);
-
-/*		alert(availible_classes.selectedIndex);*/
-		docuement.list_selection.enabled_classes.add("karate");
-   }
-
-   function RmEnable() {
-		var enabled_classes=document.getElementById("enabled_classes");
-/*		alert(enabled_classes.selectedIndex);*/
-		enabled_classes.remove(enabled_classes.selectedIndex);
-	}
-
-  </script>
-
 
 <h2>Hostname</h2>
 <form name="list_selection">
@@ -57,7 +19,7 @@ border: 1px solid black;
 		<option>school</option>
 		<option>economics</option>
 	</select><br/>
-	<input type="button" value="&gt;&gt;" onclick="AddEnable();" />
+	<input type="button" value="&gt;&gt;" id="rightarrow" class="clickable" onclick="AddEnable();" />
 	</label>
 </div>
 <div class="vr">
@@ -65,10 +27,19 @@ border: 1px solid black;
 <div class="input_section">	
 	<label>Enabled<br/>
 	<select name="enabled_classes" id="enabled_classes" multiple="multiple" size="10">
-
+	<option>lcd</option>
 	</select><br/>
-	<input type="button" value="&lt;&lt;" onclick="RmEnable();" />		
+	<input type="button" value="&lt;&lt;" id="leftarrow" class="clickable" onclick="RmEnable();" />		
 	</label>		
+</div>
+<div class="vr">
+</div>
+<div class="input_section"><br/>
+	<div id="intro_box">
+	Add the classes needed by your host by clicking the arrows. When you are done press Submit and the changes will be commited. If you want to specify the settings for a specific class, just double-click on the class.
+	</div><br/>
+	<input type="submit" class="clickable"><br/><br/>
+	<input type="reset" class="clickable"><br/>
 </div>
 </fieldset>
 </form>
