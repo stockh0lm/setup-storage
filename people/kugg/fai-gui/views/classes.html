@@ -1,0 +1,76 @@
+<html>
+
+<body>
+
+<style type="text/css">
+.input_section {
+	float:left;
+	position:relative;
+}
+.vr {
+	border-left: 2px solid black;
+	height:210px;
+	width:10px;
+	margin-left:10px;
+	float:left;
+	position:relative;
+
+}
+select {
+width: 300px;
+border: 1px solid black;
+}
+
+</style>
+  <script language="JavaScript">
+
+   function AddEnable() {
+		var enabled_classes=document.getElementById("enabled_classes");
+		var availible_classes=document.getElementById("availible_classes");
+
+		var new_option=document.createElement('option');
+		new_option.text=availible_classes.options[availible_classes.selectedIndex].value;
+		enabled_classes.add(new_option,null);
+
+/*		alert(availible_classes.selectedIndex);*/
+		docuement.list_selection.enabled_classes.add("karate");
+   }
+
+   function RmEnable() {
+		var enabled_classes=document.getElementById("enabled_classes");
+/*		alert(enabled_classes.selectedIndex);*/
+		enabled_classes.remove(enabled_classes.selectedIndex);
+	}
+
+  </script>
+
+
+<h2>Hostname</h2>
+<form name="list_selection">
+<fieldset>
+<div class="input_section">
+	<label>Availible<br/>
+ 	<select name="availible_classes" id="availible_classes" multiple="multiple" size="10">
+		<option>lcd</option>
+		<option>games</option>
+		<option>science</option>
+		<option>school</option>
+		<option>economics</option>
+	</select><br/>
+	<input type="button" value="&gt;&gt;" onclick="AddEnable();" />
+	</label>
+</div>
+<div class="vr">
+</div>
+<div class="input_section">	
+	<label>Enabled<br/>
+	<select name="enabled_classes" id="enabled_classes" multiple="multiple" size="10">
+
+	</select><br/>
+	<input type="button" value="&lt;&lt;" onclick="RmEnable();" />		
+	</label>		
+</div>
+</fieldset>
+</form>
+</body>
+</html>

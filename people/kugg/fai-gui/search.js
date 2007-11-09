@@ -23,6 +23,16 @@ function highlight(this_element)
 	}
 }
 
+
+function show_hint(element,response)
+{
+
+	document.getElementById(element).innerHTML=response;
+	
+	/*Insert keydown and key up arrow events here.*/	
+}
+
+
 function ajaxSearch(question)
 {
 	var xmlHttp;
@@ -41,12 +51,11 @@ function ajaxSearch(question)
 	{
 		if(xmlHttp.readyState==4)
 		{
-			document.getElementById("hint").innerHTML=xmlHttp.responseText;
+			//Showing a hint
+			show_hint("hint",xmlHttp.responseText);
 		}
 	}
 
 	xmlHttp.open("GET","search.result",true);
 	xmlHttp.send(question);
-	alert(xmlHttp.readyState + document.searchform.g.value);
-
 }

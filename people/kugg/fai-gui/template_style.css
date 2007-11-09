@@ -31,12 +31,23 @@ input, #search {
 	color:#505050; 
 	font-size:0.9em; 
 	width:150px;
+	vertical-align:top;	
 }
 input, #hint {
 	background-color:#ffffff;
 	border:0px;
+	vertical-align:top;
 	
 }
+.searchform, img {
+	vertical-align:top;
+}
+
+.searchform {
+	position:relative;
+	top:0px;
+}
+
 ul#top_bar_list {
 	margin:0px;
 	padding:0px;
