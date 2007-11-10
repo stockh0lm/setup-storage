@@ -268,11 +268,11 @@ border: 1px solid black;
 }
 
 #leftarrow {
-	text-align:left;
+/*	text-align:left;*/
 	border-top:0px;
 }
 #rightarrow {
-	text-align:right;
+/*	text-align:right;*/
 	border-top:0px;
 	position:absolute;
 	right:0px;

@@ -1,14 +1,50 @@
+function moveup() {
+	var enabled_classes=document.getElementById("enabled_classes");
+	previous_element=enabled_classes.selectedIndex - 1;
+	current_element=enabled_classes.options[enabled_classes.selectedIndex ];
+	
+
+	var new_element = document.createElement('option');
+
+	new_element.value=current_element.value;
+	new_element.text=current_element.text;
+	enabled_classes.add( new_element , enabled_classes.options[previous_element]);
+	RmEnable();
+}
+function movedown() {
+        var enabled_classes=document.getElementById("enabled_classes");
+        previous_element=enabled_classes.selectedIndex +2;
+        current_element=enabled_classes.options[enabled_classes.selectedIndex ];
+
+
+        var new_element = document.createElement('option');
+
+        new_element.value=current_element.value;
+        new_element.text=current_element.text;
+	if (previous_element>=enabled_classes.options.length) {
+		enabled_classes.add( new_element , null );
+		RmEnable();
+		return true;
+	}
+
+        enabled_classes.add( new_element , enabled_classes.options[previous_element]);
+        RmEnable();
+	return true;
+}
+
+
+
 function AddEnable() {
 	var enabled_classes=document.getElementById("enabled_classes");
 	var availible_classes=document.getElementById("availible_classes");
 
-	var new_option=document.createElement('option');
-	new_option.text=availible_classes.options[availible_classes.selectedIndex].value;
-	if (CheckEnabled(new_option)==false) {
-		enabled_classes.add(new_option,null);
+	var new_element=document.createElement('option');
+	new_element.value=availible_classes.value;
+	new_element.text=availible_classes.value;
+	if (CheckEnabled(new_element)==false) {
+		enabled_classes.add(new_element,null);
 	}
 
-	/*docuement.list_selection.enabled_classes.add("karate");*/
 }
 
 function RmEnable() {

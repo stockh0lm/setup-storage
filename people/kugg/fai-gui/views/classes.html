@@ -12,27 +12,41 @@
 <fieldset>
 <div class="input_section">
 	<label>Availible<br/>
- 	<select name="availible_classes" id="availible_classes" multiple="multiple" size="10">
+ 	<select name="availible_classes" id="availible_classes" size="10">
 		<option>lcd</option>
 		<option>games</option>
 		<option>science</option>
 		<option>school</option>
 		<option>economics</option>
+                <option>cdrom</option>
+                <option>testing</option>
+                <option>admin</option>
+                <option>kiosk</option>
+                <option>ha-cluster</option>
+                <option>non-free</option>
+                <option>scsi</option>
+                <option>admin-tools</option>
+                <option>recovery</option>
+                <option>openSolaris</option>
+
 	</select><br/>
-	<input type="button" value="&gt;&gt;" id="rightarrow" class="clickable" onclick="AddEnable();" />
+	<input type="button" value="&gt;" id="rightarrow" class="clickable" onclick="AddEnable();" />
 	</label>
 </div>
 <div class="vr">
 </div>
 <div class="input_section">	
 	<label>Enabled<br/>
-	<select name="enabled_classes" id="enabled_classes" multiple="multiple" size="10">
-	<option>lcd</option>
-	</select><br/>
-	<input type="button" value="&lt;&lt;" id="leftarrow" class="clickable" onclick="RmEnable();" />		
+	<select name="enabled_classes" id="enabled_classes" size="10">
+	</select>
+	<br/>
+	<input type="button" value="&lt;" id="leftarrow" class="clickable" onclick="RmEnable();" />		
 	</label>		
 </div>
-<div class="vr">
+<div class="vr" style="border:0px;padding-top:65px;">
+		<input type="button" class="clickable" id="uparrow" value="&Lambda;" style="width:50px;" onclick="moveup()" /><br/><br/>
+                <input type="button" class="clickable" id="downarrow" value="V" style="width:50px;" onclick="movedown()" />
+
 </div>
 <div class="input_section"><br/>
 	<div id="intro_box">
