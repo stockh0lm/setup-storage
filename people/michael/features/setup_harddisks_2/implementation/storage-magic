@@ -90,9 +90,9 @@ if ($opt_f) {
 
 # see which class file to use
 else {
-  foreach my $classfile ( reverse split( /\s+/, $ENV{"classes"} ) ) {
-    next unless ( -r "$ENV{'FAI'}/disk_config/$classfile" );
-    open( $config_file, "$ENV{'FAI'}/disk_config/$classfile" );
+  foreach my $classfile ( reverse split( /\s+/, $ENV{classes} ) ) {
+    next unless ( -r "$ENV{FAI}/disk_config/$classfile" );
+    open( $config_file, "$ENV{FAI}/disk_config/$classfile" );
     last;
   }
 }

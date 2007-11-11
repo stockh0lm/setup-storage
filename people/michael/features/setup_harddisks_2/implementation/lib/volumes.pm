@@ -56,7 +56,7 @@ sub get_current_disks {
     ( -b $disk ) or die "$disk is not a block special device!\n";
 
     # initialise the hash
-    $FAI::current_config{$disk}{"partitions"} = {};
+    $FAI::current_config{$disk}{partitions} = {};
 
     # the list to hold the output of parted commands as parsed below
     my @parted_print = ();
@@ -75,9 +75,11 @@ sub get_current_disks {
     # parted_2 happens when the disk has no disk label, because parted then
     # provides no information about the disk
     if ( $error eq "parted_2" ) {
+      ( $FAI::no_dry_run == 1 ) or die 
+        "Can't run on test-only mode on this system because there is no disklabel on $disk\n";
 
       # if there is no disk configuration, write an msdos disklabel
-      if ( !defined( $FAI::configs{"PHY_$disk"}{"disklabel"} ) ) {
+      if ( !defined( $FAI::configs{"PHY_$disk"}{disklabel} ) ) {
 
         # write the disk label as configured
         $error = &FAI::execute_command( "parted -s $disk mklabel msdos" );
@@ -85,7 +87,7 @@ sub get_current_disks {
 
         # write the disk label as configured
         $error = &FAI::execute_command(
-          "parted -s $disk mklabel " . $FAI::configs{"PHY_$disk"}{"disklabel"} );
+          "parted -s $disk mklabel " . $FAI::configs{"PHY_$disk"}{disklabel} );
       }
 
       # set no_dry_run to perform read-only commands always
@@ -161,12 +163,12 @@ sub get_current_disks {
 
       # determine the logical sector size
       if ( $line =~ /^Sector size \(logical\/physical\): (\d+)B\/(\d+)B$/ ) {
-        $FAI::current_config{$disk}{"sector_size"} = $1;
+        $FAI::current_config{$disk}{sector_size} = $1;
       }
 
       # read and store the current disk label
       elsif ( $line =~ /^Partition Table: (.+)$/ ) {
-        $FAI::current_config{$disk}{"disklabel"} = $1;
+        $FAI::current_config{$disk}{disklabel} = $1;
       }
 
       # the line containing the table headers
@@ -229,7 +231,7 @@ sub get_current_disks {
         $fs =~ s/\s*$//g;
 
         # store the information in the hash
-        $FAI::current_config{$disk}{"partitions"}{$id}{"filesystem"} = $fs;
+        $FAI::current_config{$disk}{partitions}{$id}{filesystem} = $fs;
       }
     }
 
@@ -260,9 +262,9 @@ sub get_current_disks {
 
       # the disk size line (Disk /dev/hda: 82348277759B)
       if ( $line =~ /Disk \Q$disk\E: (\d+)B$/ ) {
-        $FAI::current_config{$disk}{"begin_byte"} = 0;
-        $FAI::current_config{$disk}{"end_byte"}   = ( $1 - 1 );
-        $FAI::current_config{$disk}{"size"}       = $1;
+        $FAI::current_config{$disk}{begin_byte} = 0;
+        $FAI::current_config{$disk}{end_byte}   = ( $1 - 1 );
+        $FAI::current_config{$disk}{size}       = $1;
 
         # nothing else to be done
         next;
@@ -275,17 +277,17 @@ sub get_current_disks {
         );
 
       # mark the bounds of existing partitions
-      $FAI::current_config{$disk}{"partitions"}{$1}{"begin_byte"} = $2;
-      $FAI::current_config{$disk}{"partitions"}{$1}{"end_byte"}   = $3;
-      $FAI::current_config{$disk}{"partitions"}{$1}{"count_byte"} = $4;
+      $FAI::current_config{$disk}{partitions}{$1}{begin_byte} = $2;
+      $FAI::current_config{$disk}{partitions}{$1}{end_byte}   = $3;
+      $FAI::current_config{$disk}{partitions}{$1}{count_byte} = $4;
 
       # is_extended defaults to false/0
-      $FAI::current_config{$disk}{"partitions"}{$1}{"is_extended"} = 0;
+      $FAI::current_config{$disk}{partitions}{$1}{is_extended} = 0;
 
       # but may be true/1 on msdos disk labels
-      ( ( $FAI::current_config{$disk}{"disklabel"} eq "msdos" )
+      ( ( $FAI::current_config{$disk}{disklabel} eq "msdos" )
           && ( $6 eq "extended" ) )
-        and $FAI::current_config{$disk}{"partitions"}{$1}{"is_extended"} = 1;
+        and $FAI::current_config{$disk}{partitions}{$1}{is_extended} = 1;
     }
 
     # set no_dry_run to perform read-only commands always
@@ -310,21 +312,21 @@ sub get_current_disks {
       if ( $line =~
         /^BIOS cylinder,head,sector geometry:\s*(\d+),(\d+),(\d+)\.\s*Each cylinder is \d+kB\.$/
         ) {
-        $FAI::current_config{$disk}{"bios_cylinders"}         = $1;
-        $FAI::current_config{$disk}{"bios_heads"}             = $2;
-        $FAI::current_config{$disk}{"bios_sectors_per_track"} = $3;
+        $FAI::current_config{$disk}{bios_cylinders}         = $1;
+        $FAI::current_config{$disk}{bios_heads}             = $2;
+        $FAI::current_config{$disk}{bios_sectors_per_track} = $3;
       }
     }
 
     # make sure we have determined all the necessary information
-    ( $FAI::current_config{$disk}{"begin_byte"} == 0 )
+    ( $FAI::current_config{$disk}{begin_byte} == 0 )
       or die "Invalid start byte\n";
-    ( $FAI::current_config{$disk}{"end_byte"} > 0 ) or die "Invalid end byte\n";
-    defined( $FAI::current_config{$disk}{"size"} )
+    ( $FAI::current_config{$disk}{end_byte} > 0 ) or die "Invalid end byte\n";
+    defined( $FAI::current_config{$disk}{size} )
       or die "Failed to determine disk size\n";
-    defined( $FAI::current_config{$disk}{"sector_size"} )
+    defined( $FAI::current_config{$disk}{sector_size} )
       or die "Failed to determine sector size\n";
-    defined( $FAI::current_config{$disk}{"bios_sectors_per_track"} )
+    defined( $FAI::current_config{$disk}{bios_sectors_per_track} )
       or die "Failed to determine the number of sectors per track\n";
 
   }
@@ -342,27 +344,28 @@ sub get_current_lvm {
   # get the existing volume groups
   foreach my $vg (get_volume_group_list()) {
     # initialise the hash entry
-    $FAI::current_lvm_config{$vg}{"physical_volumes"} = ();
+    $FAI::current_lvm_config{$vg}{physical_volumes} = ();
     
     # store the vg size in MB
     my %vg_info = get_volume_group_information($vg);
-    $FAI::current_lvm_config{$vg}{"size"} = 
-      &FAI::convert_unit( $vg_info{"alloc_pe_size"} .
-        $vg_info{"alloc_pe_size_unit"} );
+    $FAI::current_lvm_config{$vg}{size} = 
+      &FAI::convert_unit( $vg_info{alloc_pe_size} .
+        $vg_info{alloc_pe_size_unit} );
     
       # store the logical volumes and their sizes
     my %lv_info = get_logical_volume_information($vg);
     foreach my $lv_name (sort keys %lv_info) {
       my $short_name = $lv_name;
       $short_name =~ "s{/dev/\Q$vg\E/}{}";
-      $FAI::current_lvm_config{$vg}{"volumes"}{$short_name}{"size"} =
-        &FAI::convert_unit( $lv_info{$lv_name}->{"lv_size"} .
-          $lv_info{$lv_name}->{"lv_size_unit"} );
+      $FAI::current_lvm_config{$vg}{volumes}{$short_name}{size} =
+        &FAI::convert_unit( $lv_info{$lv_name}->{lv_size} .
+          $lv_info{$lv_name}->{lv_size_unit} );
     }
     
     # store the physical volumes
-    $FAI::current_lvm_config{$vg}{"physical_volumes"} = 
-      sort keys get_physical_volume_information($vg);
+    my %pv_info = get_physical_volume_information($vg);
+    @{ $FAI::current_lvm_config{$vg}{physical_volumes} } = 
+      sort keys %{ get_physical_volume_information($vg) };
   }
 
 }
@@ -403,9 +406,9 @@ sub get_current_raid {
   foreach my $line (@mdadm_print) {
     if ( $line =~ /^ARRAY \/dev\/md(\d+) level=(\S+) num-devices=\d+ UUID=/ ) {
       $id = $1;
-      $FAI::current_raid_config{$id}{"mode"} = $2;
+      $FAI::current_raid_config{$id}{mode} = $2;
     } elsif ( $line =~ /^\s*devices=(\S+)$/ ) {
-      @{ $FAI::current_raid_config{$id}{"devices"} } = split( ",", $1 );
+      @{ $FAI::current_raid_config{$id}{devices} } = split( ",", $1 );
     }
   }
 

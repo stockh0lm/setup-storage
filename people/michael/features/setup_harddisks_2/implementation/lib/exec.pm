@@ -52,7 +52,7 @@ package FAI;
 $FAI::error_codes = [
   {
     error   => "parted_1",
-    message => "Parted produced error. Couldn't remove partition\n",
+    message => "Parted failed to remove the partition\n",
     stderr_regex =>
       ".*Error: Could not stat device rm - No such file or directory.*",
     stdout_regex => "",
@@ -61,7 +61,7 @@ $FAI::error_codes = [
   },
   {
     error        => "parted_2",
-    message      => "Parted produced error. Could not read disk label.\n",
+    message      => "Parted could not read a disk label\n",
     stderr_regex => ".*Error: Unable to open .* - unrecognised disk label.*",
     stdout_regex => "",
     program      => "parted",
@@ -69,7 +69,7 @@ $FAI::error_codes = [
   },
   {
     error   => "parted_3",
-    message => "Parted produced error. Could not open disk\n",
+    message => "Parted failed to open the device\n",
     stderr_regex =>
       ".*Error: Could not stat device .* - No such file or directory.*",
     stdout_regex => "",
@@ -240,12 +240,12 @@ sub execute_command {
   #get the error, if there was any
   foreach my $err (@$FAI::error_codes) {
     if ( (
-        $err->{'stdout_regex'} eq "" || $stdout_line =~ /$err->{'stdout_regex'}/
-      ) && ( $err->{'stderr_regex'} eq ""
-        || $stderr_line =~ /$err->{'stderr_regex'}/ )
-      && ( $err->{'program'} eq "" || $command =~ /.*$err->{'program'}.*/ )
+        $err->{stdout_regex} eq "" || $stdout_line =~ /$err->{stdout_regex}/
+      ) && ( $err->{stderr_regex} eq ""
+        || $stderr_line =~ /$err->{stderr_regex}/ )
+      && ( $err->{program} eq "" || $command =~ /.*$err->{program}.*/ )
       ) {
-      return $err->{'error'};
+      return $err->{error};
     }
   }
 

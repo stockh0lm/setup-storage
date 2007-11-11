@@ -62,7 +62,7 @@ sub in_path {
 
   # split $PATH into its components, search all of its components
   # and test for $cmd being executable
-  ( -x "$_/$cmd" ) and return 1 foreach ( split( ":", $ENV{"PATH"} ) );
+  ( -x "$_/$cmd" ) and return 1 foreach ( split( ":", $ENV{PATH} ) );
   # return 0 otherwise
   return 0;
 }
@@ -112,11 +112,11 @@ sub init_disk_config {
 
   # Initialise the entry in $FAI::configs
   $FAI::configs{$FAI::device} = {
-    "virtual"    => 0,
-    "disklabel"  => "msdos",
-    "bootable"   => -1,
-    "fstabkey"   => "device",
-    "partitions" => {}
+    virtual    => 0,
+    disklabel  => "msdos",
+    bootable   => -1,
+    fstabkey   => "device",
+    partitions => {}
   };
 }
 
@@ -140,7 +140,7 @@ sub init_part_config {
   # only supported on msdos disk labels.
   (
     $FAI::device =~ /^PHY_/ && ( $type ne "logical"
-      || $FAI::configs{$FAI::device}{"disklabel"} eq "msdos" )
+      || $FAI::configs{$FAI::device}{disklabel} eq "msdos" )
   ) or die "Syntax error: invalid partition type";
 
   # the index of the new partition
@@ -150,15 +150,14 @@ sub init_part_config {
   if ( $type eq "primary" ) {
 
     # find all previously defined primary partitions
-    foreach my $part_id ( sort keys %{ $FAI::configs{$FAI::device}{"partitions"} } ) {
+    foreach my $part_id ( sort keys %{ $FAI::configs{$FAI::device}{partitions} } ) {
 
       # break, if the partition has not been created by init_part_config
-      defined( $FAI::configs{$FAI::device}{"partitions"}{$part_id}{"size"}
-          {"extended"} ) or last;
+      defined( $FAI::configs{$FAI::device}{partitions}{$part_id}{size}{extended} ) or last;
 
       # on msdos disklabels we cannot have more than 4 primary partitions
       last if ( $part_id > 4
-        && $FAI::configs{$FAI::device}{"disklabel"} eq "msdos" );
+        && $FAI::configs{$FAI::device}{disklabel} eq "msdos" );
 
       # store the latest index found
       $part_number = $part_id;
@@ -168,7 +167,7 @@ sub init_part_config {
     $part_number++;
 
     # msdos disk labels don't allow for more than 4 primary partitions
-    ( $part_number < 5 || $FAI::configs{$FAI::device}{"disklabel"} ne "msdos" )
+    ( $part_number < 5 || $FAI::configs{$FAI::device}{disklabel} ne "msdos" )
       or die "$part_number are too many primary partitions\n";
   } else {
 
@@ -176,14 +175,13 @@ sub init_part_config {
     # this branch, it has been ensured above
 
     # find the index of the new partition, initialise it to the highest current index
-    foreach my $part_id ( sort keys %{ $FAI::configs{$FAI::device}{"partitions"} } ) {
+    foreach my $part_id ( sort keys %{ $FAI::configs{$FAI::device}{partitions} } ) {
 
       # skip primary partitions
       next if ( $part_id < 5 );
 
       # break, if the partition has not been created by init_part_config
-      defined( $FAI::configs{$FAI::device}{"partitions"}{$part_id}{"size"}
-          {"extended"} )
+      defined( $FAI::configs{$FAI::device}{partitions}{$part_id}{size}{extended} )
         or last;
 
       # store the latest index found
@@ -202,11 +200,10 @@ sub init_part_config {
       my $extended = 0;
 
       # find all previously defined primary partitions
-      foreach my $part_id ( sort keys %{ $FAI::configs{$FAI::device}{"partitions"} } ) {
+      foreach my $part_id ( sort keys %{ $FAI::configs{$FAI::device}{partitions} } ) {
 
         # break, if the partition has not been created by init_part_config
-        defined( $FAI::configs{$FAI::device}{"partitions"}{$part_id}{"size"}
-            {"extended"} ) or last;
+        defined( $FAI::configs{$FAI::device}{partitions}{$part_id}{size}{extended} ) or last;
 
         # we cannot have more than 4 primary partitions
         last if ( $part_id > 4 );
@@ -223,46 +220,44 @@ sub init_part_config {
         or die "Too many primary partitions while creating extended\n";
 
       # mark the entry as an extended partition
-      $FAI::configs{$FAI::device}{"partitions"}{$extended}{"size"}{"extended"} = 1;
+      $FAI::configs{$FAI::device}{partitions}{$extended}{size}{extended} = 1;
 
       # add the preserve = 0 flag, if it doesn't exist already
-      defined( $FAI::configs{$FAI::device}{"partitions"}{$extended}{"size"}{"preserve"} )
-        or $FAI::configs{$FAI::device}{"partitions"}{$extended}{"size"}{"preserve"} = 0;
+      defined( $FAI::configs{$FAI::device}{partitions}{$extended}{size}{preserve} )
+        or $FAI::configs{$FAI::device}{partitions}{$extended}{size}{preserve} = 0;
 
       # add the resize = 0 flag, if it doesn't exist already
       defined(
-        $FAI::configs{$FAI::device}{"partitions"}{$extended}{"size"}{"resize"} )
-        or
-        $FAI::configs{$FAI::device}{"partitions"}{$extended}{"size"}{"resize"} =
-        0;
+        $FAI::configs{$FAI::device}{partitions}{$extended}{size}{resize} ) or
+        $FAI::configs{$FAI::device}{partitions}{$extended}{size}{resize} = 0;
     }
   }
 
   # initialise the hash for the partitions, if it doesn't exist already
   # note that it might exists due to options, such as preserve:x,y
   # the initialisation is required for the reference defined next
-  defined( $FAI::configs{$FAI::device}{"partitions"}{$part_number} )
-    or $FAI::configs{$FAI::device}{"partitions"}{$part_number} = {};
+  defined( $FAI::configs{$FAI::device}{partitions}{$part_number} )
+    or $FAI::configs{$FAI::device}{partitions}{$part_number} = {};
 
   # set the reference to the current partition
   # the reference is used by all further processing of this config line
   $FAI::partition_pointer =
-    ( \%FAI::configs )->{$FAI::device}->{"partitions"}->{$part_number};
+    ( \%FAI::configs )->{$FAI::device}->{partitions}->{$part_number};
 
   # as we can't compute the index from the reference, we need to store the
   # $part_number explicitly
-  $FAI::partition_pointer->{"number"} = $part_number;
+  $FAI::partition_pointer->{number} = $part_number;
 
   # the partition is not an extended one
-  $FAI::partition_pointer->{"size"}->{"extended"} = 0;
+  $FAI::partition_pointer->{size}->{extended} = 0;
 
   # add the preserve = 0 flag, if it doesn't exist already
-  defined( $FAI::partition_pointer->{"size"}->{"preserve"} )
-    or $FAI::partition_pointer->{"size"}->{"preserve"} = 0;
+  defined( $FAI::partition_pointer->{size}->{preserve} )
+    or $FAI::partition_pointer->{size}->{preserve} = 0;
 
   # add the resize = 0 flag, if it doesn't exist already
-  defined( $FAI::partition_pointer->{"size"}->{"resize"} )
-    or $FAI::partition_pointer->{"size"}->{"resize"} = 0;
+  defined( $FAI::partition_pointer->{size}->{resize} )
+    or $FAI::partition_pointer->{size}->{resize} = 0;
 }
 
 ################################################################################
@@ -354,47 +349,47 @@ $FAI::Parser = Parse::RecDescent->new(
     option: /^preserve_always:(\d+(,\d+)*)/
         {
           # set the preserve flag for all ids in all cases
-          $FAI::configs{ $FAI::device }{ "partitions" }{ $_ }{ "size" }{ "preserve" } = 1 foreach ( split( ",", $1 ) );
+          $FAI::configs{$FAI::device}{partitions}{$_}{size}{preserve} = 1 foreach ( split( ",", $1 ) );
         }
         /^preserve_reinstall:(\d+(,\d+)*)/
         {
           # set the preserve flag for all ids if $FAI::reinstall is set
           if( $FAI::reinstall == 1 ) {
-            $FAI::configs{ $FAI::device }{ "partitions" }{ $_ }{ "size" }{ "preserve" } = 1 foreach ( split( ",", $1 ) );
+            $FAI::configs{$FAI::device}{partitions}{$_}{size}{preserve} = 1 foreach ( split( ",", $1 ) );
           }
         }
         | /^resize:(\d+(,\d+)*)/
         {
           # set the resize flag for all ids
-          $FAI::configs{ $FAI::device }{ "partitions" }{ $_ }{ "size" }{ "resize" } = 1 foreach ( split( ",", $1 ) );
+          $FAI::configs{$FAI::device}{partitions}{$_}{size}{resize} = 1 foreach ( split( ",", $1 ) );
         }
         | /^disklabel:(msdos|gpt)/
         {
           # set the disk label - actually not only the above, but all types 
           # supported by parted could be allowed, but others are not implemented
           # yet
-          $FAI::configs{ $FAI::device }{ "disklabel" } = $1;
+          $FAI::configs{$FAI::device}{disklabel} = $1;
         }
         | /^bootable:(\d+)/
         {
           # specify a partition that should get the bootable flag set
-          $FAI::configs{ $FAI::device }{ "bootable" } = $1;
+          $FAI::configs{$FAI::device}{bootable} = $1;
           ( $FAI::device =~ /^PHY_(.+)$/ ) or die 
             "INTERNAL ERROR: unexpected device name\n";
           # set the BOOT_DEVICE and BOOT_PARTITION variables
-          $FAI::disk_var{ "BOOT_DEVICE" } = $1; 
-          $FAI::disk_var{ "BOOT_PARTITION" } = $1 . 
-            $FAI::configs{ $FAI::device }{ "bootable" }; 
+          $FAI::disk_var{BOOT_DEVICE} = $1; 
+          $FAI::disk_var{BOOT_PARTITION} = $1 . 
+            $FAI::configs{$FAI::device}{bootable}; 
         }
         | 'virtual'
         {
           # this is a configuration for a virtual disk
-          $FAI::configs{ $FAI::device }{ "virtual" } = 1;
+          $FAI::configs{$FAI::device}{virtual} = 1;
         }
         | /^fstabkey:(device|label|uuid)/
         {
           # the information preferred for fstab device identifieres
-          $FAI::configs{ $FAI::device }{ "fstabkey" } = $1;
+          $FAI::configs{$FAI::device}{fstabkey} = $1;
         }
 
     volume: /^vg\s+/ name devices
@@ -403,16 +398,16 @@ $FAI::Parser = Parse::RecDescent->new(
           # make sure that this is a RAID configuration
           ( $FAI::device eq "RAID" ) or die "RAID entry invalid in this context\n";
           # initialise RAID entry, if it doesn't exist already
-          defined( $FAI::configs{"RAID"} ) or $FAI::configs{"RAID"}{"volumes"} = {};
+          defined( $FAI::configs{RAID} ) or $FAI::configs{RAID}{volumes} = {};
           # compute the next available index - the size of the entry
-          my $vol_id = scalar( keys %{ $FAI::configs{"RAID"}{"volumes"} } );
+          my $vol_id = scalar( keys %{ $FAI::configs{RAID}{volumes} } );
           # set the RAID type of this volume
-          $FAI::configs{"RAID"}{"volumes"}{$vol_id}{"mode"} = $1;
+          $FAI::configs{RAID}{volumes}{$vol_id}{mode} = $1;
           # initialise the hash of devices
-          $FAI::configs{"RAID"}{"volumes"}{$vol_id}{"devices"} = {};
+          $FAI::configs{RAID}{volumes}{$vol_id}{devices} = {};
           # set the reference to the current volume
           # the reference is used by all further processing of this config line
-          $FAI::partition_pointer = ( \%FAI::configs )->{"RAID"}->{"volumes"}->{$vol_id};
+          $FAI::partition_pointer = ( \%FAI::configs )->{RAID}->{volumes}->{$vol_id};
         }
         mountpoint devices filesystem mount_options fs_options
         | type mountpoint size filesystem mount_options fs_options
@@ -435,43 +430,43 @@ $FAI::Parser = Parse::RecDescent->new(
           defined( $FAI::configs{$FAI::device} ) or 
             die "Volume group $1 has not been declared yet.\n";
           # make sure, $2 has not been defined already
-          defined( $FAI::configs{$FAI::device}{"volumes"}{$2} ) and 
+          defined( $FAI::configs{$FAI::device}{volumes}{$2} ) and 
             die "Logical volume $2 has been defined already.\n";
           # initialise the new hash
-          $FAI::configs{$FAI::device}{"volumes"}{$2} = {};
+          $FAI::configs{$FAI::device}{volumes}{$2} = {};
           # initialise the preserve and resize flags
-          $FAI::configs{$FAI::device}{"volumes"}{$2}{"size"}{"preserve"} = 0;
-          $FAI::configs{$FAI::device}{"volumes"}{$2}{"size"}{"resize"} = 0;
+          $FAI::configs{$FAI::device}{volumes}{$2}{size}{preserve} = 0;
+          $FAI::configs{$FAI::device}{volumes}{$2}{size}{resize} = 0;
           # set the reference to the current volume
           # the reference is used by all further processing of this config line
-          $FAI::partition_pointer = ( \%FAI::configs )->{$FAI::device}->{"volumes"}->{$2};
+          $FAI::partition_pointer = ( \%FAI::configs )->{$FAI::device}->{volumes}->{$2};
         }
 
     mountpoint: '-'
         {
           # this partition should not be mounted
-          $FAI::partition_pointer->{ "mountpoint" } = "-";
+          $FAI::partition_pointer->{mountpoint} = "-";
         }
         | 'swap'
         {
           # this partition is swap space, not mounted
-          $FAI::partition_pointer->{ "mountpoint" } = "none";
+          $FAI::partition_pointer->{mountpoint} = "none";
         }
         | m{^/\S*}
         {
           # set the mount point
-          $FAI::partition_pointer->{ "mountpoint" } = $item[ 1 ];
+          $FAI::partition_pointer->{mountpoint} = $item[ 1 ];
           # if the mount point is / or /boot and we are currently doing a
           # physical device, the variables should be set, unless they are
           # already
-          if ( $FAI::configs{$FAI::device}{"bootable"} == -1 && 
+          if ( $FAI::configs{$FAI::device}{bootable} == -1 && 
             $FAI::device =~ /^PHY_(.+)$/ && 
             ( $item[ 1 ] eq "/boot" || ( $item[ 1 ] eq "/" && 
-              !defined( $FAI::disk_var{ "BOOT_DEVICE" } ) ) ) ) {
+              !defined( $FAI::disk_var{BOOT_DEVICE} ) ) ) ) {
               # set the BOOT_DEVICE and BOOT_PARTITION variables
-              $FAI::disk_var{ "BOOT_DEVICE" } = $1; 
-              $FAI::disk_var{ "BOOT_PARTITION" } = $1 . 
-                $FAI::partition_pointer->{"number"};
+              $FAI::disk_var{BOOT_DEVICE} = $1; 
+              $FAI::disk_var{BOOT_PARTITION} = $1 . 
+                $FAI::partition_pointer->{number};
           }
         }
 
@@ -486,9 +481,9 @@ $FAI::Parser = Parse::RecDescent->new(
           ( $FAI::device =~ /^VG_/ ) or
             die "vg is invalid in a non LVM-context.\n";
           # initialise the new hash
-          $FAI::configs{$FAI::device}{"volumes"} = {};
+          $FAI::configs{$FAI::device}{volumes} = {};
           # initialise the list of physical devices
-          $FAI::configs{$FAI::device}{"devices"} = ();
+          $FAI::configs{$FAI::device}{devices} = ();
           # the rule must not return undef
           1;
         }
@@ -515,9 +510,9 @@ $FAI::Parser = Parse::RecDescent->new(
           $max   = &FAI::convert_unit($max);
           $range = "$min-$max";
           # enter the range into the hash
-          $FAI::partition_pointer->{ "size" }->{ "range" } = $range;
+          $FAI::partition_pointer->{size}->{range} = $range;
           # set the resize flag, if required
-          defined( $4 ) and $FAI::partition_pointer->{ "size" }->{ "resize" } = 1;
+          defined( $4 ) and $FAI::partition_pointer->{size}->{resize} = 1;
         }
         | /^(-\d+[kMGTP%]?)(:resize)?\s+/
         {
@@ -529,9 +524,9 @@ $FAI::Parser = Parse::RecDescent->new(
           $max   = &FAI::convert_unit($max);
           $range = "$min-$max";
           # enter the range into the hash
-          $FAI::partition_pointer->{ "size" }->{ "range" } = $range;
+          $FAI::partition_pointer->{size}->{range} = $range;
           # set the resize flag, if required
-          defined( $2 ) and $FAI::partition_pointer->{ "size" }->{ "resize" } = 1;
+          defined( $2 ) and $FAI::partition_pointer->{size}->{resize} = 1;
         }
         | <error: invalid partition size near "$text">
 
@@ -568,10 +563,10 @@ $FAI::Parser = Parse::RecDescent->new(
                 ( $2 =~ /missing/ ) and $missing = 1;
               }
               # each device may only appear once
-              defined( $FAI::partition_pointer->{"devices"}->{$dev} ) and 
+              defined( $FAI::partition_pointer->{devices}->{$dev} ) and 
                 die "$dev is already part of the RAID volume\n";
               # set the options
-              $FAI::partition_pointer->{"devices"}->{$dev}->{"options"} = {
+              $FAI::partition_pointer->{devices}->{$dev}->{options} = {
                 "spare" => $spare,
                 "missing" => $missing
               };
@@ -579,7 +574,7 @@ $FAI::Parser = Parse::RecDescent->new(
             else
             {
               # create an empty hash for each device
-              $FAI::configs{$FAI::device}{"devices"}{$dev} = {};
+              $FAI::configs{$FAI::device}{devices}{$dev} = {};
             }
           }
           1;
@@ -588,27 +583,27 @@ $FAI::Parser = Parse::RecDescent->new(
 
     mount_options: /\S+/
         {
-          $FAI::partition_pointer->{ "mount_options" } = $item[ 1 ];
+          $FAI::partition_pointer->{mount_options} = $item[ 1 ];
         }
 
     filesystem: '-'
         {
-          $FAI::partition_pointer->{ "filesystem" } = $item[ 1 ];
+          $FAI::partition_pointer->{filesystem} = $item[ 1 ];
         }
         | 'swap'
         {
-          $FAI::partition_pointer->{ "filesystem" } = $item[ 1 ];
+          $FAI::partition_pointer->{filesystem} = $item[ 1 ];
         }
         | /^\S+/
         {
           ( &FAI::in_path("mkfs.$item[1]") == 1 ) or 
             die "unknown/invalid filesystem type $item[1] (mkfs.$item[1] not found in PATH)\n";
-          $FAI::partition_pointer->{ "filesystem" } = $item[ 1 ];
+          $FAI::partition_pointer->{filesystem} = $item[ 1 ];
         }
 
     fs_options: /[^;\n]*/
         {
-          $FAI::partition_pointer->{ "fs_options" } = $item[ 1 ];
+          $FAI::partition_pointer->{fs_options} = $item[ 1 ];
         }
 }
 );
