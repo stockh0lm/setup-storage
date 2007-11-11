@@ -51,16 +51,28 @@ sub build_mkfs_commands {
   defined( $partition->{"filesystem"} )
     or die "INTERNAL ERROR: filesystem is undefined\n";
 
-  if ( $partition->{"filesystem"} eq "-" ) {
-    return;
-  } elsif ( $partition->{"filesystem"} eq "swap" ) {
-    push @FAI::commands, "mkswap " . $partition->{"fs_options"} . " $device";
-  } else {
+  return if ( $partition->{"filesystem"} eq "-" );
+
+  my ($create_options)=$partition->{"fs_options"}=~m/.*createopts="([^"]+)".*/;
+  my ($tune_options)=$partition->{"fs_options"}=~m/.*tuneopts="([^"]+)".*/;
+  $create_options = $partition->{"fs_options"} unless $create_options;
+
+  if ( $partition->{"filesystem"} eq "swap" )
+  {
+    push @FAI::commands, "mkswap " . $create_options . " $device";
+  }
+  else
+  {
+    print STDERR "create_options: $create_options tune_options: $tune_options\n" if $FAI::debug;
     push @FAI::commands,
       "mkfs."
       . $partition->{"filesystem"} . " "
-      . $partition->{"fs_options"}
-      . " $device";
+      . $create_options
+      . " " . $device;
+    push @FAI::commands,
+      "tune2fs "
+      . $tune_options
+      . " " . $device if $tune_options;
   }
 }
 
