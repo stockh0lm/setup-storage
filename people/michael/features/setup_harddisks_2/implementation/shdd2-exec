@@ -114,8 +114,7 @@ $FAI::error_codes = [
 # @return our interpretation of the error as string
 #
 ################################################################################
-sub get_error_message
-{
+sub get_error_message {
   my ($error) = @_;
   my @treffer = grep { $_->{error} eq "$error" } @$FAI::error_codes;
 
@@ -133,8 +132,7 @@ sub get_error_message
 # @return the associated value
 #
 ################################################################################
-sub get_error
-{
+sub get_error {
   my ( $error, $field ) = @_;
   my @treffer = grep { $_->{error} eq "$error" } @$FAI::error_codes;
 
@@ -158,12 +156,10 @@ sub get_error
 # @return the identifier of the error
 #
 ################################################################################
-sub execute_command_std    #execute command with standard error handling
-{
+sub execute_command_std {
   my ( $command, $stdout_ref, $stderr_ref ) = @_;
   my $err = &execute_command( $command, $stdout_ref, $stderr_ref );
-  if ( $err ne "" )
-  {
+  if ( $err ne "" ) {
     my $response = &get_error( $err, "response" );
     my $message  = &get_error( $err, "message" );
 
@@ -194,8 +190,7 @@ sub execute_command_std    #execute command with standard error handling
 # @return the identifier of the error
 #
 ################################################################################
-sub execute_command
-{
+sub execute_command {
   my ( $command, $stdout_ref, $stderr_ref ) = @_;
 
   my @stderr      = ();
@@ -208,17 +203,14 @@ sub execute_command
   ( my $stdout_fh, my $stdout_filename ) = File::Temp::tempfile( UNLINK => 1 );
 
   # do only execute the given command, when in no_dry_mode
-  if ($FAI::no_dry_run)
-  {
+  if ($FAI::no_dry_run) {
 
     ($FAI::debug)
       and print "(CMD) $command 1> $stdout_filename 2> $stderr_filename\n";
 
     # execute the bash command, write stderr and stdout into the testfiles
     `$command 1> $stdout_filename 2> $stderr_filename`;
-  }
-  else
-  {
+  } else {
     print "would run command $command; to have them executed, use -X \n";
   }
 
@@ -246,18 +238,13 @@ sub execute_command
   @$stderr_ref = @stderr if ( 'ARRAY' eq ref($stderr_ref) );
 
   #get the error, if there was any
-  foreach my $err (@$FAI::error_codes)
-  {
-    if (
-      (
+  foreach my $err (@$FAI::error_codes) {
+    if ( (
         $err->{'stdout_regex'} eq "" || $stdout_line =~ /$err->{'stdout_regex'}/
-      )
-      && ( $err->{'stderr_regex'} eq ""
+      ) && ( $err->{'stderr_regex'} eq ""
         || $stderr_line =~ /$err->{'stderr_regex'}/ )
       && ( $err->{'program'} eq "" || $command =~ /.*$err->{'program'}.*/ )
-      )
-    {
-
+      ) {
       return $err->{'error'};
     }
   }

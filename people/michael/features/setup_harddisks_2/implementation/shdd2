@@ -72,11 +72,11 @@ use Getopt::Std;
 our ( $opt_X, $opt_f );
 
 # parse the command line
-&getopts('Xf:') || die "
+&getopts('Xf:') || die <<EOF;
 USAGE: [-X]                     no test, your harddisks will be formated
                                 default: only test, no real formating
        [-f<config-filename>]    default: parse classes
-";
+EOF
 
 # $disklist must be provided by the environment
 defined( $ENV{disklist} ) or die "Environment variable disklist is not set";
@@ -104,16 +104,13 @@ require "shdd2-exec";
 my $config_file = undef;
 
 # use the config file, if given
-if ($opt_f)
-{
+if ($opt_f) {
   open( $config_file, $opt_f ) or die "Failed to open config file $opt_f\n";
 }
 
 # see which class file to use
-else
-{
-  foreach my $classfile ( reverse split( /\s+/, $ENV{"classes"} ) )
-  {
+else {
+  foreach my $classfile ( reverse split( /\s+/, $ENV{"classes"} ) ) {
     next unless ( -r "$ENV{'FAI'}/disk_config/$classfile" );
     open( $config_file, "$ENV{'FAI'}/disk_config/$classfile" );
     last;
@@ -143,8 +140,7 @@ defined($config_file) or die "No matching disk_config found\n";
 use Data::Dumper;
 
 # debugging only: print the current contents of $FAI::current_config
-if ($FAI::debug)
-{
+if ($FAI::debug) {
   print "Current disk layout\n";
 
   # make sure perl doesn't warn about it being used only once
@@ -170,8 +166,7 @@ if ($FAI::debug)
 &FAI::compute_lv_sizes;
 
 # debugging only: print the current contents of $FAI::configs
-if ($FAI::debug)
-{
+if ($FAI::debug) {
   print "Desired disk layout\n";
   print Dumper \%FAI::configs;
 }
@@ -195,9 +190,7 @@ my @fstab = &FAI::generate_fstab( \%FAI::configs );
 ($FAI::debug) and print "$_\n" foreach (@fstab);
 
 # write the proposed contents of fstab to $LOGDIR/fstab, if $FAI::no_dry_run is set
-if ($FAI::no_dry_run)
-{
-
+if ($FAI::no_dry_run) {
   # write fstab to $LOGDIR/fstab
   open( FSTAB, ">$ENV{LOGDIR}/fstab" )
     or die "Failed to open $ENV{LOGDIR}/fstab for writing\n";

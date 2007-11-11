@@ -176,17 +176,5 @@ $FAI::disk_var{"SWAPLIST"} = "";
 ################################################################################
 @FAI::commands = ();
 
-################################################################################
-#
-# @brief A map of commands
-#
-# checks for availability within $PATH are performed from within the parser
-#
-################################################################################
-%FAI::system_commands = (
-  "mdadm"  => "mdadm",
-  "parted" => "parted -s"
-);
-
 1;
 

@@ -41,15 +41,13 @@ package FAI;
 # in $FAI::disks and $FAI::configs{PHY_<disk>}
 #
 ################################################################################
-sub get_current_disks
-{
+sub get_current_disks {
 
   # backup value of $FAI::no_dry_run
   my $no_dry_run = $FAI::no_dry_run;
 
   # obtain the current state of all disks
-  foreach my $disk (@FAI::disks)
-  {
+  foreach my $disk (@FAI::disks) {
 
     # create full paths
     ( $disk =~ m{^/} ) or $disk = "/dev/$disk";
@@ -69,35 +67,25 @@ sub get_current_disks
     # try to obtain the partition table for $disk
     # it might fail with parted_2 in case the disk has no partition table
     my $error =
-      &FAI::execute_command_std(
-      $FAI::system_commands{"parted"} . " $disk unit TiB print",
-      \@parted_print, 0 );
+      &FAI::execute_command_std( "parted -s $disk unit TiB print", \@parted_print, 0 );
 
     # reset no_dry_run
     $FAI::no_dry_run = $no_dry_run;
 
     # parted_2 happens when the disk has no disk label, because parted then
     # provides no information about the disk
-    if ( $error eq "parted_2" )
-    {
+    if ( $error eq "parted_2" ) {
 
       # if there is no disk configuration, write an msdos disklabel
-      if ( !defined( $FAI::configs{"PHY_$disk"}{"disklabel"} ) )
-      {
+      if ( !defined( $FAI::configs{"PHY_$disk"}{"disklabel"} ) ) {
+
+        # write the disk label as configured
+        $error = &FAI::execute_command( "parted -s $disk mklabel msdos" );
+      } else {
 
         # write the disk label as configured
         $error =
-          &FAI::execute_command(
-          $FAI::system_commands{"parted"} . " $disk mklabel msdos" );
-      }
-      else
-      {
-
-        # write the disk label as configured
-        $error =
-          &FAI::execute_command( $FAI::system_commands{"parted"}
-            . " $disk mklabel "
-            . $FAI::configs{"PHY_$disk"}{"disklabel"} );
+          "parted -s $disk mklabel " . $FAI::configs{"PHY_$disk"}{"disklabel"} );
       }
 
       # set no_dry_run to perform read-only commands always
@@ -105,17 +93,14 @@ sub get_current_disks
 
       # retry partition-table print
       $error =
-        &FAI::execute_command(
-        $FAI::system_commands{"parted"} . " $disk unit TiB print",
-        \@parted_print, 0 );
+        &FAI::execute_command( "parted -s $disk unit TiB print", \@parted_print, 0 );
 
       # reset no_dry_run
       $FAI::no_dry_run = $no_dry_run;
     }
 
     # check, whether there is still an error
-    if ( $error ne "" )
-    {
+    if ( $error ne "" ) {
       my $response = &FAI::get_error( $error, "response" );
       ( $response eq "die" ) and die &FAI::get_error( $error, "message" );
       ( $response eq "warn" ) and warn &FAI::get_error( $error, "message" );
@@ -167,37 +152,29 @@ sub get_current_disks
     my %cols = ();
 
     # Parse the output line by line
-    foreach my $line (@parted_print)
-    {
+    foreach my $line (@parted_print) {
 
       # now we test line by line - some of them may be ignored
-      if ( $line =~ /^Disk /
+      next if ( $line =~ /^Disk /
         || $line =~ /^\s*$/
-        || $line =~ /^WARNING: You are not superuser/ )
-      {
-        next;
-      }
+        || $line =~ /^WARNING: You are not superuser/ );
 
       # determine the logical sector size
-      elsif ( $line =~ /^Sector size \(logical\/physical\): (\d+)B\/(\d+)B$/ )
-      {
+      if ( $line =~ /^Sector size \(logical\/physical\): (\d+)B\/(\d+)B$/ ) {
         $FAI::current_config{$disk}{"sector_size"} = $1;
       }
 
       # read and store the current disk label
-      elsif ( $line =~ /^Partition Table: (.+)$/ )
-      {
+      elsif ( $line =~ /^Partition Table: (.+)$/ ) {
         $FAI::current_config{$disk}{"disklabel"} = $1;
       }
 
       # the line containing the table headers
-      elsif ( $line =~ /^(Number\s+)(\S+\s+)+/ )
-      {
+      elsif ( $line =~ /^(Number\s+)(\S+\s+)+/ ) {
         my $col_start = 0;
 
         # check the length of each heading; note that they might contain spaces
-        while ( $line =~ /^(\S+( [a-z]\S+)?\s*)([A-Z].*)?$/ )
-        {
+        while ( $line =~ /^(\S+( [a-z]\S+)?\s*)([A-Z].*)?$/ ) {
           my $heading = $1;
 
           # set the line to the remainder
@@ -219,8 +196,7 @@ sub get_current_disks
       }
 
       # one of the partitions
-      else
-      {
+      else {
 
         # we must have seen the header, otherwise probably the format has
         # changed
@@ -265,9 +241,7 @@ sub get_current_disks
 
     # obtain the partition table using bytes as units
     $error =
-      &FAI::execute_command_std(
-      "$FAI::system_commands{'parted'} $disk unit B print free",
-      \@parted_print, 0 );
+      &FAI::execute_command_std( "parted -s $disk unit B print free", \@parted_print, 0 );
 
     # reset no_dry_run
     $FAI::no_dry_run = $no_dry_run;
@@ -282,12 +256,10 @@ sub get_current_disks
     # }
 
     # Parse the output of the byte-wise partition table
-    foreach my $line (@parted_print)
-    {
+    foreach my $line (@parted_print) {
 
       # the disk size line (Disk /dev/hda: 82348277759B)
-      if ( $line =~ /Disk \Q$disk\E: (\d+)B$/ )
-      {
+      if ( $line =~ /Disk \Q$disk\E: (\d+)B$/ ) {
         $FAI::current_config{$disk}{"begin_byte"} = 0;
         $FAI::current_config{$disk}{"end_byte"}   = ( $1 - 1 );
         $FAI::current_config{$disk}{"size"}       = $1;
@@ -311,7 +283,7 @@ sub get_current_disks
       $FAI::current_config{$disk}{"partitions"}{$1}{"is_extended"} = 0;
 
       # but may be true/1 on msdos disk labels
-      (      ( $FAI::current_config{$disk}{"disklabel"} eq "msdos" )
+      ( ( $FAI::current_config{$disk}{"disklabel"} eq "msdos" )
           && ( $6 eq "extended" ) )
         and $FAI::current_config{$disk}{"partitions"}{$1}{"is_extended"} = 1;
     }
@@ -325,22 +297,19 @@ sub get_current_disks
     # obtain the partition table using bytes as units
     $error =
       &FAI::execute_command_std(
-      "$FAI::system_commands{'parted'} $disk unit chs print free",
-      \@parted_print, 0 );
+      "parted $disk unit chs print free", \@parted_print, 0 );
 
     # reset no_dry_run
     $FAI::no_dry_run = $no_dry_run;
 
     # Parse the output of the CHS partition table
-    foreach my $line (@parted_print)
-    {
+    foreach my $line (@parted_print) {
 
    # find the BIOS geometry that looks like this:
    # BIOS cylinder,head,sector geometry: 10011,255,63.  Each cylinder is 8225kB.
       if ( $line =~
-/^BIOS cylinder,head,sector geometry:\s*(\d+),(\d+),(\d+)\.\s*Each cylinder is \d+kB\.$/
-        )
-      {
+        /^BIOS cylinder,head,sector geometry:\s*(\d+),(\d+),(\d+)\.\s*Each cylinder is \d+kB\.$/
+        ) {
         $FAI::current_config{$disk}{"bios_cylinders"}         = $1;
         $FAI::current_config{$disk}{"bios_heads"}             = $2;
         $FAI::current_config{$disk}{"bios_sectors_per_track"} = $3;
@@ -366,8 +335,7 @@ sub get_current_disks
 # @brief Collect the current LVM configuration
 #
 ################################################################################
-sub get_current_lvm
-{
+sub get_current_lvm {
 
   # backup value of $FAI::no_dry_run
   my $no_dry_run = $FAI::no_dry_run;
@@ -388,8 +356,7 @@ sub get_current_lvm
   #   "XENU" 453.36 MB [451.93 MB used / 1.43 MB free]
 
   # parse the output line by line and call vgdisplay -v <VG>
-  foreach my $line (@vgdisplay_print)
-  {
+  foreach my $line (@vgdisplay_print) {
     ( 
       # example output with an empty vg:
       #   "my_pv" 267476.00 MB [0 MB      used / 267476.00 MB free]
@@ -470,8 +437,7 @@ sub get_current_lvm
     my $lv_name = "";
 
     # do the line-wise parsing
-    foreach my $line_v (@vgdisplay_v_print)
-    {
+    foreach my $line_v (@vgdisplay_v_print) {
       $mode = "vg" if ( $line_v =~ /^\s*--- Volume group ---\s*$/ );
       $mode = "lv" if ( $line_v =~ /^\s*--- Logical volume ---\s*$/ );
       $mode = "pv" if ( $line_v =~ /^\s*--- Physical volumes ---\s*$/ );
@@ -479,16 +445,13 @@ sub get_current_lvm
       next if ( $mode eq "" );
 
       # Now select the interesting information for each mode
-      if ( $mode eq "vg" )
-      {
+      if ( $mode eq "vg" ) {
 
         # for a volume group only the size is needed
         # extract the floatingpoint value
         $FAI::current_lvm_config{$vg}{"size"} = $1
           if ( $line_v =~ /^\s*Alloc PE \/ Size\s+\d+ \/ (\d+\.\d+) MB\s*$/ );
-      }
-      elsif ( $mode eq "lv" )
-      {
+      } elsif ( $mode eq "lv" ) {
 
         # we need the name and the size of each existing logical volume
         $lv_name = $1
@@ -498,9 +461,7 @@ sub get_current_lvm
         # extract the floatingpoint value
         $FAI::current_lvm_config{$vg}{"volumes"}{$lv_name}{"size"} = $1
           if ( $line_v =~ /^\s*LV Size\s+(\d+\.\d+) MB\s*$/ );
-      }
-      elsif ( $mode eq "pv" )
-      {
+      } elsif ( $mode eq "pv" ) {
 
         # get the physical devices that are part of this volume group
         push @{ $FAI::current_lvm_config{$vg}{"physical_volumes"} }, $1
@@ -520,8 +481,7 @@ sub get_current_lvm
 # currently active in the system
 #
 ################################################################################
-sub get_current_raid
-{
+sub get_current_raid {
 
   # backup value of $FAI::no_dry_run
   my $no_dry_run = $FAI::no_dry_run;
@@ -548,15 +508,11 @@ sub get_current_raid
   my $id;
 
   # parse the output line by line
-  foreach my $line (@mdadm_print)
-  {
-    if ( $line =~ /^ARRAY \/dev\/md(\d+) level=(\S+) num-devices=\d+ UUID=/ )
-    {
+  foreach my $line (@mdadm_print) {
+    if ( $line =~ /^ARRAY \/dev\/md(\d+) level=(\S+) num-devices=\d+ UUID=/ ) {
       $id = $1;
       $FAI::current_raid_config{$id}{"mode"} = $2;
-    }
-    elsif ( $line =~ /^\s*devices=(\S+)$/ )
-    {
+    } elsif ( $line =~ /^\s*devices=(\S+)$/ ) {
       @{ $FAI::current_raid_config{$id}{"devices"} } = split( ",", $1 );
     }
   }

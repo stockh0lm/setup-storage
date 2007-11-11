@@ -130,6 +130,27 @@ $FAI::device = "";
 
 ################################################################################
 #
+# @brief Test, whether @ref $cmd is available on the system using $PATH
+#
+# @param $cmd Command that is to be found in $PATH
+#
+# @return 1, if the command is found, else 0
+#
+################################################################################
+sub in_path {
+
+  # initialize the parameter
+  my ($cmd) = @_;
+
+  # split $PATH into its components, search all of its components
+  # and test for $cmd being executable
+  ( -x "$_/$cmd" ) and return 1 foreach ( split( ":", $ENV{"PATH"} ) );
+  # return 0 otherwise
+  return 0;
+}
+
+################################################################################
+#
 # @brief Initialise a new entry in @ref $FAI::configs for a physical disk.
 #
 # Besides creating the entry in the hash, the fully path of the device is
@@ -141,15 +162,13 @@ $FAI::device = "";
 # name, such as sdb, in which case /dev/ is prepended.
 #
 ################################################################################
-sub init_disk_config
-{
+sub init_disk_config {
 
   # Initialise $disk
   my ($disk) = @_;
 
   # test $disk for being numeric
-  if ( $disk =~ /^\d+$/ )
-  {
+  if ( $disk =~ /^\d+$/ ) {
 
     # $disk-1 must be a valid index in the map of all disks in the system
     ( scalar(@FAI::disks) >= $disk )
@@ -190,8 +209,7 @@ sub init_disk_config
 # @param $type The type of the partition. It must be either primary or logical.
 #
 ################################################################################
-sub init_part_config
-{
+sub init_part_config {
 
   # the type of the partition to be created
   my ($type) = @_;
@@ -211,22 +229,17 @@ sub init_part_config
   my $part_number = 0;
 
   # create a primary partition
-  if ( $type eq "primary" )
-  {
+  if ( $type eq "primary" ) {
 
     # find all previously defined primary partitions
-    foreach
-      my $part_id ( sort keys %{ $FAI::configs{$FAI::device}{"partitions"} } )
-    {
+    foreach my $part_id ( sort keys %{ $FAI::configs{$FAI::device}{"partitions"} } ) {
 
       # break, if the partition has not been created by init_part_config
       defined( $FAI::configs{$FAI::device}{"partitions"}{$part_id}{"size"}
-          {"extended"} )
-        or last;
+          {"extended"} ) or last;
 
       # on msdos disklabels we cannot have more than 4 primary partitions
-      last
-        if ( $part_id > 4
+      last if ( $part_id > 4
         && $FAI::configs{$FAI::device}{"disklabel"} eq "msdos" );
 
       # store the latest index found
@@ -239,17 +252,13 @@ sub init_part_config
     # msdos disk labels don't allow for more than 4 primary partitions
     ( $part_number < 5 || $FAI::configs{$FAI::device}{"disklabel"} ne "msdos" )
       or die "$part_number are too many primary partitions\n";
-  }
-  else
-  {
+  } else {
 
     # no further checks for the disk label being msdos have to be performed in
     # this branch, it has been ensured above
 
-# find the index of the new partition, initialise it to the highest current index
-    foreach
-      my $part_id ( sort keys %{ $FAI::configs{$FAI::device}{"partitions"} } )
-    {
+    # find the index of the new partition, initialise it to the highest current index
+    foreach my $part_id ( sort keys %{ $FAI::configs{$FAI::device}{"partitions"} } ) {
 
       # skip primary partitions
       next if ( $part_id < 5 );
@@ -268,22 +277,18 @@ sub init_part_config
 
     # if this is the first logical partition, the index must be set to 5 and an
     # extended partition  must be created
-    if ( $part_number <= 5 )
-    {
+    if ( $part_number <= 5 ) {
       $part_number = 5;
 
       # the proposed index of the extended partition
       my $extended = 0;
 
       # find all previously defined primary partitions
-      foreach
-        my $part_id ( sort keys %{ $FAI::configs{$FAI::device}{"partitions"} } )
-      {
+      foreach my $part_id ( sort keys %{ $FAI::configs{$FAI::device}{"partitions"} } ) {
 
         # break, if the partition has not been created by init_part_config
         defined( $FAI::configs{$FAI::device}{"partitions"}{$part_id}{"size"}
-            {"extended"} )
-          or last;
+            {"extended"} ) or last;
 
         # we cannot have more than 4 primary partitions
         last if ( $part_id > 4 );
@@ -300,14 +305,11 @@ sub init_part_config
         or die "Too many primary partitions while creating extended\n";
 
       # mark the entry as an extended partition
-      $FAI::configs{$FAI::device}{"partitions"}{$extended}{"size"}{"extended"} =
-        1;
+      $FAI::configs{$FAI::device}{"partitions"}{$extended}{"size"}{"extended"} = 1;
 
       # add the preserve = 0 flag, if it doesn't exist already
-      defined( $FAI::configs{$FAI::device}{"partitions"}{$extended}{"size"}
-          {"preserve"} )
-        or $FAI::configs{$FAI::device}{"partitions"}{$extended}{"size"}
-        {"preserve"} = 0;
+      defined( $FAI::configs{$FAI::device}{"partitions"}{$extended}{"size"}{"preserve"} )
+        or $FAI::configs{$FAI::device}{"partitions"}{$extended}{"size"}{"preserve"} = 0;
 
       # add the resize = 0 flag, if it doesn't exist already
       defined(
@@ -355,30 +357,13 @@ sub init_part_config
 sub convert_unit
 {
   my ($val) = @_;
-  $val =~ /(\d+)([kMGTP%]?)/;
-  unless ( $2 eq "%" )
-  {
-    if ( $2 eq "k" )
-    {
-      $val = $1 * ( 1 / 1024 );
-    }
-    elsif ( $2 eq "M" )
-    {
-      $val = $1;
-    }
-    elsif ( $2 eq "G" )
-    {
-      $val = $1 * 1024;
-    }
-    elsif ( $2 eq "T" )
-    {
-      $val = $1 * ( 1024 * 1024 );
-    }
-    elsif ( $2 eq "P" )
-    {
-      $val = $1 * ( 1024 * 1024 * 1024 );
-    }
-  }
+  ( $val =~ /^(\d+)([kMGTP%]?)(B)?\s*$/ ) or die "INTERNAL ERROR (convert_unit)\n";
+  $val = $1 * ( 1 / 1024 ) if ( $2 eq "k" );
+  $val = $1 if ( $2 eq "M" );
+  $val = $1 * 1024 if ( $2 eq "G" );
+  $val = $1 * ( 1024 * 1024 ) if ( $2 eq "T" );
+  $val = $1 * ( 1024 * 1024 * 1024 ) if ( $2 eq "P" );
+  # % is returned as is
   return $val;
 }
 
@@ -717,8 +702,7 @@ $FAI::Parser = Parse::RecDescent->new(
 # @param IN file handle for input file, may be STDIN
 #
 ################################################################################
-sub run_parser
-{
+sub run_parser {
   my ($IN) = @_;
 
   # read <$IN> to a single string (not a list), thus $/ has to be unset
