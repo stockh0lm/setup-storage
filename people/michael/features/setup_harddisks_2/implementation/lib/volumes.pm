@@ -84,7 +84,7 @@ sub get_current_disks {
       } else {
 
         # write the disk label as configured
-        $error =
+        $error = &FAI::execute_command(
           "parted -s $disk mklabel " . $FAI::configs{"PHY_$disk"}{"disklabel"} );
       }
 

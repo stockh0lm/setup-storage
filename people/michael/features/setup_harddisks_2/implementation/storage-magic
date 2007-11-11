@@ -27,11 +27,14 @@ use warnings FATAL => qw(uninitialized);
 #
 # @file shdd2
 #
-# @brief The main function of setup harddisks 2 - the tool to configure the
+# @brief The main function of Storage Magic - the tool to configure the
 # partitioning from within FAI.
 #
 # This is an implementation from scratch to properly support LVM and RAID. The
-# input format is documented in @ref shdd2-parser
+# input format is documented in @ref parser.pm
+#
+# Some (developer) documentation may be found on
+# http://faiwiki.debian.net/index.php/Storage_Magic
 #
 # $Id$
 #
