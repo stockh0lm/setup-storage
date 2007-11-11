@@ -46,8 +46,11 @@ use strict;
 #            | <volume>
 #
 # option ::= /* empty */
-#            | preserve:[[:digit:]]+(,[[:digit:]]+)*
-#            /* preserve partitions */
+#            | preserve_always:[[:digit:]]+(,[[:digit:]]+)*
+#            /* preserve partitions -- always */
+#            | preserve_reinstall:[[:digit:]]+(,[[:digit:]]+)*
+#            /* preserve partitions -- unless the system is installed for the 
+#            first time */
 #            | resize:[[:digit:]]+(,[[:digit:]]+)*
 #            /* attempt to resize partitions */
 #            | disklabel:(msdos|gpt)
@@ -92,8 +95,6 @@ use strict;
 #          /* size in kilo, mega (default), giga, tera or petabytes or %,
 #           * given as upper limit; physical partitions
 #           * or lvm logical volumes only */
-#          | preserve[[:digit:]]+
-#          /* do not modify this partition */
 #          | [^,:[:space:]]+(:(spare|missing))*(,[^,:[:space:]]+(:(spare|missing))*)*
 #          /* devices and options for a raid or lvm vg */
 #
@@ -433,10 +434,17 @@ $FAI::Parser = Parse::RecDescent->new(
         }
         option(s?)
 
-    option: /^preserve:(\d+(,\d+)*)/
+    option: /^preserve_always:(\d+(,\d+)*)/
         {
-          # set the preserve flag for all ids
+          # set the preserve flag for all ids in all cases
           $FAI::configs{ $FAI::device }{ "partitions" }{ $_ }{ "size" }{ "preserve" } = 1 foreach ( split( ",", $1 ) );
+        }
+        /^preserve_reinstall:(\d+(,\d+)*)/
+        {
+          # set the preserve flag for all ids if $FAI::reinstall is set
+          if( $FAI::reinstall == 1 ) {
+            $FAI::configs{ $FAI::device }{ "partitions" }{ $_ }{ "size" }{ "preserve" } = 1 foreach ( split( ",", $1 ) );
+          }
         }
         | /^resize:(\d+(,\d+)*)/
         {
@@ -607,13 +615,6 @@ $FAI::Parser = Parse::RecDescent->new(
           $FAI::partition_pointer->{ "size" }->{ "range" } = $range;
           # set the resize flag, if required
           defined( $2 ) and $FAI::partition_pointer->{ "size" }->{ "resize" } = 1;
-        }
-        | /^preserve(\d+)\s+/
-        {
-          # set the preserve flag, if the index of the partition hasn't changed
-          ( $1 == $FAI::partition_pointer->{ "number" } ) or die
-            "Partition number of to-be-preserved partition $1 changed to $FAI::partition_pointer->{number}\n";
-          $FAI::partition_pointer->{ "size" }->{ "preserve" } = 1;
         }
         | <error: invalid partition size near "$text">
 

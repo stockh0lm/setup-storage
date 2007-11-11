@@ -61,6 +61,15 @@ $FAI::disk_var{"SWAPLIST"} = "";
 
 ################################################################################
 #
+# @brief A flag to tell our script that the system is not installed for the
+# first time
+#
+################################################################################
+$FAI::reinstall = 1;
+defined( $ENV{fl_initial} ) and $FAI::reinstall = 0;
+
+################################################################################
+#
 # @brief The hash of all configurations specified in the disk_config file
 #
 # The structure is as follows:
