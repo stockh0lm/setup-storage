@@ -22,7 +22,7 @@ use strict;
 
 ################################################################################
 #
-# @file shdd2-exec
+# @file exec.pm
 #
 # @brief functions to execute system commands
 #

@@ -22,10 +22,9 @@ use strict;
 
 ################################################################################
 #
-# @file shdd2-parser
+# @file parser.pm
 #
-# @brief A parser for the disk_config files within FAI, based on the EBNF
-# listed below. The implementation makes use of the RecDescent package.
+# @brief A parser for the disk_config files within FAI.
 #
 # $Id$
 #

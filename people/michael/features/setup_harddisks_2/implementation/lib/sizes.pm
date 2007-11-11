@@ -22,7 +22,7 @@ use strict;
 
 ################################################################################
 #
-# @file shdd2-sizes
+# @file sizes.pm
 #
 # @brief Compute the size of the partitions and volumes to be created
 #
@@ -47,15 +47,13 @@ package FAI;
 # @return the size of the device in megabytes
 #
 ################################################################################
-sub estimate_size
-{
+sub estimate_size {
   my ($dev) = @_;
 
   # try the entire disk first; we then use the data from the current
   # configuration; this matches in fact for than the allowable strings, but
   # this should be caught later on
-  if ( $dev =~ /^\/dev\/[sh]d[a-z]$/ )
-  {
+  if ( $dev =~ /^\/dev\/[sh]d[a-z]$/ ) {
     defined( $FAI::current_config{$dev}{"end_byte"} )
       or die "$dev is not a valid block device\n";
 
@@ -65,8 +63,7 @@ sub estimate_size
   }
 
   # try a partition
-  elsif ( $dev =~ /^(\/dev\/[sh]d[a-z])(\d+)$/ )
-  {
+  elsif ( $dev =~ /^(\/dev\/[sh]d[a-z])(\d+)$/ ) {
 
     # the size is configured, return it
     defined( $FAI::configs{"PHY_$1"}{"partitions"}{$2}{"size"}{"eff_size"} )
@@ -83,8 +80,7 @@ sub estimate_size
   }
 
   # try RAID; estimations here are very limited and possible imprecise
-  elsif ( $dev =~ /^\/dev\/md(\d+)$/ )
-  {
+  elsif ( $dev =~ /^\/dev\/md(\d+)$/ ) {
 
     # the list of underlying devices
     my @devs = ();
@@ -93,18 +89,13 @@ sub estimate_size
     my $level = "";
 
     # let's see, whether there is a configuration of this volume
-    if ( defined( $FAI::configs{"RAID"}{"volumes"}{$1}{"devices"} ) )
-    {
+    if ( defined( $FAI::configs{"RAID"}{"volumes"}{$1}{"devices"} ) ) {
       @devs  = keys %{ $FAI::configs{"RAID"}{"volumes"}{$1}{"devices"} };
       $level = $FAI::configs{"RAID"}{"volumes"}{$1}{"mode"};
-    }
-    elsif ( defined( $FAI::current_raid_config{$1}{"devices"} ) )
-    {
+    } elsif ( defined( $FAI::current_raid_config{$1}{"devices"} ) ) {
       @devs  = $FAI::current_raid_config{$1}{"devices"};
       $level = $FAI::current_raid_config{$1}{"mode"};
-    }
-    else
-    {
+    } else {
       die "$dev is not a known RAID device\n";
     }
 
@@ -115,11 +106,9 @@ sub estimate_size
     my $dev_count = scalar(@devs);
 
     # now do the mode-specific size estimations
-    if ( $level =~ /^raid[015]$/ )
-    {
+    if ( $level =~ /^raid[015]$/ ) {
       my $min_size = &estimate_size( shift @devs );
-      foreach (@devs)
-      {
+      foreach (@devs) {
         my $s = &estimate_size($_);
         $min_size = $s if ( $s < $min_size );
       }
@@ -128,9 +117,7 @@ sub estimate_size
         if ( $level eq "raid1" );
       return $min_size * $dev_count if ( $level eq "raid0" );
       return $min_size * ( $dev_count - 1 ) if ( $level eq "raid5" );
-    }
-    else
-    {
+    } else {
 
       # probably some more should be implemented
       die "Don't know how to estimate the size of a $level device\n";
@@ -138,8 +125,7 @@ sub estimate_size
   }
 
   # otherwise we are clueless
-  else
-  {
+  else {
     die "Cannot determine size of $dev\n";
   }
 }
@@ -149,12 +135,10 @@ sub estimate_size
 # @brief Compute the desired sizes of logical volumes
 #
 ################################################################################
-sub compute_lv_sizes
-{
+sub compute_lv_sizes {
 
   # loop through all device configurations
-  foreach my $config ( keys %FAI::configs )
-  {
+  foreach my $config ( keys %FAI::configs ) {
 
     # for RAID, there is nothing to be done here
     next if ( $config eq "RAID" );
@@ -173,8 +157,7 @@ sub compute_lv_sizes
     # least give a rough estimation, we assume 1 % of overhead; the value is
     # stored in megabytes
     my $vg_size = 0;
-    foreach my $dev ( keys %{ $FAI::configs{$config}{"devices"} } )
-    {
+    foreach my $dev ( keys %{ $FAI::configs{$config}{"devices"} } ) {
 
       # $dev may be a partition, an entire disk or a RAID device; otherwise we
       # cannot deal with it
@@ -194,13 +177,13 @@ sub compute_lv_sizes
     my $max_space = 0;
 
     # set effective sizes where available
-    foreach my $lv ( keys %{ $FAI::configs{$config}{"volumes"} } )
-    {
+    foreach my $lv ( keys %{ $FAI::configs{$config}{"volumes"} } ) {
+      # reference to the size of the current logical volume
+      my $lv_ref_size = $FAI::configs->{$config}->{"volumes"}->{$lv}->{"size"};
 
       # make sure the size specification is a range (even though it might be
       # something like x-x) and store the dimensions
-      ( $FAI::configs{$config}{"volumes"}{$lv}{"size"}{"range"} =~
-          /^(\d+%?)-(\d+%?)$/ )
+      ( $lv_ref_size->{"range"} =~ /^(\d+%?)-(\d+%?)$/ )
         or die "INTERNAL ERROR: Invalid range\n";
       my $start = $1;
       my $end   = $2;
@@ -219,17 +202,13 @@ sub compute_lv_sizes
       $max_space += $end;
 
       # write back the range in MB
-      $FAI::configs{$config}{"volumes"}{$lv}{"size"}{"range"} = "$start-$end";
+      $lv_ref_size->{"range"} = "$start-$end";
 
       # the size is fixed
-      if ( $start == $end )
-      {
-
+      if ( $start == $end ) { 
         # write the size back to the configuration
-        $FAI::configs{$config}{"volumes"}{$lv}{"size"}{"eff_size"} = $start;
-      }
-      else
-      {
+        $lv_ref_size->{"eff_size"} = $start;
+      } else {
 
         # add this volume to the redistribution list
         push @redist_list, $lv;
@@ -246,8 +225,7 @@ sub compute_lv_sizes
       if ( $max_space > $min_space );
 
     # update all sizes that are still ranges
-    foreach my $lv (@redist_list)
-    {
+    foreach my $lv (@redist_list) {
 
       # get the range again
       ( $FAI::configs{$config}{"volumes"}{$lv}{"size"}{"range"} =~
@@ -273,8 +251,7 @@ sub compute_partition_sizes
 {
 
   # loop through all device configurations
-  foreach my $config ( keys %FAI::configs )
-  {
+  foreach my $config ( keys %FAI::configs ) {
 
     # for RAID, there is nothing to be done here
     next if ( $config eq "RAID" );
@@ -291,10 +268,12 @@ sub compute_partition_sizes
 
     # the device name of the disk
     my $disk = $1;
+    # reference to the current disk config
+    my $current_disk = $FAI::current_config{$disk};
 
-# at various points the following code highly depends on the desired disk label!
-# initialise variables
-# the id of the extended partition to be created, if required
+    # at various points the following code highly depends on the desired disk label!
+    # initialise variables
+    # the id of the extended partition to be created, if required
     my $extended = -1;
 
     # the id of the current extended partition, if any; this setup only caters
@@ -302,12 +281,8 @@ sub compute_partition_sizes
     my $current_extended = -1;
 
     # find the first existing extended partition
-    foreach
-      my $part_id ( sort keys %{ $FAI::current_config{$disk}{"partitions"} } )
-    {
-      if ( 1 ==
-        $FAI::current_config{$disk}{"partitions"}{$part_id}{"is_extended"} )
-      {
+    foreach my $part_id ( sort keys %{ $current_disk->{"partitions"} } ) {
+      if ( 1 == $current_disk->{"partitions"}->{$part_id}->{"is_extended"} ) {
         $current_extended = $part_id;
         last;
       }
@@ -320,29 +295,24 @@ sub compute_partition_sizes
     my $next_start = 0;
 
     # on msdos disk labels, the first partitions starts at head #1
-    if ( $FAI::configs{$config}{"disklabel"} eq "msdos" )
-    {
-      $next_start = $FAI::current_config{$disk}{"bios_sectors_per_track"} *
-        $FAI::current_config{$disk}{"sector_size"};
+    if ( $FAI::configs{$config}{"disklabel"} eq "msdos" ) {
+      $next_start = $current_disk->{"bios_sectors_per_track"} *
+        $current_disk->{"sector_size"};
 
       # the MBR requires space, too
-      $min_req_total_space +=
-        $FAI::current_config{$disk}{"bios_sectors_per_track"} *
-        $FAI::current_config{$disk}{"sector_size"};
+      $min_req_total_space += $current_disk->{"bios_sectors_per_track"} *
+        $current_disk->{"sector_size"};
     }
 
     # on GPT disk labels the first 34 and last 34 sectors must be left alone
-    if ( $FAI::configs{$config}{"disklabel"} eq "gpt" )
-    {
-      $next_start = 34 * $FAI::current_config{$disk}{"sector_size"};
+    if ( $FAI::configs{$config}{"disklabel"} eq "gpt" ) {
+      $next_start = 34 * $current_disk->{"sector_size"};
 
       # modify the disk to claim the space for the second partition table
-      $FAI::current_config{$disk}{"end_byte"} -=
-        34 * $FAI::current_config{$disk}{"sector_size"};
+      $current_disk->{"end_byte"} -= 34 * $current_disk->{"sector_size"};
 
       # the space required by the GPTs
-      $min_req_total_space +=
-        2 * 34 * $FAI::current_config{$disk}{"sector_size"};
+      $min_req_total_space += 2 * 34 * $current_disk->{"sector_size"};
     }
 
     # the list of partitions that we need to find start and end bytes for
@@ -353,91 +323,64 @@ sub compute_partition_sizes
 
       # work on the first entry of the list
       my $part_id = $worklist[0];
+      # reference to the current partition
+      my $part_ref = $FAI::configs->{$config}->{"partitions"}->{$part_id};
 
       # the partition $part_id must be preserved
-      if ( $FAI::configs{$config}{"partitions"}{$part_id}{"size"}{"preserve"} ==
-        1 )
-      {
+      if ( $part_ref->{"size"}->{"preserve"} == 1 ) {
 
         # a partition that should be preserved must exist already
-        defined( $FAI::current_config{$disk}{"partitions"}{$part_id} )
+        defined( $current_disk->{"partitions"}->{$part_id} )
           or die "$part_id can't be preserved, it does not exist.\n";
 
-        ( $next_start >
-            $FAI::current_config{$disk}{"partitions"}{$part_id}{"begin_byte"} )
-          and die
-"Previous partitions overflow begin of preserved partition $part_id\n";
+        ( $next_start > $current_disk->{"partitions"}->{$part_id}->{"begin_byte"} )
+          and die "Previous partitions overflow begin of preserved partition $part_id\n";
 
         # set the effective size to the value known already
-        $FAI::configs{$config}{"partitions"}{$part_id}{"size"}{"eff_size"} =
-          $FAI::current_config{$disk}{"partitions"}{$part_id}{"count_byte"};
+        $part_ref->{"size"}->{"eff_size"} = $current_disk->{"partitions"}->{$part_id}->{"count_byte"};
 
         # copy the start_byte and end_byte information
-        $FAI::configs{$config}{"partitions"}{$part_id}{"start_byte"} =
-          $FAI::current_config{$disk}{"partitions"}{$part_id}{"begin_byte"};
-        $FAI::configs{$config}{"partitions"}{$part_id}{"end_byte"} =
-          $FAI::current_config{$disk}{"partitions"}{$part_id}{"end_byte"};
+        $part_ref->{"start_byte"} = $current_disk->{"partitions"}->{$part_id}->{"begin_byte"};
+        $part_ref->{"end_byte"} = $current_disk->{"partitions"}->{$part_id}->{"end_byte"};
 
         # and add it to the total disk space required by this config
-        $min_req_total_space +=
-          $FAI::configs{$config}{"partitions"}{$part_id}{"size"}{"eff_size"};
+        $min_req_total_space += $part_ref->{"size"}->{"eff_size"};
 
         # set the next start
-        $next_start =
-          $FAI::configs{$config}{"partitions"}{$part_id}{"end_byte"} + 1;
+        $next_start = $part_ref->{"end_byte"} + 1;
 
         # several msdos specific parts
-        if ( $FAI::configs{$config}{"disklabel"} eq "msdos" )
-        {
+        if ( $FAI::configs{$config}{"disklabel"} eq "msdos" ) {
 
           # make sure the partition ends at a cylinder boundary
-          (
-            0 == (
-              $FAI::current_config{$disk}{"partitions"}{$part_id}{"end_byte"} +
-                1
-              ) % (
-              $FAI::current_config{$disk}{"sector_size"} *
-                $FAI::current_config{$disk}{"bios_sectors_per_track"} *
-                $FAI::current_config{$disk}{"bios_heads"}
+          ( 0 == ( $current_disk->{"partitions"}->{$part_id}->{"end_byte"} + 1
+              ) % ( $current_disk->{"sector_size"} *
+                $current_disk->{"bios_sectors_per_track"} *
+                $current_disk->{"bios_heads"}
               )
-            )
-            or die
-"Preserved partition $part_id does not end at a cylinder boundary\n";
+            ) or die "Preserved partition $part_id does not end at a cylinder boundary\n";
 
           # add one head of disk usage if this is a logical partition
-          $min_req_total_space +=
-            $FAI::current_config{$disk}{"bios_sectors_per_track"} *
-            $FAI::current_config{$disk}{"sector_size"}
-            if ( $part_id > 4 );
+          $min_req_total_space += $current_disk->{"bios_sectors_per_track"} *
+            $current_disk->{"sector_size"} if ( $part_id > 4 );
 
           # extended partitions consume no space
-          if ( $FAI::configs{$config}{"partitions"}{$part_id}{"size"}
-            {"extended"} == 1 )
-          {
+          if ( $part_ref->{"size"}->{"extended"} == 1 ) {
 
             # revert the addition of the size
-            $min_req_total_space -=
-              $FAI::configs{$config}{"partitions"}{$part_id}{"size"}
-              {"eff_size"};
+            $min_req_total_space -= $part_ref->{"size"}->{"eff_size"};
 
             # set the next start to the start of the extended partition
-            $next_start =
-              $FAI::configs{$config}{"partitions"}{$part_id}{"start_byte"};
+            $next_start = $part_ref->{"start_byte"};
           }
 
         }
 
         # on gpt, ensure that the partition ends at a sector boundary
-        if ( $FAI::configs{$config}{"disklabel"} eq "gpt" )
-        {
-          (
-            0 == (
-              $FAI::current_config{$disk}{"partitions"}{$part_id}{"end_byte"} +
-                1
-              ) % $FAI::current_config{$disk}{"sector_size"}
-            )
-            or die
-            "Preserved partition $part_id does not end at a sector boundary\n";
+        if ( $FAI::configs{$config}{"disklabel"} eq "gpt" ) {
+          ( 0 == ( $current_disk->{"partitions"}{$part_id}{"end_byte"} + 1
+              ) % $current_disk->{"sector_size"})
+            or die "Preserved partition $part_id does not end at a sector boundary\n";
         }
 
         # partition done
@@ -445,10 +388,7 @@ sub compute_partition_sizes
       }
 
       # msdos specific: deal with extended partitions
-      elsif (
-        $FAI::configs{$config}{"partitions"}{$part_id}{"size"}{"extended"} ==
-        1 )
-      {
+      elsif ( $part_ref->{"size"}->{"extended"} == 1 ) {
         ( $FAI::configs{$config}{"disklabel"} eq "msdos" )
           or die "found an extended partition on a non-msdos disklabel\n";
 
@@ -457,8 +397,7 @@ sub compute_partition_sizes
           or die "INTERNAL ERROR: More than 1 extended partition\n";
 
         # ensure that it is a primary partition
-        ( $part_id <= 4 )
-          or die
+        ( $part_id <= 4 ) or die
           "INTERNAL ERROR: Extended partition wouldn't be a primary one\n";
 
         # set the local variable to this id
@@ -467,87 +406,70 @@ sub compute_partition_sizes
         # the size cannot be determined now, push it to the end of the
         # worklist; the check against $extended being == -1 ensures that
         # there is no indefinite loop
-        if ( scalar(@worklist) > 1 )
-        {
+        if ( scalar(@worklist) > 1 ) {
           push @worklist, shift @worklist;
         }
 
         # determine the size of the extended partition
-        else
-        {
+        else {
           my $epbr_size =
-            $FAI::current_config{$disk}{"bios_sectors_per_track"} *
-            $FAI::current_config{$disk}{"sector_size"};
+            $current_disk->{"bios_sectors_per_track"} *
+            $current_disk->{"sector_size"};
 
           # initialise the size and the start byte
-          $FAI::configs{$config}{"partitions"}{$part_id}{"size"}{"eff_size"} =
-            0;
-          $FAI::configs{$config}{"partitions"}{$part_id}{"start_byte"} = -1;
+          $part_ref->{"size"}->{"eff_size"} = 0;
+          $part_ref->{"start_byte"} = -1;
 
           foreach my $p ( sort keys %{ $FAI::configs{$config}{"partitions"} } )
           {
             next if ( $p < 5 );
 
-            if ( -1 ==
-              $FAI::configs{$config}{"partitions"}{$part_id}{"start_byte"} )
+            if ( -1 == $part_ref->{"start_byte"} )
             {
-              $FAI::configs{$config}{"partitions"}{$part_id}{"start_byte"} =
+              $part_ref->{"start_byte"} =
                 $FAI::configs{$config}{"partitions"}{$p}{"start_byte"} -
                 $epbr_size;
             }
 
-            $FAI::configs{$config}{"partitions"}{$part_id}{"size"}
-              {"eff_size"} +=
+            $part_ref->{"size"}->{"eff_size"} +=
               $FAI::configs{$config}{"partitions"}{$p}{"size"}{"eff_size"} +
               $epbr_size;
 
-            $FAI::configs{$config}{"partitions"}{$part_id}{"end_byte"} =
-              $FAI::configs{$config}{"partitions"}{$p}{"end_byte"};
+            $part_ref->{"end_byte"} = $FAI::configs{$config}{"partitions"}{$p}{"end_byte"};
           }
 
-          ( $FAI::configs{$config}{"partitions"}{$part_id}{"size"}{"eff_size"} >
-              0 )
+          ( $part_ref->{"size"}->{"eff_size"} > 0 )
             or die "Extended partition has a size of 0\n";
 
           # partition done
           shift @worklist;
         }
-      }
-      else
-      {
+      } else {
 
         # make sure the size specification is a range (even though it might be
         # something like x-x) and store the dimensions
-        ( $FAI::configs{$config}{"partitions"}{$part_id}{"size"}{"range"} =~
-            /^(\d+%?)-(\d+%?)$/ )
-          or die "INTERNAL ERROR: Invalid range\n";
+        ( $part_ref->{"size"}->{"range"} =~
+            /^(\d+%?)-(\d+%?)$/ ) or die "INTERNAL ERROR: Invalid range\n";
         my $start = $1;
         my $end   = $2;
 
         # start may be given in percents of the size
-        if ( $start =~ /^(\d+)%$/ )
-        {
+        if ( $start =~ /^(\d+)%$/ ) {
 
           # rewrite it to bytes
-          $start =
-            POSIX::floor( $FAI::current_config{$disk}{"size"} * $1 / 100 );
-        }
-        else
-        {
+          $start = POSIX::floor( $current_disk->{"size"} * $1 / 100 );
+        } else {
 
           # it is given in megabytes, make it bytes
           $start = $start * 1024.0 * 1024.0;
         }
 
         # end may be given in percents of the size
-        if ( $end =~ /^(\d+)%$/ )
-        {
+        if ( $end =~ /^(\d+)%$/ ) {
 
           # rewrite it to bytes
-          $end = POSIX::ceil( $FAI::current_config{$disk}{"size"} * $1 / 100 );
-        }
-        else
-        {
+          $end = POSIX::ceil( $current_disk->{"size"} * $1 / 100 );
+        } else {
 
           # it is given in megabytes, make it bytes
           $end = $end * 1024.0 * 1024.0;
@@ -557,8 +479,7 @@ sub compute_partition_sizes
         ( $end >= $start ) or die "INTERNAL ERROR: end < start\n";
 
         # check, whether the size is fixed
-        if ( $end != $start )
-        {
+        if ( $end != $start ) {
 
           # the end of the current range (may be the end of the disk or some
           # preserved partition
@@ -574,39 +495,27 @@ sub compute_partition_sizes
           my $max_space = 0;
 
           # inspect all remaining entries in the worklist
-          foreach my $p (@worklist)
-          {
+          foreach my $p (@worklist) {
 
             # we have found the delimiter
-            if ( $FAI::configs{$config}{"partitions"}{$p}{"size"}{"preserve"} ==
-              1 )
-            {
-              $end_of_range =
-                $FAI::current_config{$disk}{"partitions"}{$p}{"begin_byte"};
+            if ( $FAI::configs{$config}{"partitions"}{$p}{"size"}{"preserve"} == 1 ) {
+              $end_of_range = $current_disk->{"partitions"}->{$p}->{"begin_byte"};
 
               # logical partitions require the space for the EPBR to be left
               # out
               if ( ( $FAI::configs{$config}{"disklabel"} eq "msdos" )
-                && ( $p > 4 ) )
-              {
-                $end_of_range -=
-                  $FAI::current_config{$disk}{"bios_sectors_per_track"} *
-                  $FAI::current_config{$disk}{"sector_size"};
+                && ( $p > 4 ) ) {
+                $end_of_range -= $current_disk->{"bios_sectors_per_track"} *
+                  $current_disk->{"sector_size"};
               }
               last;
-            }
-            elsif (
-              $FAI::configs{$config}{"partitions"}{$p}{"size"}{"extended"} ==
-              1 )
-            {
+            } elsif ( $FAI::configs{$config}{"partitions"}{$p}{"size"}{"extended"} == 1 ) {
               next;
-            }
-            else
-            {
+            } else {
 
-          # below is a slight duplication of the code
-          # make sure the size specification is a range (even though it might be
-          # something like x-x) and store the dimensions
+              # below is a slight duplication of the code
+              # make sure the size specification is a range (even though it might be
+              # something like x-x) and store the dimensions
               ( $FAI::configs{$config}{"partitions"}{$p}{"size"}{"range"} =~
                   /^(\d+%?)-(\d+%?)$/ )
                 or die "INTERNAL ERROR: Invalid range\n";
@@ -614,31 +523,23 @@ sub compute_partition_sizes
               my $max_size = $2;
 
               # start may be given in percents of the size
-              if ( $min_size =~ /^(\d+)%$/ )
-              {
+              if ( $min_size =~ /^(\d+)%$/ ) {
 
                 # rewrite it to bytes
-                $min_size =
-                  POSIX::floor(
-                  $FAI::current_config{$disk}{"size"} * $1 / 100 );
-              }
-              else
-              {
+                $min_size = POSIX::floor( $current_disk->{"size"} * $1 / 100 );
+              } else {
 
                 # it is given in megabytes, make it bytes
                 $min_size *= 1024.0 * 1024.0;
               }
 
               # end may be given in percents of the size
-              if ( $max_size =~ /^(\d+)%$/ )
-              {
+              if ( $max_size =~ /^(\d+)%$/ ) {
 
                 # rewrite it to bytes
                 $max_size =
-                  POSIX::ceil( $FAI::current_config{$disk}{"size"} * $1 / 100 );
-              }
-              else
-              {
+                  POSIX::ceil( $current_disk->{"size"} * $1 / 100 );
+              } else {
 
                 # it is given in megabytes, make it bytes
                 $max_size *= 1024.0 * 1024.0;
@@ -647,14 +548,11 @@ sub compute_partition_sizes
               # logical partitions require the space for the EPBR to be left
               # out
               if ( ( $FAI::configs{$config}{"disklabel"} eq "msdos" )
-                && ( $p > 4 ) )
-              {
-                $min_size +=
-                  $FAI::current_config{$disk}{"bios_sectors_per_track"} *
-                  $FAI::current_config{$disk}{"sector_size"};
-                $max_size +=
-                  $FAI::current_config{$disk}{"bios_sectors_per_track"} *
-                  $FAI::current_config{$disk}{"sector_size"};
+                && ( $p > 4 ) ) {
+                $min_size += $current_disk->{"bios_sectors_per_track"} *
+                  $current_disk->{"sector_size"};
+                $max_size += $current_disk->{"bios_sectors_per_track"} *
+                  $current_disk->{"sector_size"};
               }
 
               $min_req_space += $min_size;
@@ -663,8 +561,7 @@ sub compute_partition_sizes
           }
 
           # set the end if we have reached the end of the disk
-          $end_of_range = $FAI::current_config{$disk}{"end_byte"}
-            if ( -1 == $end_of_range );
+          $end_of_range = $current_disk->{"end_byte"} if ( -1 == $end_of_range );
 
           my $available_space = $end_of_range - $next_start + 1;
 
@@ -674,12 +571,9 @@ sub compute_partition_sizes
 
           # the new size
           my $scaled_size = $end;
-          $scaled_size = POSIX::floor(
-            ( $end - $start ) * (
+          $scaled_size = POSIX::floor( ( $end - $start ) * (
               ( $available_space - $min_req_space ) /
-                ( $max_space - $min_req_space )
-            )
-            ) + $start
+                ( $max_space - $min_req_space ) )) + $start
             if ( $max_space > $available_space );
 
           ( $scaled_size >= $start )
@@ -693,17 +587,15 @@ sub compute_partition_sizes
         # now we compute the effective locations on the disk
         # msdos specific offset for logical partitions
         if ( ( $FAI::configs{$config}{"disklabel"} eq "msdos" )
-          && ( $part_id > 4 ) )
-        {
+          && ( $part_id > 4 ) ) {
 
           # add one head of disk usage if this is a logical partition
-          $min_req_total_space +=
-            $FAI::current_config{$disk}{"bios_sectors_per_track"} *
-            $FAI::current_config{$disk}{"sector_size"};
+          $min_req_total_space += $current_disk->{"bios_sectors_per_track"} *
+            $current_disk->{"sector_size"};
 
           # move the start byte as well
-          $next_start += $FAI::current_config{$disk}{"bios_sectors_per_track"} *
-            $FAI::current_config{$disk}{"sector_size"};
+          $next_start += $current_disk->{"bios_sectors_per_track"} *
+            $current_disk->{"sector_size"};
         }
 
         # partition starts at where we currently are
@@ -714,19 +606,17 @@ sub compute_partition_sizes
         my $end_byte = $next_start + $start - 1;
 
         # on msdos, ensure that the partition ends at a cylinder boundary
-        if ( $FAI::configs{$config}{"disklabel"} eq "msdos" )
-        {
+        if ( $FAI::configs{$config}{"disklabel"} eq "msdos" ) {
           $end_byte -=
-            ( $end_byte + 1 ) % ( $FAI::current_config{$disk}{"sector_size"} *
-              $FAI::current_config{$disk}{"bios_sectors_per_track"} *
-              $FAI::current_config{$disk}{"bios_heads"} );
+            ( $end_byte + 1 ) % ( $current_disk->{"sector_size"} *
+              $current_disk->{"bios_sectors_per_track"} *
+              $current_disk->{"bios_heads"} );
         }
 
         # on gpt, ensure that the partition ends at a sector boundary
-        if ( $FAI::configs{$config}{"disklabel"} eq "gpt" )
-        {
+        if ( $FAI::configs{$config}{"disklabel"} eq "gpt" ) {
           $end_byte -=
-            ( $end_byte + 1 ) % $FAI::current_config{$disk}{"sector_size"};
+            ( $end_byte + 1 ) % $current_disk->{"sector_size"};
         }
 
         # set $start and $end to the effective values
@@ -734,23 +624,19 @@ sub compute_partition_sizes
         $end   = $start;
 
         # write back the size spec in bytes
-        $FAI::configs{$config}{"partitions"}{$part_id}{"size"}{"range"} =
-          $start . "-" . $end;
+        $part_ref->{"size"}->{"range"} = $start . "-" . $end;
 
         # then set eff_size to a proper value
-        $FAI::configs{$config}{"partitions"}{$part_id}{"size"}{"eff_size"} =
-          $start;
+        $part_ref->{"size"}->{"eff_size"} = $start;
 
         # write the end byte to the configuration
-        $FAI::configs{$config}{"partitions"}{$part_id}{"end_byte"} = $end_byte;
+        $part_ref->{"end_byte"} = $end_byte;
 
         # and add it to the total disk space required by this config
-        $min_req_total_space +=
-          $FAI::configs{$config}{"partitions"}{$part_id}{"size"}{"eff_size"};
+        $min_req_total_space += $part_ref->{"size"}->{"eff_size"};
 
         # set the next start
-        $next_start =
-          $FAI::configs{$config}{"partitions"}{$part_id}{"end_byte"} + 1;
+        $next_start = $part_ref->{"end_byte"} + 1;
 
         # partition done
         shift @worklist;
@@ -758,21 +644,17 @@ sub compute_partition_sizes
     }
 
     # check, whether there is sufficient space on the disk
-    ( $min_req_total_space > $FAI::current_config{$disk}{"size"} )
-      and die
-"Disk $disk is too small - at least $min_req_total_space bytes are required\n";
+    ( $min_req_total_space > $current_disk->{"size"} )
+      and die "Disk $disk is too small - at least $min_req_total_space bytes are required\n";
 
     # make sure, extended partitions are only created on msdos disklabels
     ( $FAI::configs{$config}{"disklabel"} ne "msdos" && $extended > -1 )
-      and die
-"INTERNAL ERROR: extended partitions are not supported by this disklabel\n";
+      and die "INTERNAL ERROR: extended partitions are not supported by this disklabel\n";
 
     # ensure that we have done our work
-    foreach my $part_id ( sort keys %{ $FAI::configs{$config}{"partitions"} } )
-    {
+    foreach my $part_id ( sort keys %{ $FAI::configs{$config}{"partitions"} } ) {
       ( defined( $FAI::configs{$config}{"partitions"}{$part_id}{"start_byte"} )
-          && defined(
-          $FAI::configs{$config}{"partitions"}{$part_id}{"end_byte"} ) )
+          && defined( $FAI::configs{$config}{"partitions"}{$part_id}{"end_byte"} ) )
         or die "INTERNAL ERROR: start or end of partition $part_id not set\n";
     }
 

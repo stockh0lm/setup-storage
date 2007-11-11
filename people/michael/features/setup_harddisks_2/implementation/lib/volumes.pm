@@ -22,7 +22,7 @@ use strict;
 
 ################################################################################
 #
-# @file shdd2-volumes
+# @file volumes.pm
 #
 # @brief Parse the current partition table and LVM/RAID configurations
 #

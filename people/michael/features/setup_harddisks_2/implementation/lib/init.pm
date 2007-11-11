@@ -22,7 +22,7 @@ use strict;
 
 ################################################################################
 #
-# @file shdd2-init
+# @file init.pm
 #
 # @brief Initialize all variables and acquire the set of disks of the system.
 #

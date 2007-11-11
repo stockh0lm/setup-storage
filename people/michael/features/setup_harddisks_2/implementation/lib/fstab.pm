@@ -22,7 +22,7 @@ use strict;
 
 ################################################################################
 #
-# @file shdd2-fstab
+# @file fstab.pm
 #
 # @brief Generate an fstab file as appropriate for the configuration
 #
