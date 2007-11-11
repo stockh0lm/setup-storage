@@ -536,17 +536,17 @@ $FAI::Parser = Parse::RecDescent->new(
         {
           # set the mount point
           $FAI::partition_pointer->{ "mountpoint" } = $item[ 1 ];
-          # mark the bootable partition, if it is not set yet and this is a PHY_
-          # device
-          if ( $item[ 1 ] eq "/" && $FAI::device =~ /^PHY_(.+)$/ &&
-            $FAI::configs{$FAI::device}{"bootable"} == -1 )
-          {
-            $FAI::configs{$FAI::device}{"bootable"} =
-              $FAI::partition_pointer->{"number"};
-            # set the BOOT_DEVICE and BOOT_PARTITION variables
-            $FAI::disk_var{ "BOOT_DEVICE" } = $1; 
-            $FAI::disk_var{ "BOOT_PARTITION" } = $1 . 
-              $FAI::configs{ $FAI::device }{ "bootable" };
+          # if the mount point is / or /boot and we are currently doing a
+          # physical device, the variables should be set, unless they are
+          # already
+          if ( $FAI::configs{$FAI::device}{"bootable"} == -1 && 
+            $FAI::device =~ /^PHY_(.+)$/ && 
+            ( $item[ 1 ] eq "/boot" || ( $item[ 1 ] eq "/" && 
+              !defined( $FAI::disk_var{ "BOOT_DEVICE" } ) ) ) ) {
+              # set the BOOT_DEVICE and BOOT_PARTITION variables
+              $FAI::disk_var{ "BOOT_DEVICE" } = $1; 
+              $FAI::disk_var{ "BOOT_PARTITION" } = $1 . 
+                $FAI::partition_pointer->{"number"};
           }
         }
 
