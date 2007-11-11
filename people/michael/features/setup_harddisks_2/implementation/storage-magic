@@ -68,14 +68,14 @@ $FAI::no_dry_run = 0;
 ($opt_X) or warn "shdd2 is running in test-only mode!\n";
 
 # include all subparts
-require "shdd2-init";
-require "shdd2-lib";
-require "shdd2-volumes";
-require "shdd2-parser";
-require "shdd2-sizes";
-require "shdd2-commands";
-require "shdd2-fstab";
-require "shdd2-exec";
+unshift @INC, "/usr/share/fai/storage-magic/";
+require "init.pm";
+require "volumes.pm";
+require "parser.pm";
+require "sizes.pm";
+require "commands.pm";
+require "fstab.pm";
+require "exec.pm";
 
 # the config source file
 my $config_file = undef;
