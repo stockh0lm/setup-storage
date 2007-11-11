@@ -26,6 +26,9 @@ use strict;
 #
 # @brief Initialize all variables and acquire the set of disks of the system.
 #
+# The layout of the data structures is documented in the wiki:
+# http://faiwiki.debian.net/index.php/Setup_harddisks_2
+#
 # $Id$
 #
 # @author Christian Kern, Michael Tautschnig
@@ -72,81 +75,12 @@ defined( $ENV{fl_initial} ) and $FAI::reinstall = 0;
 #
 # @brief The hash of all configurations specified in the disk_config file
 #
-# The structure is as follows:
-# PHY_<DEVICE>
-#   virtual (0|1)
-#   disklabel STRING
-#   bootable -1..n
-#   partitions
-#     <1..n>
-#       size
-#         extended (0|1)
-#         preserve (0|1)
-#         resize (0|1)
-#         range
-#         eff_size
-#       number 1..n
-#       maps_to_existing 1..n
-#       start_byte
-#       end_byte
-#       mountpoint
-#       mount_options
-#       filesystem
-#       fs_options
-#       label
-# VG_<NAME>
-#   devices
-#   estimated_size
-#   volumes
-#     <logical-volume-name>
-#       size
-#         preserve (0|1)
-#         resize (0|1)
-#         range
-#         eff_size
-#       mountpoint
-#       mount_options
-#       filesystem
-#       fs_options
-#       label
-# RAID
-#   volumes
-#     <0..n>
-#       mode
-#       devices
-#         /dev/<device-name>
-#           options
-#             spare (0|1)
-#             missing (0|1)
-#       mountpoint
-#       mount_options
-#       filesystem
-#       fs_options
-#       label
-#
 ################################################################################
 %FAI::configs = ();
 
 ################################################################################
 #
 # @brief The current disk configuration
-#
-# The structure is as follows:
-# <DEVICE>
-#   bios_cylinders
-#   bios_heads
-#   bios_sectors_per_track
-#   sector_size
-#   disklabel
-#   begin_byte
-#   end_byte
-#   partitions
-#     <1..n>
-#       begin_byte
-#       end_byte
-#       count_byte
-#       is_extended
-#       filesystem
 #
 ################################################################################
 %FAI::current_config = ();
@@ -155,25 +89,12 @@ defined( $ENV{fl_initial} ) and $FAI::reinstall = 0;
 #
 # @brief The current LVM configuration
 #
-# The structure is as follows:
-# <VG>
-#   physical_volumes
-#   size
-#   volumes
-#     <lv-name>
-#       size
-#
 ################################################################################
 %FAI::current_lvm_config = ();
 
 ################################################################################
 #
 # @brief The current RAID configuration
-#
-# The structure is as follows:
-# <0..n>
-#   devices
-#   mode
 #
 ################################################################################
 %FAI::current_raid_config = ();
