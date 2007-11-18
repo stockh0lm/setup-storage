@@ -71,7 +71,8 @@ $FAI::no_dry_run = 0;
 ($opt_X) or warn "shdd2 is running in test-only mode!\n";
 
 # include all subparts
-unshift @INC, "/usr/share/fai/storage-magic/";
+unshift @INC, "/var/lib/fai/sm/lib/";
+# unshift @INC, "/usr/share/fai/storage-magic/";
 require "init.pm";
 require "volumes.pm";
 require "parser.pm";

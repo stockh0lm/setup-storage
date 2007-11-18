@@ -179,11 +179,11 @@ sub compute_lv_sizes {
     # set effective sizes where available
     foreach my $lv ( keys %{ $FAI::configs{$config}{volumes} } ) {
       # reference to the size of the current logical volume
-      my $lv_ref_size = ( \%FAI::configs )->{$config}->{volumes}->{$lv}->{size};
+      my $lv_size = ( \%FAI::configs )->{$config}->{volumes}->{$lv}->{size};
 
       # make sure the size specification is a range (even though it might be
       # something like x-x) and store the dimensions
-      ( $lv_ref_size->{range} =~ /^(\d+%?)-(\d+%?)$/ )
+      ( $lv_size->{range} =~ /^(\d+%?)-(\d+%?)$/ )
         or die "INTERNAL ERROR: Invalid range\n";
       my $start = $1;
       my $end   = $2;
@@ -202,12 +202,12 @@ sub compute_lv_sizes {
       $max_space += $end;
 
       # write back the range in MB
-      $lv_ref_size->{range} = "$start-$end";
+      $lv_size->{range} = "$start-$end";
 
       # the size is fixed
       if ( $start == $end ) { 
         # write the size back to the configuration
-        $lv_ref_size->{eff_size} = $start;
+        $lv_size->{eff_size} = $start;
       } else {
 
         # add this volume to the redistribution list
@@ -323,10 +323,10 @@ sub compute_partition_sizes
       # work on the first entry of the list
       my $part_id = $worklist[0];
       # reference to the current partition
-      my $part_ref = ( \%FAI::configs )->{$config}->{partitions}->{$part_id};
+      my $part = ( \%FAI::configs )->{$config}->{partitions}->{$part_id};
 
       # the partition $part_id must be preserved
-      if ( $part_ref->{size}->{preserve} == 1 ) {
+      if ( $part->{size}->{preserve} == 1 ) {
 
         # a partition that should be preserved must exist already
         defined( $current_disk->{partitions}->{$part_id} )
@@ -336,17 +336,17 @@ sub compute_partition_sizes
           and die "Previous partitions overflow begin of preserved partition $part_id\n";
 
         # set the effective size to the value known already
-        $part_ref->{size}->{eff_size} = $current_disk->{partitions}->{$part_id}->{count_byte};
+        $part->{size}->{eff_size} = $current_disk->{partitions}->{$part_id}->{count_byte};
 
         # copy the start_byte and end_byte information
-        $part_ref->{start_byte} = $current_disk->{partitions}->{$part_id}->{begin_byte};
-        $part_ref->{end_byte} = $current_disk->{partitions}->{$part_id}->{end_byte};
+        $part->{start_byte} = $current_disk->{partitions}->{$part_id}->{begin_byte};
+        $part->{end_byte} = $current_disk->{partitions}->{$part_id}->{end_byte};
 
         # and add it to the total disk space required by this config
-        $min_req_total_space += $part_ref->{size}->{eff_size};
+        $min_req_total_space += $part->{size}->{eff_size};
 
         # set the next start
-        $next_start = $part_ref->{end_byte} + 1;
+        $next_start = $part->{end_byte} + 1;
 
         # several msdos specific parts
         if ( $FAI::configs{$config}{disklabel} eq "msdos" ) {
@@ -364,13 +364,13 @@ sub compute_partition_sizes
             $current_disk->{sector_size} if ( $part_id > 4 );
 
           # extended partitions consume no space
-          if ( $part_ref->{size}->{extended} == 1 ) {
+          if ( $part->{size}->{extended} == 1 ) {
 
             # revert the addition of the size
-            $min_req_total_space -= $part_ref->{size}->{eff_size};
+            $min_req_total_space -= $part->{size}->{eff_size};
 
             # set the next start to the start of the extended partition
-            $next_start = $part_ref->{start_byte};
+            $next_start = $part->{start_byte};
           }
 
         }
@@ -387,7 +387,7 @@ sub compute_partition_sizes
       }
 
       # msdos specific: deal with extended partitions
-      elsif ( $part_ref->{size}->{extended} == 1 ) {
+      elsif ( $part->{size}->{extended} == 1 ) {
         ( $FAI::configs{$config}{disklabel} eq "msdos" )
           or die "found an extended partition on a non-msdos disklabel\n";
 
@@ -416,28 +416,28 @@ sub compute_partition_sizes
             $current_disk->{sector_size};
 
           # initialise the size and the start byte
-          $part_ref->{size}->{eff_size} = 0;
-          $part_ref->{start_byte} = -1;
+          $part->{size}->{eff_size} = 0;
+          $part->{start_byte} = -1;
 
           foreach my $p ( sort keys %{ $FAI::configs{$config}{partitions} } )
           {
             next if ( $p < 5 );
 
-            if ( -1 == $part_ref->{start_byte} )
+            if ( -1 == $part->{start_byte} )
             {
-              $part_ref->{start_byte} =
+              $part->{start_byte} =
                 $FAI::configs{$config}{partitions}{$p}{start_byte} -
                 $epbr_size;
             }
 
-            $part_ref->{size}->{eff_size} +=
+            $part->{size}->{eff_size} +=
               $FAI::configs{$config}{partitions}{$p}{size}{eff_size} +
               $epbr_size;
 
-            $part_ref->{end_byte} = $FAI::configs{$config}{partitions}{$p}{end_byte};
+            $part->{end_byte} = $FAI::configs{$config}{partitions}{$p}{end_byte};
           }
 
-          ( $part_ref->{size}->{eff_size} > 0 )
+          ( $part->{size}->{eff_size} > 0 )
             or die "Extended partition has a size of 0\n";
 
           # partition done
@@ -447,7 +447,7 @@ sub compute_partition_sizes
 
         # make sure the size specification is a range (even though it might be
         # something like x-x) and store the dimensions
-        ( $part_ref->{size}->{range} =~
+        ( $part->{size}->{range} =~
             /^(\d+%?)-(\d+%?)$/ ) or die "INTERNAL ERROR: Invalid range\n";
         my $start = $1;
         my $end   = $2;
@@ -623,19 +623,19 @@ sub compute_partition_sizes
         $end   = $start;
 
         # write back the size spec in bytes
-        $part_ref->{size}->{range} = $start . "-" . $end;
+        $part->{size}->{range} = $start . "-" . $end;
 
         # then set eff_size to a proper value
-        $part_ref->{size}->{eff_size} = $start;
+        $part->{size}->{eff_size} = $start;
 
         # write the end byte to the configuration
-        $part_ref->{end_byte} = $end_byte;
+        $part->{end_byte} = $end_byte;
 
         # and add it to the total disk space required by this config
-        $min_req_total_space += $part_ref->{size}->{eff_size};
+        $min_req_total_space += $part->{size}->{eff_size};
 
         # set the next start
-        $next_start = $part_ref->{end_byte} + 1;
+        $next_start = $part->{end_byte} + 1;
 
         # partition done
         shift @worklist;

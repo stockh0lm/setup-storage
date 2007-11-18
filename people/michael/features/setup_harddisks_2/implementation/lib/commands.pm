@@ -54,8 +54,8 @@ sub build_mkfs_commands {
 
   return if ( $fs eq "-" );
 
-  my ($create_options) = $partition->{fs_options}=~m/.*createopts="([^"]+)".*/;
-  my ($tune_options) = $partition->{fs_options}=~m/.*tuneopts="([^"]+)".*/;
+  my ( $create_options ) = $partition->{fs_options} =~ m/createopts="([^"]+)"/;
+  my ( $tune_options )   = $partition->{fs_options} =~ m/tuneopts="([^"]+)"/;
   $create_options = $partition->{fs_options} unless $create_options;
   print STDERR "create_options: $create_options tune_options: $tune_options\n" if $FAI::debug;
 
@@ -102,20 +102,20 @@ sub build_raid_commands {
     foreach my $id ( sort keys %{ $FAI::configs{$config}{volumes} } ) {
 
       # keep a reference to the current volume
-      my $vol_ref = ( \%FAI::configs )->{$config}->{volumes}->{$id};
+      my $vol = ( \%FAI::configs )->{$config}->{volumes}->{$id};
       # the desired RAID level
-      my $level = $vol_ref->{mode};
+      my $level = $vol->{mode};
 
       # prepend "raid", if the mode is numeric-only
       $level = "raid" . $level if ( $level =~ /^\d+$/ );
 
       # the list of RAID devices
-      my @devs = keys %{ $vol_ref->{devices} };
+      my @devs = keys %{ $vol->{devices} };
 
       # set proper partition types for RAID
       foreach my $d (@devs) {
         # skip devices marked missing
-        next if( 1 == $vol_ref->{devices}{$d}{missing} );
+        next if( 1 == $vol->{devices}{$d}{missing} );
         # only match physical partitions (this string of matchings is hopefully complete)
         next unless( $d =~
           m{^/dev/(cciss/c\dd\dp|ida/c\dd\dp|rd/c\dd\dp|ataraid/d\dp|sd[a-t]|hd[a-t])(\d+)$} );
@@ -199,8 +199,8 @@ sub build_lvm_commands {
     # already exist
     foreach my $lv ( keys %{ $FAI::configs{$config}{volumes} } ) {
       # reference to the size of the current logical volume
-      my $lv_ref_size = ( \%FAI::configs )->{$config}->{volumes}->{$lv}->{size};
-      next unless ( $lv_ref_size->{preserve} == 1 || $lv_ref_size->{resize} == 1 );
+      my $lv_size = ( \%FAI::configs )->{$config}->{volumes}->{$lv}->{size};
+      next unless ( $lv_size->{preserve} == 1 || $lv_size->{resize} == 1 );
 
       # preserved or resized volumes must exist already
       defined( $FAI::current_lvm_config{$vg}{volumes}{$lv} )
@@ -287,28 +287,28 @@ sub build_lvm_commands {
     # now create or resize the configured logical volumes
     foreach my $lv ( keys %{ $FAI::configs{$config}{volumes} } ) {
       # reference to the size of the current logical volume
-      my $lv_ref_size = ( \%FAI::configs )->{$config}->{volumes}->{$lv}->{size};
+      my $lv_size = ( \%FAI::configs )->{$config}->{volumes}->{$lv}->{size};
       # skip preserved partitions, but ensure that they exist
-      if ( $lv_ref_size->{preserve} == 1 ) {
+      if ( $lv_size->{preserve} == 1 ) {
         defined( $FAI::current_lvm_config{$vg}{volumes}{$lv} )
           or die "Preserved volume $vg/$lv does not exist\n";
         next;
       }
 
       # resize the volume
-      if ( $lv_ref_size->{resize} == 1 ) {
+      if ( $lv_size->{resize} == 1 ) {
         defined( $FAI::current_lvm_config{$vg}{volumes}{$lv} )
           or die "Resized volume $vg/$lv does not exist\n";
 
         # note that resizing a volume destroys the data on it
         push @FAI::commands,
-          "lvresize -L " . $lv_ref_size->{eff_size} . " $vg/$lv";
+          "lvresize -L " . $lv_size->{eff_size} . " $vg/$lv";
       }
 
       # create a new volume
       else {
         push @FAI::commands,
-          "lvcreate -n $lv -L " . $lv_ref_size->{eff_size} . " $vg";
+          "lvcreate -n $lv -L " . $lv_size->{eff_size} . " $vg";
 
         # create the filesystem on the volume
         &FAI::build_mkfs_commands( "/dev/$vg/$lv",
@@ -350,9 +350,9 @@ sub build_disk_commands {
       # find partitions that should be preserved or resized
       foreach my $part_id ( sort keys %{ $FAI::configs{$config}{partitions} } ) {
         # reference to the current partition
-        my $part_ref = ( \%FAI::configs )->{$config}->{partitions}->{$part_id};
+        my $part = ( \%FAI::configs )->{$config}->{partitions}->{$part_id};
         next unless (
-          $part_ref->{size}->{preserve} == 1 || $part_ref->{size}->{resize} == 1 );
+          $part->{size}->{preserve} == 1 || $part->{size}->{resize} == 1 );
 
         # preserved or resized partitions must exist already
         defined( $FAI::current_config{$disk}{partitions}{$part_id} )
@@ -360,7 +360,7 @@ sub build_disk_commands {
 
         # add a mapping from the configured partition to the existing one
         # (identical here, may change for extended partitions below)
-        $part_ref->{maps_to_existing} = $part_id;
+        $part->{maps_to_existing} = $part_id;
 
         # add $part_id to the list of preserved partitions
         push @to_preserve, $part_id;
@@ -412,17 +412,17 @@ sub build_disk_commands {
             # find the configured extended partition to set the mapping
             foreach my $p ( sort keys %{ $FAI::configs{$config}{partitions} } ) {
               # reference to the current partition
-              my $part_ref = ( \%FAI::configs )->{$config}->{partitions}->{$p};
-              next unless ( $part_ref->{size}->{extended} == 1 );
+              my $part = ( \%FAI::configs )->{$config}->{partitions}->{$p};
+              next unless ( $part->{size}->{extended} == 1 );
 
               # make sure resize is set
-              $part_ref->{size}->{resize} = 1;
+              $part->{size}->{resize} = 1;
 
               # store the id for further checks
               $extended = $p;
 
               # add a mapping entry to the existing extended partition
-              $part_ref->{maps_to_existing} = $part_id;
+              $part->{maps_to_existing} = $part_id;
 
               # add it to the preserved partitions
               push @to_preserve, $p;
@@ -502,15 +502,15 @@ sub build_disk_commands {
       # iterate over the worklists
       foreach my $part_id (@shrink_list) {
         # reference to the current partition
-        my $part_ref = ( \%FAI::configs )->{$config}->{partitions}->{$part_id};
+        my $part = ( \%FAI::configs )->{$config}->{partitions}->{$part_id};
         # anything to be done?
-        next unless ( $part_ref->{size}->{resize} == 1 );
+        next unless ( $part->{size}->{resize} == 1 );
 
         # get the existing id
-        my $mapped_id = $part_ref->{maps_to_existing};
+        my $mapped_id = $part->{maps_to_existing};
 
         # if partition is to be grown, move it to then grow_list
-        if ( $part_ref->{size}->{eff_size} >
+        if ( $part->{size}->{eff_size} >
           $FAI::current_config{$disk}{partitions}{$mapped_id}{count_byte} ) {
           unshift @grow_list, $part_id;
           next;
@@ -520,8 +520,8 @@ sub build_disk_commands {
         my $p = $FAI::current_config{$disk}{partitions}{$mapped_id}{new_id};
 
         # get the new starts and ends
-        my $start = $part_ref->{start_byte};
-        my $end = $part_ref->{end_byte};
+        my $start = $part->{start_byte};
+        my $end = $part->{end_byte};
 
         # build an appropriate command
         push @FAI::commands, "parted -s $disk resize $p ${start}B ${end}B";
@@ -530,17 +530,17 @@ sub build_disk_commands {
       # grow the remaining partitions
       foreach my $part_id (@grow_list) {
         # reference to the current partition
-        my $part_ref = ( \%FAI::configs )->{$config}->{partitions}->{$part_id};
+        my $part = ( \%FAI::configs )->{$config}->{partitions}->{$part_id};
 
         # get the existing id
-        my $mapped_id = $part_ref->{maps_to_existing};
+        my $mapped_id = $part->{maps_to_existing};
 
         # get the new partition id
         my $p = $FAI::current_config{$disk}{partitions}{$mapped_id}{new_id};
 
         # get the new starts and ends
-        my $start = $part_ref->{start_byte};
-        my $end = $part_ref->{end_byte};
+        my $start = $part->{start_byte};
+        my $end = $part->{end_byte};
 
         # build an appropriate command
         push @FAI::commands, "parted -s $disk resize $p ${start}B ${end}B";
@@ -552,18 +552,18 @@ sub build_disk_commands {
       # generate the commands for creating all partitions
       foreach my $part_id ( sort keys %{ $FAI::configs{$config}{partitions} } ) {
         # reference to the current partition
-        my $part_ref = ( \%FAI::configs )->{$config}->{partitions}->{$part_id};
+        my $part = ( \%FAI::configs )->{$config}->{partitions}->{$part_id};
 
         # get the new starts and ends
-        my $start = $part_ref->{start_byte};
-        my $end = $part_ref->{end_byte};
+        my $start = $part->{start_byte};
+        my $end = $part->{end_byte};
 
         # the type of the partition defaults to primary
         my $part_type = "primary";
         if ( $FAI::configs{$config}{disklabel} eq "msdos" ) {
 
           # change the partition type to extended or logical as appropriate
-          if ( $part_ref->{size}->{extended} == 1 ) {
+          if ( $part->{size}->{extended} == 1 ) {
             $part_type = "extended";
           } elsif ( $part_id > 4 ) {
             $part_type = "logical";
@@ -588,14 +588,14 @@ sub build_disk_commands {
     # generate the commands for creating all filesystems
     foreach my $part_id ( sort keys %{ $FAI::configs{$config}{partitions} } ) {
       # reference to the current partition
-      my $part_ref = ( \%FAI::configs )->{$config}->{partitions}->{$part_id};
+      my $part = ( \%FAI::configs )->{$config}->{partitions}->{$part_id};
 
       # skip preserved/resized/extended partitions
-      next if ( $part_ref->{size}->{preserve} == 1
-        || $part_ref->{size}->{resize} == 1 || $part_ref->{size}->{extended} == 1 );
+      next if ( $part->{size}->{preserve} == 1
+        || $part->{size}->{resize} == 1 || $part->{size}->{extended} == 1 );
 
       # create the filesystem on $disk$part_id
-      &FAI::build_mkfs_commands( $disk . $part_id, $part_ref );
+      &FAI::build_mkfs_commands( $disk . $part_id, $part );
     }
   }
 }
@@ -617,18 +617,18 @@ sub restore_partition_table {
     # generate the commands for creating all partitions
     foreach my $part_id ( sort keys %{ $FAI::current_config{$disk}{partitions} } ) {
       # reference to the current partition
-      my $curr_part_ref = ( \%FAI::current_config )->{$disk}->{partitions}->{$part_id};
+      my $curr_part = ( \%FAI::current_config )->{$disk}->{partitions}->{$part_id};
 
       # get the starts and ends
-      my $start = $curr_part_ref->{begin_byte};
-      my $end = $curr_part_ref->{end_byte};
+      my $start = $curr_part->{begin_byte};
+      my $end = $curr_part->{end_byte};
 
       # the type of the partition defaults to primary
       my $part_type = "primary";
       if ( $FAI::current_config{$disk}{disklabel} eq "msdos" ) {
 
         # change the partition type to extended or logical as appropriate
-        if ( $curr_part_ref->{is_extended} == 1 ) {
+        if ( $curr_part->{is_extended} == 1 ) {
           $part_type = "extended";
         } elsif ( $part_id > 4 ) {
           $part_type = "logical";

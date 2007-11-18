@@ -147,18 +147,18 @@ sub get_error {
 # defined action, when an error occurs.
 #
 # @param command bash command to be executed as string
-# @reference stdout_ref reference to a list, that should contain the standard
+# @reference stdout reference to a list, that should contain the standard
 # output of the bash command
 #
-# @reference stderr_ref reference to a list, that should contain the standard
+# @reference stderr reference to a list, that should contain the standard
 # errer output of the bash command
 #
 # @return the identifier of the error
 #
 ################################################################################
 sub execute_command_std {
-  my ( $command, $stdout_ref, $stderr_ref ) = @_;
-  my $err = &execute_command( $command, $stdout_ref, $stderr_ref );
+  my ( $command, $stdout, $stderr ) = @_;
+  my $err = &execute_command( $command, $stdout, $stderr );
   if ( $err ne "" ) {
     my $response = &get_error( $err, "response" );
     my $message  = &get_error( $err, "message" );
