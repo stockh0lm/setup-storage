@@ -376,10 +376,7 @@ $FAI::Parser = Parse::RecDescent->new(
           $FAI::configs{$FAI::device}{bootable} = $1;
           ( $FAI::device =~ /^PHY_(.+)$/ ) or die 
             "INTERNAL ERROR: unexpected device name\n";
-          # set the BOOT_DEVICE and BOOT_PARTITION variables
           $FAI::disk_var{BOOT_DEVICE} = $1; 
-          $FAI::disk_var{BOOT_PARTITION} = $1 . 
-            $FAI::configs{$FAI::device}{bootable}; 
         }
         | 'virtual'
         {
@@ -459,14 +456,14 @@ $FAI::Parser = Parse::RecDescent->new(
           # if the mount point is / or /boot and we are currently doing a
           # physical device, the variables should be set, unless they are
           # already
-          if ( $FAI::configs{$FAI::device}{bootable} == -1 && 
-            $FAI::device =~ /^PHY_(.+)$/ && 
+          if ( $FAI::device =~ /^PHY_(.+)$/ && 
             ( $item[ 1 ] eq "/boot" || ( $item[ 1 ] eq "/" && 
-              !defined( $FAI::disk_var{BOOT_DEVICE} ) ) ) ) {
-              # set the BOOT_DEVICE and BOOT_PARTITION variables
-              $FAI::disk_var{BOOT_DEVICE} = $1; 
+              !defined( $FAI::disk_var{BOOT_PARTITION} ) ) ) ) {
+              # set the BOOT_DEVICE and BOOT_PARTITION variables, if necessary
               $FAI::disk_var{BOOT_PARTITION} = $1 . 
                 $FAI::partition_pointer->{number};
+              defined( $FAI::disk_var{BOOT_DEVICE} ) or
+                $FAI::disk_var{BOOT_DEVICE} = $1; 
           }
         }
 
