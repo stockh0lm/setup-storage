@@ -299,7 +299,7 @@ sub get_current_disks {
     # obtain the partition table using bytes as units
     $error =
       &FAI::execute_command_std(
-      "parted $disk unit chs print free", \@parted_print, 0 );
+      "parted -s $disk unit chs print free", \@parted_print, 0 );
 
     # reset no_dry_run
     $FAI::no_dry_run = $no_dry_run;
