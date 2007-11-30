@@ -1,0 +1,15 @@
+PACKAGES aptitude-r
+fai-quickstart
+
+dhcp3-server dhcp3-client tftpd-hpa
+rsh-server
+debmirror tcpdump
+apache2
+apt-move mkisofs grub
+apt-proxy lftp
+
+PACKAGES aptitude-r I386
+mknbi syslinux
+
+PACKAGES aptitude-r AMD64
+mknbi syslinux
