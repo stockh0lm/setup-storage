@@ -32,7 +32,6 @@ $0=~ s#.+/##; # remove path from program name
 
 use strict;
 use Getopt::Std;
-use Data::Dumper;
 
 # global variables
 our ($opt_d,$opt_l,$opt_L,$opt_v,$opt_h,$opt_H,$opt_m,$opt_n,$opt_N,$opt_p);
@@ -137,7 +136,6 @@ foreach (@classes) {
 
 # check if any Debian related commands/types are used in package_config
 my @debiantypes= qw/taskinst aptitude aptitude-r install remove dselect-upgrade smarti/;
-print "\n". Dumper(%types);
 foreach my $dt (@debiantypes) {
   $types{$dt} and $hasdebian=1;
   if ($types{$dt} eq 'smarti') {
