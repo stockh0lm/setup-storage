@@ -256,7 +256,8 @@ sub readconfig {
   warn "$0: read config file $file\n" if $verbose;
 
   while (<FILE>) {
-    next if /^#.*$/;    # skip comments
+    next if /^#/;    # skip comments
+    s/#.*$//;        # delete comments
     next if /^\s*$/; # skip empty lines
     chomp;
     /^PRELOAD\s+(\S+)\s+(\S+)/   and push(@preloadlist,   [$1,$2]),next;
@@ -274,8 +275,7 @@ sub readconfig {
 	$doit = 0; # assume no class is defined
 	@oclasses = split(/\s+/,$cllist);
 	# if a listed class is defined, add the packaes, otherwise skip these packages
-	foreach (@oclasses) { exists $classisdef{$_} and $doit = 1; }
-    	$types{$type}=1 if $doit;   # remember which types are used in package_config
+	foreach (@oclasses) { exists $classisdef{$_} and $doit = 1;}
       }
       next;
     }
@@ -284,6 +284,7 @@ sub readconfig {
     warn "WARNING: Uppercase character found in package name in line $_\n" if $_ =~ /[A-Z]/;
     warn "ERROR: PACKAGES .. line missing in $file\n",next unless $type;
     push @{$list{$type}}, split if $doit;
+    $types{$type}=1 if $doit;   # remember which types are used in package_config
   }
 }
 # - - - - - - - - - - - - - - - - - - - - - - - - - - -
