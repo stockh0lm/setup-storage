@@ -57,7 +57,8 @@ sub build_mkfs_commands {
   my ( $create_options ) = $partition->{fs_options} =~ m/createopts="([^"]+)"/;
   my ( $tune_options )   = $partition->{fs_options} =~ m/tuneopts="([^"]+)"/;
   $create_options = $partition->{fs_options} unless $create_options;
-  print STDERR "create_options: $create_options tune_options: $tune_options\n" if $FAI::debug;
+  print "create_options: $create_options\n" if ( $FAI::debug && $create_options );
+  print "tune_options: $tune_options\n" if ( $FAI::debug && $tune_options );
 
   # create the file system with options
   my $create_tool = "mkfs.$fs";
