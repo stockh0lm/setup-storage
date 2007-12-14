@@ -53,6 +53,9 @@ sub generate_fstab {
 
   # the file to be returned, a list of lines
   my @fstab = ();
+      
+  # wait for udev to set up all devices
+  push @FAI::commands, "udevsettle --timeout=10";
 
   # walk through all configured parts
   # the order of entries is most likely wrong, it is fixed at the end
