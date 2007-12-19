@@ -642,7 +642,7 @@ sub restore_partition_table {
     warn "Partition table of disk $disk has been restored\n";
   }
 
-  die "Storage Magic failed, but the partition tables have been restored\n";
+  die "setup-storage failed, but the partition tables have been restored\n";
 }
 
 1;

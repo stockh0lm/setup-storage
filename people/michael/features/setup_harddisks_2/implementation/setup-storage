@@ -27,14 +27,14 @@ use warnings FATAL => qw(uninitialized);
 #
 # @file shdd2
 #
-# @brief The main function of Storage Magic - the tool to configure the
+# @brief The main function of setup-storage - the tool to configure the
 # partitioning from within FAI.
 #
 # This is an implementation from scratch to properly support LVM and RAID. The
 # input format is documented in @ref parser.pm
 #
 # Some (developer) documentation may be found on
-# http://faiwiki.debian.net/index.php/Storage_Magic
+# http://faiwiki.debian.net/index.php/Setup-storage
 #
 # $Id$
 #
@@ -72,7 +72,7 @@ $FAI::no_dry_run = 0;
 
 # include all subparts
 unshift @INC, "/var/lib/fai/sm/lib/";
-# unshift @INC, "/usr/share/fai/storage-magic/";
+# unshift @INC, "/usr/share/fai/setup-storage/";
 require "init.pm";
 require "volumes.pm";
 require "parser.pm";
