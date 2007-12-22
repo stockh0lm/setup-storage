@@ -43,9 +43,6 @@ package FAI;
 ################################################################################
 sub get_current_disks {
 
-  # backup value of $FAI::no_dry_run
-  my $no_dry_run = $FAI::no_dry_run;
-
   # obtain the current state of all disks
   foreach my $disk (@FAI::disks) {
 
@@ -61,44 +58,31 @@ sub get_current_disks {
     # the list to hold the output of parted commands as parsed below
     my @parted_print = ();
 
-    # set no_dry_run to perform read-only commands always
-    $FAI::no_dry_run = 1;
-
     # try to obtain the partition table for $disk
     # it might fail with parted_2 in case the disk has no partition table
     my $error =
-      &FAI::execute_command_std( "parted -s $disk unit TiB print", \@parted_print, 0 );
-
-    # reset no_dry_run
-    $FAI::no_dry_run = $no_dry_run;
+      &FAI::execute_ro_command( "parted -s $disk unit TiB print", \@parted_print, 0 );
 
     # parted_2 happens when the disk has no disk label, because parted then
     # provides no information about the disk
     if ( $error eq "parted_2" ) {
-      ( $FAI::no_dry_run == 1 ) or die 
+      $FAI::no_dry_run or die 
         "Can't run on test-only mode on this system because there is no disklabel on $disk\n";
 
       # if there is no disk configuration, write an msdos disklabel
       if ( !defined( $FAI::configs{"PHY_$disk"}{disklabel} ) ) {
 
         # write the disk label as configured
-        $error = &FAI::execute_command( "parted -s $disk mklabel msdos" );
+        $error = &FAI::execute_command("parted -s $disk mklabel msdos");
       } else {
 
         # write the disk label as configured
         $error = &FAI::execute_command(
           "parted -s $disk mklabel " . $FAI::configs{"PHY_$disk"}{disklabel} );
       }
-
-      # set no_dry_run to perform read-only commands always
-      $FAI::no_dry_run = 1;
-
       # retry partition-table print
       $error =
-        &FAI::execute_command( "parted -s $disk unit TiB print", \@parted_print, 0 );
-
-      # reset no_dry_run
-      $FAI::no_dry_run = $no_dry_run;
+        &FAI::execute_ro_command( "parted -s $disk unit TiB print", \@parted_print, 0 );
     }
 
     # check, whether there is still an error
@@ -203,8 +187,7 @@ sub get_current_disks {
         # we must have seen the header, otherwise probably the format has
         # changed
         defined( $cols{"File system"}{"start"} )
-          or die
-          or die "INTERNAL ERROR: Table header not seen yet\n";
+          or &FAI::internal_error("Table header not seen yet");
 
         # the info for the partition number
         my $num_cols_before = $cols{"Number"}{"start"};
@@ -235,27 +218,12 @@ sub get_current_disks {
       }
     }
 
-    # set no_dry_run to perform read-only commands always
-    $FAI::no_dry_run = 1;
-
     # reset the output list
     @parted_print = ();
 
     # obtain the partition table using bytes as units
     $error =
-      &FAI::execute_command_std( "parted -s $disk unit B print free", \@parted_print, 0 );
-
-    # reset no_dry_run
-    $FAI::no_dry_run = $no_dry_run;
-
-    # check, whether an error has occured - already handled by
-    # execute_command_std
-    # if ( $error ne "" )
-    # {
-    # my $response = &FAI::get_error( $error, "response" );
-    # ( $response eq "die" ) and die &FAI::get_error( $error, "message" );
-    # ( $response eq "warn" ) and warn &FAI::get_error( $error, "message" );
-    # }
+      &FAI::execute_ro_command( "parted -s $disk unit B print free", \@parted_print, 0 );
 
     # Parse the output of the byte-wise partition table
     foreach my $line (@parted_print) {
@@ -290,19 +258,13 @@ sub get_current_disks {
         and $FAI::current_config{$disk}{partitions}{$1}{is_extended} = 1;
     }
 
-    # set no_dry_run to perform read-only commands always
-    $FAI::no_dry_run = 1;
-
     # reset the output list
     @parted_print = ();
 
     # obtain the partition table using bytes as units
     $error =
-      &FAI::execute_command_std(
+      &FAI::execute_ro_command(
       "parted -s $disk unit chs print free", \@parted_print, 0 );
-
-    # reset no_dry_run
-    $FAI::no_dry_run = $no_dry_run;
 
     # Parse the output of the CHS partition table
     foreach my $line (@parted_print) {
@@ -378,18 +340,12 @@ sub get_current_lvm {
 ################################################################################
 sub get_current_raid {
 
-  # backup value of $FAI::no_dry_run
-  my $no_dry_run = $FAI::no_dry_run;
-
   # the list to hold the output of mdadm commands as parsed below
   my @mdadm_print = ();
 
-  # set no_dry_run to perform read-only commands always
-  $FAI::no_dry_run = 1;
-
   # try to obtain the list of existing RAID arrays
   my $error =
-    &FAI::execute_command_std( "mdadm --detail --scan --verbose -c partitions",
+    &FAI::execute_ro_command( "mdadm --detail --scan --verbose -c partitions",
     \@mdadm_print, 0 );
 
 # the expected output is as follows
@@ -411,9 +367,6 @@ sub get_current_raid {
       @{ $FAI::current_raid_config{$id}{devices} } = split( ",", $1 );
     }
   }
-
-  # reset no_dry_run
-  $FAI::no_dry_run = $no_dry_run;
 }
 
 1;

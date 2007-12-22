@@ -37,6 +37,44 @@ package FAI;
 
 ################################################################################
 #
+# @brief Create a line for /etc/fstab
+#
+# @reference $d_ref Device reference
+# @param $name Device name used as a key in /etc/fstab
+# @param $dev_name Real (current) device name to be used in SWAPLIST
+#
+# @return fstab line
+#
+################################################################################
+sub create_fstab_line {
+  my ($d_ref, $name, $dev_name) = @_;
+
+  my @fstab_line = ();
+
+  # start with the device key
+  push @fstab_line, $name;
+
+  # add mount information, never dump, order of filesystem checks
+  push @fstab_line, ($d_ref->{mountpoint}, $d_ref->{filesystem},
+    $d_ref->{mount_options}, 0, 2);
+  # order of filesystem checks: the root filesystem gets a 1, the others
+  # got 2
+  $fstab_line[-1] = 1 if ($d_ref->{mountpoint} eq "/");
+
+  # set the ROOT_PARTITION variable, if this is the mountpoint for /
+  $FAI::disk_var{ROOT_PARTITION} = $name
+    if ($d_ref->{mountpoint} eq "/");
+
+  # add to the swaplist, if the filesystem is swap
+  $FAI::disk_var{SWAPLIST} .= " " . $dev_name
+    if ($d_ref->{filesystem} eq "swap");
+
+  # join the columns of one line with tabs
+  return join ("\t", @fstab_line);
+}
+
+################################################################################
+#
 # @brief this function generates the fstab file from our representation of the
 # partitions to be created.
 #
@@ -59,189 +97,102 @@ sub generate_fstab {
 
   # walk through all configured parts
   # the order of entries is most likely wrong, it is fixed at the end
-  foreach my $c ( keys %$config ) {
+  foreach my $c (keys %$config) {
 
     # entry is a physical device
-    if ( $c =~ /^PHY_(.+)$/ ) {
+    if ($c =~ /^PHY_(.+)$/) {
       my $device = $1;
 
       # make sure the desired fstabkey is defined at all
-      defined( $config->{$c}->{fstabkey} )
-        or die "INTERNAL ERROR: fstabkey undefined\n";
+      defined ($config->{$c}->{fstabkey})
+        or &FAI::internal_error("fstabkey undefined");
 
       # create a line in the output file for each partition
-      foreach my $p ( sort keys %{ $config->{$c}->{partitions} } ) {
+      foreach my $p (sort keys %{ $config->{$c}->{partitions} }) {
 
         # keep a reference to save some typing
         my $p_ref = $config->{$c}->{partitions}->{$p};
 
-        # skip extended partitions
-        next if ( $p_ref->{size}->{extended} );
+        # skip extended partitions and entries without a mountpoint
+        next if ($p_ref->{size}->{extended} || $p_ref->{mountpoint} eq "-");
 
-        # skip entries without a mountpoint
-        next if ( $p_ref->{mountpoint} eq "-" );
-
-        # each line is a list of values
-        my @fstab_line = ();
+        # device key used for mounting
+        my $fstab_key = "";
 
         # write the device name as the first entry; if the user prefers uuids
         # or labels, use these if available
         my @uuid = ();
-        &execute_command_std(
-          "/lib/udev/vol_id -u $device" . $p_ref->{number},
-          \@uuid, 0 );
+        &FAI::execute_ro_command(
+          "/lib/udev/vol_id -u $device" . $p_ref->{number}, \@uuid, 0);
 
         # every device must have a uuid, otherwise this is an error (unless we
         # are testing only)
-        ( $FAI::no_dry_run == 0 || scalar(@uuid) == 1 )
-          or die "Failed to obtain UUID for $device"
-          . $p_ref->{number} . "\n";
+        ($FAI::no_dry_run == 0 || scalar (@uuid) == 1)
+          or die "Failed to obtain UUID for $device" . $p_ref->{number} . "\n";
 
         # get the label -- this is likely empty
         my @label = ();
-        &execute_command_std(
-          "/lib/udev/vol_id -l $device" . $p_ref->{number},
-          \@label, 0 );
+        &FAI::execute_ro_command(
+          "/lib/udev/vol_id -l $device" . $p_ref->{number}, \@label, 0);
 
         # using the fstabkey value the desired device entry is defined
-        if ( $config->{$c}->{fstabkey} eq "uuid" ) {
-          chomp( $uuid[0] );
-          push @fstab_line, "UUID=" . $uuid[0];
-        } elsif ( $config->{$c}->{fstabkey} eq "label" && scalar(@label) == 1 ) {
-          chomp( $label[0] );
-          push @fstab_line, "LABEL=" . $label[0];
+        if ($config->{$c}->{fstabkey} eq "uuid") {
+          chomp ($uuid[0]);
+          $fstab_key = "UUID=$uuid[0]";
+        } elsif ($config->{$c}->{fstabkey} eq "label" && scalar(@label) == 1) {
+          chomp($label[0]);
+          $fstab_key = "LABEL=$label[0]";
         } else {
           # otherwise, use the usual device path
-          push @fstab_line, $device . $p_ref->{number};
+          $fstab_key = $device . $p_ref->{number};
         }
+  
+        push @fstab, &FAI::create_fstab_line($p_ref, $fstab_key, $device . $p_ref->{number});
 
-        # next is the mountpoint
-        push @fstab_line, $p_ref->{mountpoint};
-
-        # the filesystem to be used
-        push @fstab_line, $p_ref->{filesystem};
-
-        # add the mount options
-        push @fstab_line, $p_ref->{mount_options};
-
-        # never dump
-        push @fstab_line, 0;
-
-        # order of filesystem checks; the root filesystem gets a 1, the others 2
-        push @fstab_line, 2;
-        $fstab_line[-1] = 1 if ( $p_ref->{mountpoint} eq "/" );
-
-        # join the columns of one line with tabs, and push it to our fstab line array
-        push @fstab, join( "\t", @fstab_line );
-
-        # set the ROOT_PARTITION variable, if this is the mountpoint for /
-        $FAI::disk_var{ROOT_PARTITION} = $fstab_line[0]
-          if ( $p_ref->{mountpoint} eq "/" );
-
-        # add to the swaplist, if the filesystem is swap
-        $FAI::disk_var{SWAPLIST} .= " " . $device . $p_ref->{number}
-          if ( $p_ref->{filesystem} eq "swap" );
       }
-    } elsif ( $c =~ /^VG_(.+)$/ ) {
+    } elsif ($c =~ /^VG_(.+)$/) {
       my $device = $1;
 
       # create a line in the output file for each logical volume
-      foreach my $l ( sort keys %{ $config->{$c}->{volumes} } ) {
+      foreach my $l (sort keys %{ $config->{$c}->{volumes} }) {
 
         # keep a reference to save some typing
         my $l_ref = $config->{$c}->{volumes}->{$l};
 
         # skip entries without a mountpoint
-        next if ( $l_ref->{mountpoint} eq "-" );
+        next if ($l_ref->{mountpoint} eq "-");
 
-        # each line is a list of values
-        my @fstab_line = ();
+        # real device name
+        my @fstab_key = ();
 
         # resolve the symlink to the real device
         # and write it as the first entry
-        &execute_command_std(
-          "readlink -f /dev/$device/$l", \@fstab_line, 0 );
+        &FAI::execute_ro_command("readlink -f /dev/$device/$l", \@fstab_key, 0);
         
         # remove the newline
-        chomp( $fstab_line[0] );
+        chomp ($fstab_key[0]);
 
         # make sure we got back a real device
-        ( $FAI::no_dry_run == 0 || -b $fstab_line[0] ) 
+        ($FAI::no_dry_run == 0 || -b $fstab_key[0]) 
           or die "Failed to resolve /dev/$device/$l\n";
 
-        # next is the mountpoint
-        push @fstab_line, $l_ref->{mountpoint};
-
-        # the filesystem to be used
-        push @fstab_line, $l_ref->{filesystem};
-
-        # add the mount options
-        push @fstab_line, $l_ref->{mount_options};
-
-        # never dump
-        push @fstab_line, 0;
-
-        # order of filesystem checks; the root filesystem gets a 1, the others 2
-        push @fstab_line, 2;
-        $fstab_line[-1] = 1 if ( $l_ref->{mountpoint} eq "/" );
-
-        # join the columns of one line with tabs, and push it to our fstab line array
-        push @fstab, join( "\t", @fstab_line );
-
-        # set the ROOT_PARTITION variable, if this is the mountpoint for /
-        $FAI::disk_var{ROOT_PARTITION} = $fstab_line[0]
-          if ( $l_ref->{mountpoint} eq "/" );
-
-        # add to the swaplist, if the filesystem is swap
-        $FAI::disk_var{SWAPLIST} .= " " . $fstab_line[0]
-          if ( $l_ref->{filesystem} eq "swap" );
+        push @fstab, &FAI::create_fstab_line($l_ref, $fstab_key[0], $fstab_key[0]);
       }
-    } elsif ( $c eq "RAID" ) {
+    } elsif ($c eq "RAID") {
 
       # create a line in the output file for each device
-      foreach my $r ( sort keys %{ $config->{$c}->{volumes} } ) {
+      foreach my $r (sort keys %{ $config->{$c}->{volumes} }) {
 
         # keep a reference to save some typing
         my $r_ref = $config->{$c}->{volumes}->{$r};
 
         # skip entries without a mountpoint
-        next if ( $r_ref->{mountpoint} eq "-" );
+        next if ($r_ref->{mountpoint} eq "-");
 
-        # each line is a list of values
-        my @fstab_line = ();
-
-        # write the device name as the first entry
-        push @fstab_line, "/dev/md" . $r;
-
-        # next is the mountpoint
-        push @fstab_line, $r_ref->{mountpoint};
-
-        # the filesystem to be used
-        push @fstab_line, $r_ref->{filesystem};
-
-        # add the mount options
-        push @fstab_line, $r_ref->{mount_options};
-
-        # never dump
-        push @fstab_line, 0;
-
-        # order of filesystem checks; the root filesystem gets a 1, the others 2
-        push @fstab_line, 2;
-        $fstab_line[-1] = 1 if ( $r_ref->{mountpoint} eq "/" );
-
-        # join the columns of one line with tabs, and push it to our fstab line array
-        push @fstab, join( "\t", @fstab_line );
-
-        # set the ROOT_PARTITION variable, if this is the mountpoint for /
-        $FAI::disk_var{ROOT_PARTITION} = "/dev/md" . $r
-          if ( $r_ref->{mountpoint} eq "/" );
-
-        # add to the swaplist, if the filesystem is swap
-        $FAI::disk_var{SWAPLIST} .= " /dev/md$r"
-          if ( $r_ref->{filesystem} eq "swap" );
+        push @fstab, &FAI::create_fstab_line($r_ref, "/dev/md$r", "/dev/md$r");
       }
     } else {
-      die "INTERNAL ERROR: Unexpected key $c\n";
+      &FAI::internal_error("Unexpected key $c");
     }
   }
 

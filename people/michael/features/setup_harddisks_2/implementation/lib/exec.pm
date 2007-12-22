@@ -115,6 +115,7 @@ $FAI::error_codes = [
 #
 ################################################################################
 sub get_error_message {
+
   my ($error) = @_;
   my @treffer = grep { $_->{error} eq "$error" } @$FAI::error_codes;
 
@@ -133,7 +134,8 @@ sub get_error_message {
 #
 ################################################################################
 sub get_error {
-  my ( $error, $field ) = @_;
+
+  my ($error, $field) = @_;
   my @treffer = grep { $_->{error} eq "$error" } @$FAI::error_codes;
 
   # returns the first found error message.
@@ -156,23 +158,56 @@ sub get_error {
 # @return the identifier of the error
 #
 ################################################################################
-sub execute_command_std {
-  my ( $command, $stdout, $stderr ) = @_;
-  my $err = &execute_command( $command, $stdout, $stderr );
-  if ( $err ne "" ) {
-    my $response = &get_error( $err, "response" );
-    my $message  = &get_error( $err, "message" );
+sub execute_command {
 
-    $response->() if ( ref($response) );
+  my ($command, $stdout, $stderr) = @_;
 
-    die $message if ( $response eq "die" );
+  my $err = &execute_command_internal($command, $stdout, $stderr);
+  
+  if ($err ne "") {
+    my $response = &get_error($err, "response");
+    my $message  = &get_error($err, "message");
 
-    warn $message if ( $response eq "warn" );
+    $response->() if (ref ($response));
+
+    die $message if ($response eq "die");
+
+    warn $message if ($response eq "warn");
 
     return $err;
   }
   return "";
 }
+
+sub execute_ro_command {
+  my ($command, $stdout, $stderr) = @_;
+  
+  # backup value of $FAI::no_dry_run
+  my $no_dry_run = $FAI::no_dry_run;
+
+  # set no_dry_run to perform read-only commands always
+  $FAI::no_dry_run = 1;
+
+  my $err = &execute_command_internal($command, $stdout, $stderr);
+  
+  # reset no_dry_run
+  $FAI::no_dry_run = $no_dry_run;
+  
+  if ($err ne "") {
+    my $response = &get_error($err, "response");
+    my $message  = &get_error($err, "message");
+
+    $response->() if (ref ($response));
+
+    die $message if ($response eq "die");
+
+    warn $message if ($response eq "warn");
+
+    return $err;
+  }
+  return "";
+}
+
 
 ################################################################################
 #
@@ -190,8 +225,9 @@ sub execute_command_std {
 # @return the identifier of the error
 #
 ################################################################################
-sub execute_command {
-  my ( $command, $stdout_ref, $stderr_ref ) = @_;
+sub execute_command_internal {
+
+  my ($command, $stdout_ref, $stderr_ref) = @_;
 
   my @stderr      = ();
   my @stdout      = ();
@@ -199,13 +235,13 @@ sub execute_command {
   my $stdout_line = "";
 
   #make tempfile, get perl filehandle and filename of the file
-  ( my $stderr_fh, my $stderr_filename ) = File::Temp::tempfile( UNLINK => 1 );
-  ( my $stdout_fh, my $stdout_filename ) = File::Temp::tempfile( UNLINK => 1 );
+  my ($stderr_fh, $stderr_filename) = File::Temp::tempfile(UNLINK => 1);
+  my ($stdout_fh, $stdout_filename) = File::Temp::tempfile(UNLINK => 1);
 
   # do only execute the given command, when in no_dry_mode
   if ($FAI::no_dry_run) {
 
-    ($FAI::debug)
+    $FAI::debug
       and print "(CMD) $command 1> $stdout_filename 2> $stderr_filename\n";
 
     # execute the bash command, write stderr and stdout into the testfiles
@@ -219,32 +255,29 @@ sub execute_command {
   @stdout = <$stdout_fh>;
 
   #when closing the files, the tempfiles are removed too
-  close($stderr_fh);
-  close($stdout_fh);
+  close ($stderr_fh);
+  close ($stdout_fh);
 
-  ($FAI::debug) and print "(STDERR) $_" foreach (@stderr);
-  ($FAI::debug) and print "(STDOUT) $_" foreach (@stdout);
+  $FAI::debug and print "(STDERR) $_" foreach (@stderr);
+  $FAI::debug and print "(STDOUT) $_" foreach (@stdout);
 
   #if the stderr contains information, get the first line for error recognition
-  $stderr_line = $stderr[0] if ( scalar(@stderr) > 0 );
+  $stderr_line = $stderr[0] if (scalar (@stderr));
 
   #see last comment
-  $stdout_line = $stdout[0] if ( scalar(@stdout) > 0 );
+  $stdout_line = $stdout[0] if (scalar (@stdout));
 
   #if an array is passed to the function, it is filled with the stdout
-  @$stdout_ref = @stdout if ( 'ARRAY' eq ref($stdout_ref) );
+  @$stdout_ref = @stdout if ('ARRAY' eq ref ($stdout_ref));
 
   #see above
-  @$stderr_ref = @stderr if ( 'ARRAY' eq ref($stderr_ref) );
+  @$stderr_ref = @stderr if ('ARRAY' eq ref ($stderr_ref));
 
   #get the error, if there was any
   foreach my $err (@$FAI::error_codes) {
-    if ( (
-        $err->{stdout_regex} eq "" || $stdout_line =~ /$err->{stdout_regex}/
-      ) && ( $err->{stderr_regex} eq ""
-        || $stderr_line =~ /$err->{stderr_regex}/ )
-      && ( $err->{program} eq "" || $command =~ /.*$err->{program}.*/ )
-      ) {
+    if (($err->{stdout_regex} eq "" || $stdout_line =~ /$err->{stdout_regex}/)
+      && ($err->{stderr_regex} eq "" || $stderr_line =~ /$err->{stderr_regex}/)
+      && ($err->{program} eq "" || $command =~ /$err->{program}/)) {
       return $err->{error};
     }
   }

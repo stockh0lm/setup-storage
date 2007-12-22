@@ -106,5 +106,23 @@ defined( $ENV{fl_initial} ) and $FAI::reinstall = 0;
 ################################################################################
 @FAI::commands = ();
 
+################################################################################
+#
+# @brief Report an error that is due to a bug in the implementation
+#
+# @param $error_msg Error message
+#
+################################################################################
+sub internal_error {
+
+  my ($error_msg) = @_;
+
+  die <<EOF;
+INTERNAL ERROR in setup-storage:
+$error_msg
+Please report this error to the Debian Bug Tracking System.
+EOF
+}
+
 1;
 
