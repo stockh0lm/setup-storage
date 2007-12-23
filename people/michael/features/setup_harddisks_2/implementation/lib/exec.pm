@@ -53,8 +53,7 @@ $FAI::error_codes = [
   {
     error   => "parted_1",
     message => "Parted failed to remove the partition\n",
-    stderr_regex =>
-      ".*Error: Could not stat device rm - No such file or directory.*",
+    stderr_regex => "Error: Could not stat device rm - No such file or directory",
     stdout_regex => "",
     program      => "parted",
     response     => "die",
@@ -62,7 +61,7 @@ $FAI::error_codes = [
   {
     error        => "parted_2",
     message      => "Parted could not read a disk label\n",
-    stderr_regex => ".*Error: Unable to open .* - unrecognised disk label.*",
+    stderr_regex => "Error: Unable to open .* - unrecognised disk label",
     stdout_regex => "",
     program      => "parted",
     response     => "warn",
@@ -70,8 +69,7 @@ $FAI::error_codes = [
   {
     error   => "parted_3",
     message => "Parted failed to open the device\n",
-    stderr_regex =>
-      ".*Error: Could not stat device .* - No such file or directory.*",
+    stderr_regex => "Error: Could not stat device .* - No such file or directory",
     stdout_regex => "",
     program      => "parted",
     response     => "die"
@@ -79,8 +77,7 @@ $FAI::error_codes = [
   {
     error   => "parted_4",
     message => "parted not found\n",
-    stderr_regex =>
-      ".*(parted: command not found|/sbin/parted: No such file or directory)",
+    stderr_regex => "(parted: command not found|/sbin/parted: No such file or directory)",
     stdout_regex => "",
     program      => "parted",
     response     => "die"
@@ -95,12 +92,18 @@ $FAI::error_codes = [
   },
   {
     error => "mkfs.xfs_1",
-    message =>
-"mkfs.xfs refused to create a filesystem. Probably you should add -f to the mkfs options in your disk_config file.\n",
-    stderr_regex =>
-      "mkfs.xfs: /dev/.* appears to contain an existing filesystem",
+    message => "mkfs.xfs refused to create a filesystem. Probably you should add -f to the mkfs options in your disk_config file.\n",
+    stderr_regex => "mkfs.xfs: /dev/.* appears to contain an existing filesystem",
     stdout_regex => "",
     program      => "mkfs.xfs",
+    response     => "die",
+  },
+  {
+    error        => "parted_6",
+    message      => "Parted was unable to read the partition table\n",
+    stderr_regex => "No Implementation: Partition 1 isn't aligned to cylinder boundaries",
+    stdout_regex => "",
+    program      => "parted",
     response     => "die",
   },
 ];

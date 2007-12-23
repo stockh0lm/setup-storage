@@ -54,11 +54,7 @@ package FAI;
 
 # command line parameter handling
 use Getopt::Std;
-
-# the variables for getopt
-our ($opt_X, $opt_f);
-
-# parse the command line
+our ($opt_X, $opt_f); # the variables for getopt
 &getopts('Xf:') || die <<EOF;
 USAGE: [-X]                     no test, your harddisks will be formated
                                 default: only test, no real formating
@@ -89,10 +85,8 @@ require "exec.pm";
 
 # the config source file
 my $config_file = undef;
-
 # use the config file, if given
 open($config_file, $opt_f) or die "Failed to open config file $opt_f\n" if ($opt_f);
-
 unless ($opt_f) {
   # see which class file to use
   foreach my $classfile (reverse split(/\s+/, $ENV{classes})) {
@@ -149,11 +143,9 @@ if ($FAI::debug) {
 &FAI::compute_partition_sizes;
 &FAI::compute_lv_sizes;
 
-# debugging only: print the current contents of $FAI::configs
-if ($FAI::debug) {
-  print "Desired disk layout\n";
-  print Dumper \%FAI::configs;
-}
+# print the current contents of $FAI::configs
+$FAI::debug and print "Desired disk layout\n";
+$FAI::debug and print Dumper \%FAI::configs;
 
 # generate the command script
 &FAI::build_disk_commands;
@@ -170,7 +162,7 @@ $FAI::debug and print "$_\n" foreach (@FAI::commands);
 # generate the proposed fstab contents
 my @fstab = &FAI::generate_fstab(\%FAI::configs);
 
-# debugging only; print fstab
+# print fstab
 $FAI::debug and print "$_\n" foreach (@fstab);
 
 # write the proposed contents of fstab to $LOGDIR/fstab

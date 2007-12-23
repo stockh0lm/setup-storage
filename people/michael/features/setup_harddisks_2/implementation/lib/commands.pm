@@ -111,8 +111,7 @@ sub set_partition_type_on_phys_dev {
 ################################################################################
 sub build_raid_commands {
 
-  # loop through all configs
-  foreach my $config (keys %FAI::configs) {
+  foreach my $config (keys %FAI::configs) { # loop through all configs
     # no LVM or physical devices here
     next if ($config =~ /^VG_./ || $config =~ /^PHY_./);
     ($config eq "RAID") or &FAI::internal_error("Invalid config $config");

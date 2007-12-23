@@ -273,6 +273,7 @@ sub convert_unit
   my ($val) = @_;
   ($val =~ /^(\d+)([kMGTP%]?)(B)?\s*$/) or
     &FAI::internal_error("convert_unit $val");
+  $val = $1 * (1 / 1024) * (1 / 1024) if ($2 eq "" && defined ($3) && $3 eq "B");
   $val = $1 * (1 / 1024) if ($2 eq "k");
   $val = $1 if ($2 eq "M");
   $val = $1 * 1024 if ($2 eq "G");

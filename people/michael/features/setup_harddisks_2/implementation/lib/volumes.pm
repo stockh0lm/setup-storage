@@ -47,10 +47,10 @@ sub get_current_disks {
   foreach my $disk (@FAI::disks) {
 
     # create full paths
-    ( $disk =~ m{^/} ) or $disk = "/dev/$disk";
+    ($disk =~ m{^/}) or $disk = "/dev/$disk";
 
     # make sure, $disk is a proper block device
-    ( -b $disk ) or die "$disk is not a block special device!\n";
+    (-b $disk) or die "$disk is not a block special device!\n";
 
     # initialise the hash
     $FAI::current_config{$disk}{partitions} = {};
@@ -61,35 +61,28 @@ sub get_current_disks {
     # try to obtain the partition table for $disk
     # it might fail with parted_2 in case the disk has no partition table
     my $error =
-      &FAI::execute_ro_command( "parted -s $disk unit TiB print", \@parted_print, 0 );
+      &FAI::execute_ro_command("parted -s $disk unit TiB print", \@parted_print, 0);
 
     # parted_2 happens when the disk has no disk label, because parted then
     # provides no information about the disk
-    if ( $error eq "parted_2" ) {
+    if ($error eq "parted_2") {
       $FAI::no_dry_run or die 
         "Can't run on test-only mode on this system because there is no disklabel on $disk\n";
 
       # if there is no disk configuration, write an msdos disklabel
-      if ( !defined( $FAI::configs{"PHY_$disk"}{disklabel} ) ) {
+      if (!defined ($FAI::configs{"PHY_$disk"}{disklabel})) {
 
         # write the disk label as configured
         $error = &FAI::execute_command("parted -s $disk mklabel msdos");
       } else {
 
         # write the disk label as configured
-        $error = &FAI::execute_command(
-          "parted -s $disk mklabel " . $FAI::configs{"PHY_$disk"}{disklabel} );
+        $error = &FAI::execute_command("parted -s $disk mklabel " 
+          . $FAI::configs{"PHY_$disk"}{disklabel});
       }
       # retry partition-table print
       $error =
-        &FAI::execute_ro_command( "parted -s $disk unit TiB print", \@parted_print, 0 );
-    }
-
-    # check, whether there is still an error
-    if ( $error ne "" ) {
-      my $response = &FAI::get_error( $error, "response" );
-      ( $response eq "die" ) and die &FAI::get_error( $error, "message" );
-      ( $response eq "warn" ) and warn &FAI::get_error( $error, "message" );
+        &FAI::execute_ro_command("parted -s $disk unit TiB print", \@parted_print, 0);
     }
 
 # the following code parses the output of parted print, using various units
@@ -141,34 +134,33 @@ sub get_current_disks {
     foreach my $line (@parted_print) {
 
       # now we test line by line - some of them may be ignored
-      next if ( $line =~ /^Disk /
-        || $line =~ /^\s*$/
-        || $line =~ /^WARNING: You are not superuser/ );
+      next if ($line =~ /^Disk / || $line =~ /^\s*$/
+        || $line =~ /^WARNING: You are not superuser/);
 
       # determine the logical sector size
-      if ( $line =~ /^Sector size \(logical\/physical\): (\d+)B\/(\d+)B$/ ) {
+      if ($line =~ /^Sector size \(logical\/physical\): (\d+)B\/\d+B$/) {
         $FAI::current_config{$disk}{sector_size} = $1;
       }
 
       # read and store the current disk label
-      elsif ( $line =~ /^Partition Table: (.+)$/ ) {
+      elsif ($line =~ /^Partition Table: (.+)$/) {
         $FAI::current_config{$disk}{disklabel} = $1;
       }
 
       # the line containing the table headers
-      elsif ( $line =~ /^(Number\s+)(\S+\s+)+/ ) {
+      elsif ($line =~ /^(Number\s+)(\S+\s+)+/) {
         my $col_start = 0;
 
         # check the length of each heading; note that they might contain spaces
-        while ( $line =~ /^(\S+( [a-z]\S+)?\s*)([A-Z].*)?$/ ) {
+        while ($line =~ /^(\S+( [a-z]\S+)?\s*)([A-Z].*)?$/) {
           my $heading = $1;
 
           # set the line to the remainder
           $line = "";
-          $line = $3 if defined($3);
+          $line = $3 if defined ($3);
 
           # the width of the column includes any whitespace
-          my $col_width = length($heading);
+          my $col_width = length ($heading);
           $heading =~ s/(\S+)\s*$/$1/;
 
           # build the hash entry
@@ -179,14 +171,11 @@ sub get_current_disks {
           };
           $col_start += $col_width;
         }
-      }
-
-      # one of the partitions
-      else {
+      } else { # one of the partitions
 
         # we must have seen the header, otherwise probably the format has
         # changed
-        defined( $cols{"File system"}{"start"} )
+        defined ($cols{"File system"}{"start"})
           or &FAI::internal_error("Table header not seen yet");
 
         # the info for the partition number
@@ -204,7 +193,7 @@ sub get_current_disks {
 
         # if there is no partition number, then it must be free space, so no
         # file system either
-        next if ( $id eq "" );
+        next if ($id eq "");
 
         # extract the set of characters
         $line =~ /^.{$fs_cols_before}(.{$fs_col_width})/;
@@ -223,15 +212,15 @@ sub get_current_disks {
 
     # obtain the partition table using bytes as units
     $error =
-      &FAI::execute_ro_command( "parted -s $disk unit B print free", \@parted_print, 0 );
+      &FAI::execute_ro_command("parted -s $disk unit B print free", \@parted_print, 0);
 
     # Parse the output of the byte-wise partition table
     foreach my $line (@parted_print) {
 
       # the disk size line (Disk /dev/hda: 82348277759B)
-      if ( $line =~ /Disk \Q$disk\E: (\d+)B$/ ) {
+      if ($line =~ /Disk \Q$disk\E: (\d+)B$/) {
         $FAI::current_config{$disk}{begin_byte} = 0;
-        $FAI::current_config{$disk}{end_byte}   = ( $1 - 1 );
+        $FAI::current_config{$disk}{end_byte}   = $1 - 1;
         $FAI::current_config{$disk}{size}       = $1;
 
         # nothing else to be done
@@ -239,10 +228,8 @@ sub get_current_disks {
       }
 
       # One of the partition lines, see above example
-      next
-        unless ( $line =~
-        /^\s*(\d+)\s+(\d+)B\s+(\d+)B\s+(\d+)B(\s+(primary|logical|extended))?/i
-        );
+      next unless ($line =~
+        /^\s*(\d+)\s+(\d+)B\s+(\d+)B\s+(\d+)B(\s+(primary|logical|extended))?/i);
 
       # mark the bounds of existing partitions
       $FAI::current_config{$disk}{partitions}{$1}{begin_byte} = $2;
@@ -264,16 +251,15 @@ sub get_current_disks {
     # obtain the partition table using bytes as units
     $error =
       &FAI::execute_ro_command(
-      "parted -s $disk unit chs print free", \@parted_print, 0 );
+      "parted -s $disk unit chs print free", \@parted_print, 0);
 
     # Parse the output of the CHS partition table
     foreach my $line (@parted_print) {
 
    # find the BIOS geometry that looks like this:
    # BIOS cylinder,head,sector geometry: 10011,255,63.  Each cylinder is 8225kB.
-      if ( $line =~
-        /^BIOS cylinder,head,sector geometry:\s*(\d+),(\d+),(\d+)\.\s*Each cylinder is \d+kB\.$/
-        ) {
+      if ($line =~
+        /^BIOS cylinder,head,sector geometry:\s*(\d+),(\d+),(\d+)\.\s*Each cylinder is \d+kB\.$/) {
         $FAI::current_config{$disk}{bios_cylinders}         = $1;
         $FAI::current_config{$disk}{bios_heads}             = $2;
         $FAI::current_config{$disk}{bios_sectors_per_track} = $3;
@@ -281,20 +267,18 @@ sub get_current_disks {
     }
 
     # make sure we have determined all the necessary information
-    ( $FAI::current_config{$disk}{begin_byte} == 0 )
+    ($FAI::current_config{$disk}{begin_byte} == 0)
       or die "Invalid start byte\n";
-    ( $FAI::current_config{$disk}{end_byte} > 0 ) or die "Invalid end byte\n";
-    defined( $FAI::current_config{$disk}{size} )
+    ($FAI::current_config{$disk}{end_byte} > 0) or die "Invalid end byte\n";
+    defined ($FAI::current_config{$disk}{size})
       or die "Failed to determine disk size\n";
-    defined( $FAI::current_config{$disk}{sector_size} )
+    defined ($FAI::current_config{$disk}{sector_size})
       or die "Failed to determine sector size\n";
-    defined( $FAI::current_config{$disk}{bios_sectors_per_track} )
+    defined ($FAI::current_config{$disk}{bios_sectors_per_track})
       or die "Failed to determine the number of sectors per track\n";
 
   }
 }
-
-use Linux::LVM;
 
 ################################################################################
 #
@@ -302,6 +286,8 @@ use Linux::LVM;
 #
 ################################################################################
 sub get_current_lvm {
+  
+  use Linux::LVM;
 
   # get the existing volume groups
   foreach my $vg (get_volume_group_list()) {
@@ -320,8 +306,8 @@ sub get_current_lvm {
       my $short_name = $lv_name;
       $short_name =~ "s{/dev/\Q$vg\E/}{}";
       $FAI::current_lvm_config{$vg}{volumes}{$short_name}{size} =
-        &FAI::convert_unit( $lv_info{$lv_name}->{lv_size} .
-          $lv_info{$lv_name}->{lv_size_unit} );
+        &FAI::convert_unit($lv_info{$lv_name}->{lv_size} .
+          $lv_info{$lv_name}->{lv_size_unit});
     }
     
     # store the physical volumes
@@ -345,8 +331,8 @@ sub get_current_raid {
 
   # try to obtain the list of existing RAID arrays
   my $error =
-    &FAI::execute_ro_command( "mdadm --detail --scan --verbose -c partitions",
-    \@mdadm_print, 0 );
+    &FAI::execute_ro_command("mdadm --detail --scan --verbose -c partitions",
+    \@mdadm_print, 0);
 
 # the expected output is as follows
 # $ mdadm --detail --scan --verbose -c partitions
@@ -360,11 +346,11 @@ sub get_current_raid {
 
   # parse the output line by line
   foreach my $line (@mdadm_print) {
-    if ( $line =~ /^ARRAY \/dev\/md(\d+) level=(\S+) num-devices=\d+ UUID=/ ) {
+    if ($line =~ /^ARRAY \/dev\/md(\d+) level=(\S+) num-devices=\d+ UUID=/) {
       $id = $1;
       $FAI::current_raid_config{$id}{mode} = $2;
-    } elsif ( $line =~ /^\s*devices=(\S+)$/ ) {
-      @{ $FAI::current_raid_config{$id}{devices} } = split( ",", $1 );
+    } elsif ($line =~ /^\s*devices=(\S+)$/) {
+      @{ $FAI::current_raid_config{$id}{devices} } = split (",", $1);
     }
   }
 }
