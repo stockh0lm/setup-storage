@@ -440,11 +440,12 @@ sub get_preserved_partitions {
 # flushed
 #
 # @param $config Config entry
+# @param $to_preserve Reference to list of preserved/resized partitions
 #
 ################################################################################
-sub get_preserved_partitions {
+sub rebuild_preserved_partitions {
   
-  my ($config) = @_;
+  my ($config, $to_preserve) = @_;
   ($config =~ /^PHY_(.+)$/) or &FAI::internal_error("Invalid config $config");
   my $disk = $1; # the device to be configured
   
@@ -453,7 +454,7 @@ sub get_preserved_partitions {
   my $part_nr = 0;
 
   # now rebuild all preserved partitions
-  foreach my $part_id (@to_preserve) {
+  foreach my $part_id (@{$to_preserve}) {
     # get the existing id
     my $mapped_id =
     $FAI::configs{$config}{partitions}{$part_id}{maps_to_existing};
@@ -516,7 +517,7 @@ sub setup_partitions {
   push @FAI::commands, "parted -s $disk mklabel "
     . $FAI::configs{$config}{disklabel};
 
-  &FAI::rebuild_preserved_partitions($config);
+  &FAI::rebuild_preserved_partitions($config, \@to_preserve);
 
   # resize partitions; first we shrink partitions, then grow others;
   # furthermore we start from the end to shrink logical partitions before
@@ -525,7 +526,7 @@ sub setup_partitions {
   my @grow_list   = ();
 
   # iterate over the worklists
-  foreach my $part_id (reverse sort (@to_preserve));
+  foreach my $part_id (reverse sort (@to_preserve)) {
     # reference to the current partition
     my $part = (\%FAI::configs)->{$config}->{partitions}->{$part_id};
     # anything to be done?
