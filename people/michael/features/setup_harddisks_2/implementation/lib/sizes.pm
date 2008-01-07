@@ -215,8 +215,8 @@ sub compute_lv_sizes {
       # get the effective sizes (in Bytes) from the range
       my ($start, $end) = &FAI::make_range($lv_size->{range}, "${vg_size}MB");
       # make them MB
-      $start *= 1024.0 * 1024.0;
-      $end *= 1024.0 * 1024.0;
+      $start /= 1024.0 * 1024.0;
+      $end /= 1024.0 * 1024.0;
 
       # increase the used space
       $min_space += $start;
@@ -252,8 +252,8 @@ sub compute_lv_sizes {
       my ($start, $end) =
       &FAI::make_range($FAI::configs{$config}{volumes}{$lv}{size}{range}, "${vg_size}MB");
       # make them MB
-      $start *= 1024.0 * 1024.0;
-      $end *= 1024.0 * 1024.0;
+      $start /= 1024.0 * 1024.0;
+      $end /= 1024.0 * 1024.0;
 
       # write the final size
       $FAI::configs{$config}{volumes}{$lv}{size}{eff_size} =
