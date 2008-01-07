@@ -238,7 +238,7 @@ sub compute_lv_sizes {
 
     # test, whether the configuration fits on the volume group at all
     ($min_space < $vg_size)
-      or die "Volume group $vg requires $min_space MB\n";
+      or die "Volume group $vg requires $min_space MB, but available space was estimated to be $vg_size\n";
 
     # the extension factor
     my $redist_factor = 0;
