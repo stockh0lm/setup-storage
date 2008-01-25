@@ -74,13 +74,11 @@ sub get_current_disks {
 
         # write the disk label as configured
         $error = &FAI::execute_command("parted -s $disk mklabel msdos");
-        &FAI::execute_command("udevsettle --timeout=10");
       } else {
 
         # write the disk label as configured
         $error = &FAI::execute_command("parted -s $disk mklabel " 
           . $FAI::configs{"PHY_$disk"}{disklabel});
-        &FAI::execute_command("udevsettle --timeout=10");
       }
       # retry partition-table print
       $error =

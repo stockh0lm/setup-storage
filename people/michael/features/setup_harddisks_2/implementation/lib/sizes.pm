@@ -50,6 +50,7 @@ sub make_range {
   use POSIX qw(ceil floor);
 
   my ($rstr, $size) = @_;
+  $FAI::debug and print "make_range called with $rstr, $size\n";
   # convert size to Bytes
   my $size_b = &FAI::convert_unit($size);
   # check the format of the string
