@@ -74,16 +74,20 @@ sub get_current_disks {
 
         # write the disk label as configured
         $error = &FAI::execute_command("parted -s $disk mklabel msdos");
+        &FAI::execute_command("udevsettle --timeout=10");
       } else {
 
         # write the disk label as configured
         $error = &FAI::execute_command("parted -s $disk mklabel " 
           . $FAI::configs{"PHY_$disk"}{disklabel});
+        &FAI::execute_command("udevsettle --timeout=10");
       }
       # retry partition-table print
       $error =
         &FAI::execute_ro_command("parted -s $disk unit TiB print", \@parted_print, 0);
     }
+        
+    ($error eq "") or die "Failed to read the partition table from $disk\n";
 
 # the following code parses the output of parted print, using various units
 # (TiB, B, chs)
