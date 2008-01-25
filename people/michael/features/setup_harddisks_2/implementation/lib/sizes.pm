@@ -50,9 +50,8 @@ sub make_range {
   use POSIX qw(ceil floor);
 
   my ($rstr, $size) = @_;
-  $FAI::debug and print "make_range called with $rstr, $size\n";
   # convert size to Bytes
-  my $size_b = &FAI::convert_unit($size);
+  my $size_b = &FAI::convert_unit($size) * 1024.0 * 1024.0;
   # check the format of the string
   ($rstr =~ /^(\d+%?)-(\d+%?)$/) or &FAI::internal_error("Invalid range");
   my ($start, $end) = ($1, $2);
