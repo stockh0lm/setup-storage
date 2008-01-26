@@ -53,10 +53,10 @@ sub make_range {
   # convert size to Bytes
   my $size_b = &FAI::convert_unit($size) * 1024.0 * 1024.0;
   # check the format of the string
-  ($rstr =~ /^(\d+%?)-(\d+%?)$/) or &FAI::internal_error("Invalid range");
-  my ($start, $end) = ($1, $2);
+  ($rstr =~ /^(\d+(\.\d+)?%?)-(\d+(\.\d+)?%?)$/) or &FAI::internal_error("Invalid range");
+  my ($start, $end) = ($1, $3);
   # start may be given in percents of the size
-  if ($start =~ /^(\d+)%$/) {
+  if ($start =~ /^(\d+(\.\d+)?)%$/) {
     # rewrite it to bytes
     $start = POSIX::floor($size_b * $1 / 100);
   } else {
@@ -65,7 +65,7 @@ sub make_range {
   }
 
   # end may be given in percents of the size
-  if ( $end =~ /^(\d+)%$/ ) {
+  if ( $end =~ /^(\d+(\.\d+)?)%$/ ) {
     # rewrite it to bytes
     $end = POSIX::ceil($size_b * $1 / 100);
   } else {
@@ -407,7 +407,8 @@ sub do_partition_real {
   # reference to the current partition
   my $part = (\%FAI::configs)->{$config}->{partitions}->{$part_id};
         
-  my ($start, $end) = &FAI::make_range($part->{size}->{range}, $current_disk->{size});
+  my ($start, $end) = &FAI::make_range($part->{size}->{range},
+    $current_disk->{size} . "B");
 
   # check, whether the size is fixed
   if ($end != $start) {
@@ -444,7 +445,8 @@ sub do_partition_real {
         next;
       } else {
         my ($min_size, $max_size) = &FAI::make_range(
-          $FAI::configs{$config}{partitions}{$p}{size}{range}, $current_disk->{size});
+          $FAI::configs{$config}{partitions}{$p}{size}{range},
+          $current_disk->{size} . "B");
 
         # logical partitions require the space for the EPBR to be left
         # out
