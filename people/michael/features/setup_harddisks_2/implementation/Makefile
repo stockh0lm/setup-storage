@@ -1,19 +1,12 @@
 DESTDIR=/srv/fai/nfsroot/live/filesystem.dir
 DEST=$(DESTDIR)/usr/lib/perl/5.8
 
-BIN   = shdd2
-FILES = shdd2-commands \
-	shdd2-exec \
-	shdd2-fstab \
-	shdd2-init \
-	shdd2-parser \
-	shdd2-sizes \
-	shdd2-volumes
+FILES := $(wildcard lib/*.pm )
 
 install:
 	install -d $(DEST)
 	install -m 444 $(FILES) $(DEST) 
-	install -m 744 $(BIN) $(DESTDIR)/usr/bin
+#	install -m 744 $(BIN) $(DESTDIR)/usr/bin
 
 
 # TODO (bessere) fehlermeldungen wenn parted oder mdadm oder lvm tools streiken
