@@ -111,6 +111,7 @@ sub scan_files {
 			# check only files
 			if (-f) {
 				if    ($_ eq 'postinst')       { parse_script($File::Find::dir,$_); }
+				elsif ($_ eq 'preinst')        { parse_script($File::Find::dir,$_); }
 				elsif ($_ eq 'file-modes')     { parse_filemodes($File::Find::dir,$_); }
 				elsif ($_ =~ m#$ignore_files#o) { }
 				else  {
