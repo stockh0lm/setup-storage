@@ -90,7 +90,7 @@ sub set_partition_type_on_phys_dev {
   my ($d, $t) = @_;
   # only match physical partitions (this string of matchings is hopefully complete)
   return unless($d =~
-    m{^/dev/(cciss/c\dd\dp|ida/c\dd\dp|rd/c\dd\dp|ataraid/d\dp|sd[a-t]|hd[a-t])(\d+)$});
+    m{^/dev/(i2o/hd[a-t]|cciss/c\dd\dp|ida/c\dd\dp|rd/c\dd\dp|ataraid/d\dp|sd[a-t]|hd[a-t])(\d+)$});
   my $disk = "/dev/$1";
   my $part_no = $2;
   # in case the name was /dev/cciss/c0d1p or the like, remove the trailing
