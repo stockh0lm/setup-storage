@@ -74,14 +74,14 @@ $opt_X and $FAI::no_dry_run = 1;
 $opt_X or warn "setup-harddisks is running in test-only mode\n";
 
 # include all subparts, which are part of the FAI perl package
-unshift @INC, "/usr/share/fai/setup-storage/";
-require "init.pm";
-require "volumes.pm";
-require "parser.pm";
-require "sizes.pm";
-require "commands.pm";
-require "fstab.pm";
-require "exec.pm";
+use lib "/usr/share/fai/setup-storage/";
+use init;
+use volumes;
+use parser;
+use sizes;
+use commands;
+use fstab;
+use exec;
 
 # the config source file
 my $config_file = undef;
