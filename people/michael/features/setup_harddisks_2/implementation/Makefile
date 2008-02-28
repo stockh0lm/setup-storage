@@ -2,11 +2,12 @@ DESTDIR=/srv/fai/nfsroot/live/filesystem.dir
 DEST=$(DESTDIR)/usr/lib/perl/5.8
 
 FILES := $(wildcard lib/*.pm )
+BIN   := setup-storage
 
 install:
 	install -d $(DEST)
 	install -m 444 $(FILES) $(DEST) 
-#	install -m 744 $(BIN) $(DESTDIR)/usr/bin
+	install -m 744 $(BIN) $(DESTDIR)/usr/bin
 
 
 # TODO (bessere) fehlermeldungen wenn parted oder mdadm oder lvm tools streiken
