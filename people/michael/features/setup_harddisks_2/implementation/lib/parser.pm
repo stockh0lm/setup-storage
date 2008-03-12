@@ -218,7 +218,12 @@ sub init_part_config {
       # msdos disk labels don't allow for more than 4 primary partitions
       ($extended < 5)
         or die "Too many primary partitions while creating extended\n";
-    
+
+      # initialize the entry
+      (\%FAI::configs)->{$FAI::device}->{partitions}->{$extended} = {
+        size => {}
+      };
+
       my $part_size =
         (\%FAI::configs)->{$FAI::device}->{partitions}->{$extended}->{size};
 
