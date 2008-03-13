@@ -100,9 +100,6 @@ sub init_disk_config {
   # appropriate
   ($disk =~ m{^/}) or $disk = "/dev/$disk";
 
-  # test, whether $disk is a block special device
-  (-b $disk) or die "$disk is not a valid device name\n";
-
   # prepend PHY_
   $FAI::device = "PHY_$disk";
 
@@ -167,7 +164,8 @@ sub init_part_config {
     $part_number++;
 
     # msdos disk labels don't allow for more than 4 primary partitions
-    ($part_number < 5 || $FAI::configs{$FAI::device}{disklabel} ne "msdos")
+    ($part_number < 5 || $FAI::configs{$FAI::device}{virtual} || 
+      $FAI::configs{$FAI::device}{disklabel} ne "msdos")
       or die "$part_number are too many primary partitions\n";
   } else {
 

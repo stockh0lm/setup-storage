@@ -561,6 +561,8 @@ sub compute_partition_sizes
     # nothing to be done, if this is a configuration for a virtual disk
     next if $FAI::configs{$config}{virtual};
     my $disk = $1; # the device name of the disk
+    # test, whether $disk is a block special device
+    (-b $disk) or die "$disk is not a valid device name\n";
     # reference to the current disk config
     my $current_disk = $FAI::current_config{$disk};
 
