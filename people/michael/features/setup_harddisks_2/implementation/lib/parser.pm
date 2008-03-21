@@ -153,7 +153,7 @@ sub init_part_config {
       defined ($FAI::configs{$FAI::device}{partitions}{$part_id}{size}{extended}) or last;
 
       # on msdos disklabels we cannot have more than 4 primary partitions
-      last if ($part_id > 4
+      last if ($part_id > 4 && ! $FAI::configs{$FAI::device}{virtual}
         && $FAI::configs{$FAI::device}{disklabel} eq "msdos");
 
       # store the latest index found
