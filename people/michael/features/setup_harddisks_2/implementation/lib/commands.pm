@@ -129,9 +129,16 @@ sub build_raid_commands {
 
       # the list of RAID devices
       my @devs = keys %{ $vol->{devices} };
+      my @eff_devs = ();
+      my @spares = ();
 
       # set proper partition types for RAID
       foreach my $d (@devs) {
+        if ($vol->{devices}->{$d}->{spare}) {
+          push @spares, $d;
+        } else {
+          push @eff_devs, $d;
+        }
         # skip devices marked missing
         next if $vol->{devices}{$d}{missing};
         &FAI::set_partition_type_on_phys_dev($d, "raid");
@@ -141,8 +148,9 @@ sub build_raid_commands {
       
       # create the command
       push @FAI::commands,
-        "yes | mdadm --create /dev/md$id --level=$level --raid-devices="
-        . scalar(@devs) . " " . join(" ", @devs);
+        "yes | mdadm --create /dev/md$id --level=$level --force --run --raid-devices="
+        . scalar(@eff_devs) . " --spare-devices=" . scalar(@spares) . " "
+        . join(" ", @eff_devs) . " " . join(" ", @spares);
 
       # create the filesystem on the volume
       &FAI::build_mkfs_commands("/dev/md$id",
