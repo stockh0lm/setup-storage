@@ -3,6 +3,7 @@ these are some helper scripts to ease FAI development and testing.
 for now it's mostly targeted to development of or testing with fai-cd.
 
 You'll need debooststrap, maybe a Debian mirror, pbuilder (read pbuilder docs
+at http://www.netfort.gr.jp/~dancer/software/pbuilder-doc/pbuilder-doc.html 
 for a nice introduction),and qemu, everything gets faster when using the kqemu
 accelarator kernel module.
 
