@@ -406,7 +406,9 @@ sub mkpackagelist {
 #     }
 # TODO: aptitude also can install tasks. How do we check them? Currently they will push to @unknown
 
-    if ($cache->exists($pack)) { # simple package name
+    # TODO(henning): hmm, for some reason I had to add this on Etch to get
+    # make-fai.nfsroot working - don know why
+    if ($aptpkg_avail==1 && $cache->exists($pack)) { # simple package name
       # check for packages with no installation candidates
       # explicitely don't check if the name is provided by some other package:
       # apt-get install <virtual> fails with newer apt

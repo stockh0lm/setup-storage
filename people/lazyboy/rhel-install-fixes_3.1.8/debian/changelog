@@ -1,3 +1,9 @@
+fai (3.1.8rheldemo0.2.2) unstable; urgency=low
+
+  * add a lot more fixes, including making install_packages not only work when running on redhat, but also when running in make-fai-nfsroot on debian, as well as dir and network installs in debian 
+
+ -- Henning Sprang <henning@filet.lazy>  Tue, 10 Jul 2007 11:06:41 +0200
+
 fai (3.1.8rheldemo0.2.1) unstable; urgency=low
 
   * add rhel demo example config
