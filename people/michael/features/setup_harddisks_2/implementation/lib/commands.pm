@@ -63,6 +63,7 @@ sub build_mkfs_commands {
   # create the file system with options
   my $create_tool = "mkfs.$fs";
   ($fs eq "swap") and $create_tool = "mkswap";
+  ($fs eq "xfs") and $create_options = "$create_options -f" unless ($create_options =~ m/-f/);
   push @FAI::commands, "$create_tool $create_options $device";
   
   # possibly tune the file system - this depends on whether the file system
