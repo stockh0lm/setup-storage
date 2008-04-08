@@ -147,7 +147,7 @@ sub init_part_config {
   if ($type eq "primary") {
 
     # find all previously defined primary partitions
-    foreach my $part_id (sort keys %{ $FAI::configs{$FAI::device}{partitions} }) {
+    foreach my $part_id (sort { $a <=> $b } keys %{ $FAI::configs{$FAI::device}{partitions} }) {
 
       # break, if the partition has not been created by init_part_config
       defined ($FAI::configs{$FAI::device}{partitions}{$part_id}{size}{extended}) or last;
@@ -173,7 +173,7 @@ sub init_part_config {
     # this branch, it has been ensured above
 
     # find the index of the new partition, initialise it to the highest current index
-    foreach my $part_id (sort keys %{ $FAI::configs{$FAI::device}{partitions} }) {
+    foreach my $part_id (sort { $a <=> $b } keys %{ $FAI::configs{$FAI::device}{partitions} }) {
 
       # skip primary partitions
       next if ($part_id < 5);
@@ -198,7 +198,7 @@ sub init_part_config {
       my $extended = 0;
 
       # find all previously defined primary partitions
-      foreach my $part_id (sort keys %{ $FAI::configs{$FAI::device}{partitions} }) {
+      foreach my $part_id (sort { $a <=> $b } keys %{ $FAI::configs{$FAI::device}{partitions} }) {
 
         # break, if the partition has not been created by init_part_config
         defined ($FAI::configs{$FAI::device}{partitions}{$part_id}{size}{extended}) or last;

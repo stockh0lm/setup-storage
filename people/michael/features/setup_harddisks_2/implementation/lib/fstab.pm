@@ -108,7 +108,7 @@ sub generate_fstab {
         or &FAI::internal_error("fstabkey undefined");
 
       # create a line in the output file for each partition
-      foreach my $p (sort keys %{ $config->{$c}->{partitions} }) {
+      foreach my $p (sort { $a <=> $b } keys %{ $config->{$c}->{partitions} }) {
 
         # keep a reference to save some typing
         my $p_ref = $config->{$c}->{partitions}->{$p};
@@ -154,7 +154,7 @@ sub generate_fstab {
       my $device = $1;
 
       # create a line in the output file for each logical volume
-      foreach my $l (sort keys %{ $config->{$c}->{volumes} }) {
+      foreach my $l (sort { $a <=> $b } keys %{ $config->{$c}->{volumes} }) {
 
         # keep a reference to save some typing
         my $l_ref = $config->{$c}->{volumes}->{$l};
@@ -181,7 +181,7 @@ sub generate_fstab {
     } elsif ($c eq "RAID") {
 
       # create a line in the output file for each device
-      foreach my $r (sort keys %{ $config->{$c}->{volumes} }) {
+      foreach my $r (sort { $a <=> $b } keys %{ $config->{$c}->{volumes} }) {
 
         # keep a reference to save some typing
         my $r_ref = $config->{$c}->{volumes}->{$r};

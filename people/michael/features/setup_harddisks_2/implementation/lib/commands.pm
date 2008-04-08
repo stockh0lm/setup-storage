@@ -117,7 +117,7 @@ sub build_raid_commands {
     ($config eq "RAID") or &FAI::internal_error("Invalid config $config");
 
     # create all raid devices
-    foreach my $id (sort keys %{ $FAI::configs{$config}{volumes} }) {
+    foreach my $id (sort { $a <=> $b } keys %{ $FAI::configs{$config}{volumes} }) {
 
       # keep a reference to the current volume
       my $vol = (\%FAI::configs)->{$config}->{volumes}->{$id};
@@ -344,7 +344,7 @@ sub get_preserved_partitions {
   my @to_preserve = ();
 
   # find partitions that should be preserved or resized
-  foreach my $part_id ( sort keys %{ $FAI::configs{$config}{partitions} } ) {
+  foreach my $part_id ( sort { $a <=> $b } keys %{ $FAI::configs{$config}{partitions} } ) {
     # reference to the current partition
     my $part = (\%FAI::configs)->{$config}->{partitions}->{$part_id};
     next unless ($part->{size}->{preserve} || $part->{size}->{resize});
@@ -399,14 +399,14 @@ sub get_preserved_partitions {
     # if the extended partition is not listed yet, find and add it now; note
     # that we need to add the existing one
     if ($has_logical && -1 == $extended) {
-      foreach my $part_id (sort keys %{ $FAI::current_config{$disk}{partitions} }) {
+      foreach my $part_id (sort { $a <=> $b } keys %{ $FAI::current_config{$disk}{partitions} }) {
 
         # no extended partition
         next unless
           $FAI::current_config{$disk}{partitions}{$part_id}{is_extended};
 
         # find the configured extended partition to set the mapping
-        foreach my $p (sort keys %{ $FAI::configs{$config}{partitions} }) {
+        foreach my $p (sort { $a <=> $b } keys %{ $FAI::configs{$config}{partitions} }) {
           # reference to the current partition
           my $part = (\%FAI::configs)->{$config}->{partitions}->{$p};
           next unless $part->{size}->{extended};
@@ -485,6 +485,10 @@ sub rebuild_preserved_partitions {
         $part_nr = 4 if ( $part_nr < 4 );
       }
     }
+    
+    # restore the partition type, if any
+    my $fs =
+      $FAI::current_config{$disk}{partitions}{$mapped_id}{filesystem};
 
     # increase the partition counter for the partition created next and
     # write it to the configuration
@@ -493,7 +497,7 @@ sub rebuild_preserved_partitions {
 
     # build a parted command to create the partition
     push @FAI::commands,
-      "parted -s $disk mkpart $part_type ${start}B ${end}B";
+      "parted -s $disk mkpart $part_type $fs ${start}B ${end}B";
   }
 }
 
@@ -534,7 +538,7 @@ sub setup_partitions {
   my @grow_list   = ();
 
   # iterate over the worklists
-  foreach my $part_id (reverse sort (@to_preserve)) {
+  foreach my $part_id (reverse sort { $a <=> $b } (@to_preserve)) {
     # reference to the current partition
     my $part = (\%FAI::configs)->{$config}->{partitions}->{$part_id};
     # anything to be done?
@@ -576,9 +580,11 @@ sub setup_partitions {
   push @FAI::commands, "parted -s $disk mklabel " . $FAI::configs{$config}{disklabel};
 
   # generate the commands for creating all partitions
-  foreach my $part_id (sort keys %{ $FAI::configs{$config}{partitions} }) {
+  foreach my $part_id (sort { $a <=> $b } keys %{ $FAI::configs{$config}{partitions} }) {
     # reference to the current partition
     my $part = (\%FAI::configs)->{$config}->{partitions}->{$part_id};
+    # get the existing id
+    my $mapped_id = $part->{maps_to_existing};
 
     # get the new starts and ends
     my $start = $part->{start_byte};
@@ -595,9 +601,16 @@ sub setup_partitions {
         $part_type = "logical";
       }
     }
+    
+    my $fs = $part->{filesystem};
+    $fs = "linux-swap" if ($fs eq "swap");
+    $fs = "fat32" if ($fs eq "vfat");
+    $fs = "fat16" if ($fs eq "msdos");
+    $fs = $FAI::current_config{$disk}{partitions}{$mapped_id}{filesystem}
+      if ($part->{size}->{preserve} || $part->{size}->{resize});
 
     # build a parted command to create the partition
-    push @FAI::commands, "parted -s $disk mkpart $part_type ${start}B ${end}B";
+    push @FAI::commands, "parted -s $disk mkpart $part_type $fs ${start}B ${end}B";
   }
 
   # set the bootable flag, if requested at all
@@ -629,7 +642,7 @@ sub build_disk_commands {
     &FAI::setup_partitions($config) unless ($FAI::configs{$config}{virtual});
     
     # generate the commands for creating all filesystems
-    foreach my $part_id ( sort keys %{ $FAI::configs{$config}{partitions} } ) {
+    foreach my $part_id ( sort { $a <=> $b } keys %{ $FAI::configs{$config}{partitions} } ) {
       # reference to the current partition
       my $part = (\%FAI::configs)->{$config}->{partitions}->{$part_id};
 
@@ -658,7 +671,7 @@ sub restore_partition_table {
         . $FAI::current_config{$disk}{disklabel}, 0, 0);
 
     # generate the commands for creating all partitions
-    foreach my $part_id (sort keys %{ $FAI::current_config{$disk}{partitions} }) {
+    foreach my $part_id (sort { $a <=> $b } keys %{ $FAI::current_config{$disk}{partitions} }) {
       # reference to the current partition
       my $curr_part = (\%FAI::current_config)->{$disk}->{partitions}->{$part_id};
 
@@ -677,9 +690,12 @@ sub restore_partition_table {
           $part_type = "logical";
         }
       }
+      
+      # restore the partition type, if any
+      my $fs = $curr_part->{filesystem};
 
       # build a parted command to create the partition
-      &FAI::execute_command("parted -s $disk mkpart $part_type ${start}B ${end}B");
+      &FAI::execute_command("parted -s $disk mkpart $part_type $fs ${start}B ${end}B");
     }
     warn "Partition table of disk $disk has been restored\n";
   }
