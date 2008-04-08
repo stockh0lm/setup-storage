@@ -95,7 +95,7 @@ sub estimate_size {
   # try the entire disk first; we then use the data from the current
   # configuration; this matches in fact for than the allowable strings, but
   # this should be caught later on
-  if ($dev =~ /^\/dev\/[sh]d[a-z]$/) {
+  if ($dev =~ m{^/dev/(i2o/hd[a-t]|cciss/c\dd\d|ida/c\dd\d|rd/c\dd\d|ataraid/d\d|sd[a-t]|hd[a-t])$}) {
     defined ($FAI::current_config{$dev}{end_byte})
       or die "$dev is not a valid block device\n";
 
@@ -105,7 +105,7 @@ sub estimate_size {
   }
 
   # try a partition
-  elsif ($dev =~ /^(\/dev\/[sh]d[a-z])(\d+)$/) {
+  elsif ($dev =~ m{^/dev/(i2o/hd[a-t]|cciss/c\dd\d|ida/c\dd\d|rd/c\dd\d|ataraid/d\d|sd[a-t]|hd[a-t])p?(\d+)$}) {
 
     # the size is configured, return it
     defined ($FAI::configs{"PHY_$1"}{partitions}{$2}{size}{eff_size})
