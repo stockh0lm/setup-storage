@@ -101,7 +101,23 @@ $FAI::error_codes = [
   {
     error        => "parted_6",
     message      => "Parted was unable to read the partition table\n",
-    stderr_regex => "No Implementation: Partition 1 isn't aligned to cylinder boundaries",
+    stderr_regex => "No Implementation: Partition \d+ isn't aligned to cylinder boundaries",
+    stdout_regex => "",
+    program      => "parted",
+    response     => "die",
+  },
+  {
+    error        => "parted_7",
+    message      => "Parted doesn't support ntfs resizing\n",
+    stderr_regex => "No Implementation: Support for opening ntfs file systems is not implemented yet",
+    stdout_regex => "",
+    program      => "parted",
+    response     => "die",
+  },
+  {
+    error        => "parted_8",
+    message      => "Parted failed to resize due to a setup-storage internal error\n",
+    stderr_regex => "Error: Can't have overlapping partitions",
     stdout_regex => "",
     program      => "parted",
     response     => "die",
@@ -249,6 +265,7 @@ sub execute_command_internal {
 
     # execute the bash command, write stderr and stdout into the testfiles
     `$command 1> $stdout_filename 2> $stderr_filename`;
+    ( ($?>>8) ne 0 ) and warn "Command had exit code " . ($?>>8) . "\n";
   } else {
     print "would run command $command; to have them executed, use -X \n";
   }

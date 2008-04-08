@@ -414,7 +414,7 @@ sub do_partition_real {
   if ($end != $start) {
 
     # the end of the current range (may be the end of the disk or some
-    # preserved partition
+    # preserved partition or an ntfs volume to be resized)
     my $end_of_range = -1;
 
    # minimum space required by all partitions, i.e., the lower ends of the
@@ -430,7 +430,9 @@ sub do_partition_real {
     foreach my $p (@{$worklist}) {
 
       # we have found the delimiter
-      if ($FAI::configs{$config}{partitions}{$p}{size}{preserve}) {
+      if ($FAI::configs{$config}{partitions}{$p}{size}{preserve} ||
+        ($FAI::configs{$config}{partitions}{$p}{size}{resize} &&
+          ($current_disk->{partitions}->{$p}->{filesystem} eq "ntfs"))) {
         $end_of_range = $current_disk->{partitions}->{$p}->{begin_byte};
 
         # logical partitions require the space for the EPBR to be left
@@ -500,7 +502,14 @@ sub do_partition_real {
       $current_disk->{sector_size};
   }
 
-  # partition starts at where we currently are
+  # partition starts at where we currently are, or remains fixed in case of
+  # resized ntfs
+  if ($FAI::configs{$config}{partitions}{$part_id}{size}{resize} &&
+    ($current_disk->{partitions}->{$part_id}->{filesystem} eq "ntfs")) {
+    ($next_start <= $current_disk->{partitions}->{$part_id}->{begin_byte}) 
+      or die "Cannot preserve start byte of ntfs volume on partition $part_id, space before it is too small\n";
+    $next_start = $current_disk->{partitions}->{$part_id}->{begin_byte};
+  }
   $FAI::configs{$config}{partitions}{$part_id}{start_byte} =
     $next_start;
 

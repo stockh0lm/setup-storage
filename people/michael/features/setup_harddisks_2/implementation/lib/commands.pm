@@ -563,16 +563,32 @@ sub setup_partitions {
 
     # get the existing id
     my $mapped_id = $part->{maps_to_existing};
-    
-    # get the new partition id
+      
+    # get the intermediate partition id
     my $p = $FAI::current_config{$disk}{partitions}{$mapped_id}{new_id};
-
+    
     # get the new starts and ends
     my $start = $part->{start_byte};
     my $end = $part->{end_byte};
-
+    
     # build an appropriate command
-    push @FAI::commands, "parted -s $disk resize $p ${start}B ${end}B";
+    # ntfs requires specific care
+    if ($FAI::current_config{$disk}{partitions}{$mapped_id}{filesystem} eq
+      "ntfs") {
+      # check, whether ntfsresize is available
+      &FAI::in_path("ntfsresize") or die "ntfsresize not found in PATH\n";
+      # ntfs partition can't be moved
+      ($start == $FAI::current_config{$disk}{partitions}{$mapped_id}{begin_byte}) 
+        or &FAI::internal_error("ntfs partition supposed to move");
+      # ntfsresize requires device names
+      my $eff_size = $part->{size}->{eff_size};
+      my $dev = $disk;
+      $dev = "${dev}p" if ($dev =~ m{^/dev/(cciss/c\dd\d|ida/c\dd\d|rd/c\dd\d|ataraid/d\d)$});
+      $dev = $dev . $p;
+      push @FAI::commands, "ntfsresize -s $eff_size $dev";
+    } else {
+      push @FAI::commands, "parted -s $disk resize $p ${start}B ${end}B";
+    }
   }
 
   # write the disklabel again to drop the partition table and create a new one
