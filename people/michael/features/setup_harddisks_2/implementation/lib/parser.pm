@@ -353,7 +353,7 @@ $FAI::Parser = Parse::RecDescent->new(
           # set the preserve flag for all ids in all cases
           $FAI::configs{$FAI::device}{partitions}{$_}{size}{preserve} = 1 foreach (split (",", $1));
         }
-        /^preserve_reinstall:(\d+(,\d+)*)/
+        | /^preserve_reinstall:(\d+(,\d+)*)/
         {
           # set the preserve flag for all ids if $FAI::reinstall is set
           if ($FAI::reinstall) {
@@ -546,7 +546,7 @@ $FAI::Parser = Parse::RecDescent->new(
                 my $short_dev = $FAI::disks[ $1 - 1 ];
                 my $part_no = $2;
                 $dev = "/dev/$short_dev";
-                if ($dev =~ m{^/dev/(cciss/c\dd\dp|ida/c\dd\dp|rd/c\dd\dp|ataraid/d\dp)$}) $dev = "${dev}p";
+                $dev = "${dev}p" if ($dev =~ m{^/dev/(cciss/c\dd\d|ida/c\dd\d|rd/c\dd\d|ataraid/d\d)$});
                 $dev = "$dev$part_no";
               } else {
                 $dev = "/dev/$dev";
