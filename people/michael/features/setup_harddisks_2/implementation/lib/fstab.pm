@@ -102,6 +102,7 @@ sub generate_fstab {
     # entry is a physical device
     if ($c =~ /^PHY_(.+)$/) {
       my $device = $1;
+      $device = "${device}p" if ($device =~ m{^/dev/(cciss/c\dd\d|ida/c\dd\d|rd/c\dd\d|ataraid/d\d)$});
 
       # make sure the desired fstabkey is defined at all
       defined ($config->{$c}->{fstabkey})

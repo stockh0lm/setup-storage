@@ -101,7 +101,7 @@ $FAI::error_codes = [
   {
     error        => "parted_6",
     message      => "Parted was unable to read the partition table\n",
-    stderr_regex => "No Implementation: Partition \d+ isn't aligned to cylinder boundaries",
+    stderr_regex => "No Implementation: Partition \\d+ isn't aligned to cylinder boundaries",
     stdout_regex => "",
     program      => "parted",
     response     => "die",

@@ -621,11 +621,13 @@ sub setup_partitions {
     }
     
     my $fs = $part->{filesystem};
+    $fs = "" unless defined($fs);
     $fs = "linux-swap" if ($fs eq "swap");
     $fs = "fat32" if ($fs eq "vfat");
     $fs = "fat16" if ($fs eq "msdos");
     $fs = $FAI::current_config{$disk}{partitions}{$mapped_id}{filesystem}
       if ($part->{size}->{preserve} || $part->{size}->{resize});
+    $fs = "" if ($fs eq "-");
 
     # build a parted command to create the partition
     push @FAI::commands, "parted -s $disk mkpart $part_type $fs ${start}B ${end}B";
@@ -668,8 +670,11 @@ sub build_disk_commands {
       next if ($part->{size}->{preserve} == 1
         || $part->{size}->{resize} == 1 || $part->{size}->{extended} == 1);
 
-      # create the filesystem on $disk$part_id
-      &FAI::build_mkfs_commands( "$disk$part_id", $part );
+      # create the filesystem on the device
+      my $dev = $disk;
+      $dev = "${dev}p" if ($dev =~ m{^/dev/(cciss/c\dd\d|ida/c\dd\d|rd/c\dd\d|ataraid/d\d)$});
+      $dev = $dev . $part_id;
+      &FAI::build_mkfs_commands( $dev, $part );
     }
   }
 }
