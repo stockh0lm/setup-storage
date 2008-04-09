@@ -586,7 +586,8 @@ sub setup_partitions {
       my $dev = $disk;
       $dev = "${dev}p" if ($dev =~ m{^/dev/(cciss/c\dd\d|ida/c\dd\d|rd/c\dd\d|ataraid/d\d)$});
       $dev = $dev . $p;
-      push @FAI::commands, "ntfsresize -s $eff_size $dev";
+      push @FAI::commands, "yes | ntfsresize -s $eff_size $dev";
+      push @FAI::commands, "parted -s $disk rm $p";
     } else {
       push @FAI::commands, "parted -s $disk resize $p ${start}B ${end}B";
     }
