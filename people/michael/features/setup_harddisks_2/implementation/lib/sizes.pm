@@ -105,16 +105,16 @@ sub estimate_size {
   }
 
   # try a partition
-  elsif ($dev =~ m{^(/dev/i2o/hd[a-t]|cciss/c\dd\d|ida/c\dd\d|rd/c\dd\d|ataraid/d\d|sd[a-t]|hd[a-t])p?(\d+)$}) {
+  elsif ($dev =~ m{^(/dev/(i2o/hd[a-t]|cciss/c\dd\d|ida/c\dd\d|rd/c\dd\d|ataraid/d\d|sd[a-t]|hd[a-t]))p?(\d+)$}) {
 
     # the size is configured, return it
-    defined ($FAI::configs{"PHY_$1"}{partitions}{$2}{size}{eff_size})
-      and return $FAI::configs{"PHY_$1"}{partitions}{$2}{size}{eff_size} /
+    defined ($FAI::configs{"PHY_$1"}{partitions}{$3}{size}{eff_size})
+      and return $FAI::configs{"PHY_$1"}{partitions}{$3}{size}{eff_size} /
       (1024 * 1024);
 
     # the size is known from the current configuration on disk, return it
-    defined ($FAI::current_config{$1}{partitions}{$2}{count_byte})
-      and return $FAI::current_config{$1}{partitions}{$2}{count_byte} /
+    defined ($FAI::current_config{$1}{partitions}{$3}{count_byte})
+      and return $FAI::current_config{$1}{partitions}{$3}{count_byte} /
       (1024 * 1024);
 
     # the size is not known (yet?)
