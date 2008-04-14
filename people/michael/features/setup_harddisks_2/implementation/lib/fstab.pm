@@ -109,7 +109,7 @@ sub generate_fstab {
         or &FAI::internal_error("fstabkey undefined");
 
       # create a line in the output file for each partition
-      foreach my $p (sort { $a <=> $b } keys %{ $config->{$c}->{partitions} }) {
+      foreach my $p (keys %{ $config->{$c}->{partitions} }) {
 
         # keep a reference to save some typing
         my $p_ref = $config->{$c}->{partitions}->{$p};
@@ -147,6 +147,17 @@ sub generate_fstab {
           # otherwise, use the usual device path
           $fstab_key = $device . $p_ref->{number};
         }
+          
+        # if the mount point is / or /boot, the variables should be set, unless
+        # they are already
+        if ($p_ref->{mountpoint} eq "/boot" || ($p_ref->{mountpoint} eq "/" && 
+              !defined ($FAI::disk_var{BOOT_PARTITION}))) {
+          # set the BOOT_DEVICE and BOOT_PARTITION variables, if necessary
+          $FAI::disk_var{BOOT_PARTITION} = $device . $p_ref->{number};
+          ($c =~ /^PHY_(.+)$/) or &FAI::internal_error("unexpected mismatch");
+          defined ($FAI::disk_var{BOOT_DEVICE}) or
+            $FAI::disk_var{BOOT_DEVICE} = $1;
+        }
   
         push @fstab, &FAI::create_fstab_line($p_ref, $fstab_key, $device . $p_ref->{number});
 
@@ -155,7 +166,7 @@ sub generate_fstab {
       my $device = $1;
 
       # create a line in the output file for each logical volume
-      foreach my $l (sort { $a <=> $b } keys %{ $config->{$c}->{volumes} }) {
+      foreach my $l (keys %{ $config->{$c}->{volumes} }) {
 
         # keep a reference to save some typing
         my $l_ref = $config->{$c}->{volumes}->{$l};
@@ -176,19 +187,43 @@ sub generate_fstab {
         # make sure we got back a real device
         ($FAI::no_dry_run == 0 || -b $fstab_key[0]) 
           or die "Failed to resolve /dev/$device/$l\n";
+        
+        # according to http://grub.enbug.org/LVMandRAID, this should work...
+        # if the mount point is / or /boot, the variables should be set, unless
+        # they are already
+        if ($p_ref->{mountpoint} eq "/boot" || ($p_ref->{mountpoint} eq "/" && 
+              !defined ($FAI::disk_var{BOOT_PARTITION}))) {
+          # set the BOOT_DEVICE and BOOT_PARTITION variables, if necessary
+          $FAI::disk_var{BOOT_PARTITION} = $fstab_key[0];
+          ($c =~ /^PHY_(.+)$/) or &FAI::internal_error("unexpected mismatch");
+          defined ($FAI::disk_var{BOOT_DEVICE}) or
+            $FAI::disk_var{BOOT_DEVICE} = $fstab_key[0];
+        }
 
         push @fstab, &FAI::create_fstab_line($l_ref, $fstab_key[0], $fstab_key[0]);
       }
     } elsif ($c eq "RAID") {
 
       # create a line in the output file for each device
-      foreach my $r (sort { $a <=> $b } keys %{ $config->{$c}->{volumes} }) {
+      foreach my $r (keys %{ $config->{$c}->{volumes} }) {
 
         # keep a reference to save some typing
         my $r_ref = $config->{$c}->{volumes}->{$r};
 
         # skip entries without a mountpoint
         next if ($r_ref->{mountpoint} eq "-");
+
+        # according to http://grub.enbug.org/LVMandRAID, this should work...
+        # if the mount point is / or /boot, the variables should be set, unless
+        # they are already
+        if ($p_ref->{mountpoint} eq "/boot" || ($p_ref->{mountpoint} eq "/" && 
+              !defined ($FAI::disk_var{BOOT_PARTITION}))) {
+          # set the BOOT_DEVICE and BOOT_PARTITION variables, if necessary
+          $FAI::disk_var{BOOT_PARTITION} = "/dev/md$r";
+          ($c =~ /^PHY_(.+)$/) or &FAI::internal_error("unexpected mismatch");
+          defined ($FAI::disk_var{BOOT_DEVICE}) or
+            $FAI::disk_var{BOOT_DEVICE} = "/dev/md$r";
+        }
 
         push @fstab, &FAI::create_fstab_line($r_ref, "/dev/md$r", "/dev/md$r");
       }
