@@ -172,8 +172,9 @@ mountpoint ::= -
                /* do not mount */
                | swap
                /* swap space */
-               | /[^[:space:]]*
-               /* fully qualified path */
+               | /[^[:space:]]*(:encrypt)?
+               /* fully qualified path; if :encrypt is given, the partition
+                * will be encrypted, the key is generated automatically */
 .Pp
 name ::= [^/[:space:]]+
          /* lvm volume group name */
@@ -196,8 +197,11 @@ filesystem ::= -
                | [^[:space:]]
                /* mkfs.xxx must exist */
 .Pp
-fs_options ::= .*
-               /* options appended to mkfs.xxx call */
+fs_options ::= (createopts=".*"|tuneopts=".*")*
+               /* options to append to mkfs.xxx and to the filesystem-specific
+                * tuning tool */
+               | .*
+               /* arbitrary options appended to mkfs.xxx call */
 .Sh EXAMPLES
 # Configure the device /dev/hda
 disk_config hda   preserve:6,7   disklabel:msdos  bootable:3
