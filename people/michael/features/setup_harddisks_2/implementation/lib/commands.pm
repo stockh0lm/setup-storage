@@ -73,9 +73,49 @@ sub build_mkfs_commands {
   ($fs eq "ext2" || $fs eq "ext3") and $tune_tool = "tune2fs";
   ($fs eq "reiserfs") and $tune_tool = "reiserfstune";
   die "Don't know how to tune $fs\n" unless $tune_tool;
+
+  # check for encryption requests
+  $device = &FAI::encrypt_device($device, $partition);
+
+  # add the mkfs command
   push @FAI::commands, "$tune_tool $tune_options $device";
 }
 
+################################################################################
+#
+# @brief Encrypt a device and change the device name before formatting it
+#
+# @param $device Original device name of the target partition
+# @param $partition Reference to partition in the config hash
+#
+# @return Device name, may be the same as $device
+#
+################################################################################
+sub encrypt_device {
+  
+  my ($device, $partition) = @_;
+
+  return $device unless $part->{encrypt};
+
+  # encryption requested, rewrite the device name
+  my $enc_dev_name = $device;
+  $enc_dev_name =~ "s#/#_#g";
+  my $enc_dev_short_name = "crypt$enc_dev_name";
+  $enc_dev_name = "/dev/mapper/$enc_dev_short_name";
+  my $keyfile = "$ENV{LOGDIR}/$enc_dev_short_name";
+
+  # generate a key for encryption
+  push @FAI::commands, "head -c 2048 /dev/urandom | head -n 47 | tail -n 46 | od | tee $keyfile";
+
+  # prepare encryption
+  push @FAI::commands, "yes YES | cryptsetup luksFormat $device $keyfile -c aes-cbc-essiv:sha256 -s 256";
+  push @FAI::commands, "cryptsetup luksOpen $device $enc_dev_short_name --key-file $keyfile";
+
+  # add entries to crypttab
+  push @FAI::crypttab, "$enc_dev_short_name\t$device\t$keyfile\tluks";
+
+  return $enc_dev_name;
+}
 
 ################################################################################
 #

@@ -157,6 +157,9 @@ $FAI::debug and print Dumper \%FAI::configs;
 $FAI::debug and print "$_\n" foreach (@FAI::commands);
 
 # run the commands (if $FAI::no_dry_run is set)
+# load the modules to support encryption
+`modprobe aes`;
+`modprobe dm-crypt`;
 &FAI::execute_command($_) foreach (@FAI::commands);
 
 # generate the proposed fstab contents
@@ -184,5 +187,16 @@ if ($FAI::no_dry_run)
     or die "Unable to write to file $ENV{LOGDIR}/disk_var.sh\n";
   print DISK_VAR "$_=$FAI::disk_var{$_}\n" foreach (keys %FAI::disk_var);
   close DISK_VAR;
+}
+
+# print crypttab
+$FAI::debug and print "$_\n" foreach (@FAI::crypttab);
+
+# write the proposed contents of fstab to $LOGDIR/fstab
+if ($FAI::no_dry_run && scalar(@FAI::crypttab)) {
+  open(CRYPTTAB, ">$ENV{LOGDIR}/crypttab")
+    or die "Failed to open $ENV{LOGDIR}/crypttab for writing\n";
+  print CRYPTTAB "$_\n" foreach (@FAI::crypttab);
+  close CRYPTTAB;
 }
 

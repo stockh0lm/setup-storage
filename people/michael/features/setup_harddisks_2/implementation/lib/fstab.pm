@@ -116,6 +116,13 @@ sub generate_fstab {
 
         # skip extended partitions and entries without a mountpoint
         next if ($p_ref->{size}->{extended} || $p_ref->{mountpoint} eq "-");
+  
+        my $device_name = $device . $p_ref->{number};
+        if ($p_ref->{encrypt}) {
+          # encryption requested, rewrite the device name
+          $device_name =~ "s#/#_#g";
+          $device_name = "/dev/mapper/crypt$device_name";
+        }
 
         # device key used for mounting
         my $fstab_key = "";
@@ -124,17 +131,17 @@ sub generate_fstab {
         # or labels, use these if available
         my @uuid = ();
         &FAI::execute_ro_command(
-          "/lib/udev/vol_id -u $device" . $p_ref->{number}, \@uuid, 0);
+          "/lib/udev/vol_id -u $device_name", \@uuid, 0);
 
         # every device must have a uuid, otherwise this is an error (unless we
         # are testing only)
         ($FAI::no_dry_run == 0 || scalar (@uuid) == 1)
-          or die "Failed to obtain UUID for $device" . $p_ref->{number} . "\n";
+          or die "Failed to obtain UUID for $device_name\n";
 
         # get the label -- this is likely empty
         my @label = ();
         &FAI::execute_ro_command(
-          "/lib/udev/vol_id -l $device" . $p_ref->{number}, \@label, 0);
+          "/lib/udev/vol_id -l $device_name", \@label, 0);
 
         # using the fstabkey value the desired device entry is defined
         if ($config->{$c}->{fstabkey} eq "uuid") {
@@ -145,7 +152,7 @@ sub generate_fstab {
           $fstab_key = "LABEL=$label[0]";
         } else {
           # otherwise, use the usual device path
-          $fstab_key = $device . $p_ref->{number};
+          $fstab_key = $device_name;
         }
           
         # if the mount point is / or /boot, the variables should be set, unless
@@ -153,13 +160,13 @@ sub generate_fstab {
         if ($p_ref->{mountpoint} eq "/boot" || ($p_ref->{mountpoint} eq "/" && 
               !defined ($FAI::disk_var{BOOT_PARTITION}))) {
           # set the BOOT_DEVICE and BOOT_PARTITION variables, if necessary
-          $FAI::disk_var{BOOT_PARTITION} = $device . $p_ref->{number};
+          $FAI::disk_var{BOOT_PARTITION} = $device_name;
           ($c =~ /^PHY_(.+)$/) or &FAI::internal_error("unexpected mismatch");
           defined ($FAI::disk_var{BOOT_DEVICE}) or
             $FAI::disk_var{BOOT_DEVICE} = $1;
         }
   
-        push @fstab, &FAI::create_fstab_line($p_ref, $fstab_key, $device . $p_ref->{number});
+        push @fstab, &FAI::create_fstab_line($p_ref, $fstab_key, $device_name);
 
       }
     } elsif ($c =~ /^VG_(.+)$/) {
@@ -188,19 +195,28 @@ sub generate_fstab {
         ($FAI::no_dry_run == 0 || -b $fstab_key[0]) 
           or die "Failed to resolve /dev/$device/$l\n";
         
+        my $device_name = "/dev/$device/$l";
+        if ($l_ref->{encrypt}) {
+          # encryption requested, rewrite the device name
+          $device_name =~ "s#/#_#g";
+          $device_name = "/dev/mapper/crypt$device_name";
+        } else {
+          $device_name = $fstab_key[0];
+        }
+        
         # according to http://grub.enbug.org/LVMandRAID, this should work...
         # if the mount point is / or /boot, the variables should be set, unless
         # they are already
         if ($p_ref->{mountpoint} eq "/boot" || ($p_ref->{mountpoint} eq "/" && 
               !defined ($FAI::disk_var{BOOT_PARTITION}))) {
           # set the BOOT_DEVICE and BOOT_PARTITION variables, if necessary
-          $FAI::disk_var{BOOT_PARTITION} = $fstab_key[0];
+          $FAI::disk_var{BOOT_PARTITION} = $device_name;
           ($c =~ /^PHY_(.+)$/) or &FAI::internal_error("unexpected mismatch");
           defined ($FAI::disk_var{BOOT_DEVICE}) or
-            $FAI::disk_var{BOOT_DEVICE} = $fstab_key[0];
+            $FAI::disk_var{BOOT_DEVICE} = $device_name;
         }
 
-        push @fstab, &FAI::create_fstab_line($l_ref, $fstab_key[0], $fstab_key[0]);
+        push @fstab, &FAI::create_fstab_line($l_ref, $device_name, $device_name);
       }
     } elsif ($c eq "RAID") {
 
@@ -212,6 +228,13 @@ sub generate_fstab {
 
         # skip entries without a mountpoint
         next if ($r_ref->{mountpoint} eq "-");
+        
+        my $device_name = "/dev/md$r";
+        if ($r_ref->{encrypt}) {
+          # encryption requested, rewrite the device name
+          $device_name =~ "s#/#_#g";
+          $device_name = "/dev/mapper/crypt$device_name";
+        } 
 
         # according to http://grub.enbug.org/LVMandRAID, this should work...
         # if the mount point is / or /boot, the variables should be set, unless
@@ -219,13 +242,13 @@ sub generate_fstab {
         if ($p_ref->{mountpoint} eq "/boot" || ($p_ref->{mountpoint} eq "/" && 
               !defined ($FAI::disk_var{BOOT_PARTITION}))) {
           # set the BOOT_DEVICE and BOOT_PARTITION variables, if necessary
-          $FAI::disk_var{BOOT_PARTITION} = "/dev/md$r";
+          $FAI::disk_var{BOOT_PARTITION} = "$device_name"
           ($c =~ /^PHY_(.+)$/) or &FAI::internal_error("unexpected mismatch");
           defined ($FAI::disk_var{BOOT_DEVICE}) or
-            $FAI::disk_var{BOOT_DEVICE} = "/dev/md$r";
+            $FAI::disk_var{BOOT_DEVICE} = "$device_name";
         }
 
-        push @fstab, &FAI::create_fstab_line($r_ref, "/dev/md$r", "/dev/md$r");
+        push @fstab, &FAI::create_fstab_line($r_ref, $device_name, $device_name);
       }
     } else {
       &FAI::internal_error("Unexpected key $c");

@@ -64,6 +64,13 @@ $FAI::disk_var{SWAPLIST} = "";
 
 ################################################################################
 #
+# @brief The contents later written to crypttab, if any
+#
+################################################################################
+@FAI::crypttab = ();
+
+################################################################################
+#
 # @brief A flag to tell our script that the system is not installed for the
 # first time
 #

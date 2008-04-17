@@ -445,16 +445,25 @@ $FAI::Parser = Parse::RecDescent->new(
         {
           # this partition should not be mounted
           $FAI::partition_pointer->{mountpoint} = "-";
+          $FAI::partition_pointer->{encrypt} = 0;
         }
         | 'swap'
         {
           # this partition is swap space, not mounted
           $FAI::partition_pointer->{mountpoint} = "none";
+          $FAI::partition_pointer->{encrypt} = 0;
         }
         | m{^/\S*}
         {
-          # set the mount point
-          $FAI::partition_pointer->{mountpoint} = $item[ 1 ];
+          # set the mount point, may include encryption-request
+          if ($item[ 1 ] =~ m{^(/[^:]*):encrypt$}) {
+            &FAI::in_path("cryptsetup") or die "cryptsetup not found in PATH\n";
+            $FAI::partition_pointer->{mountpoint} = $1;
+            $FAI::partition_pointer->{encrypt} = 1;
+          } else {
+            $FAI::partition_pointer->{mountpoint} = $item[ 1 ];
+            $FAI::partition_pointer->{encrypt} = 0;
+          }
         }
 
     name: m{^([^/\s\-]+)}
