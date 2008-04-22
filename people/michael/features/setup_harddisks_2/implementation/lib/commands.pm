@@ -95,7 +95,7 @@ sub encrypt_device {
   
   my ($device, $partition) = @_;
 
-  return $device unless $part->{encrypt};
+  return $device unless $partition->{encrypt};
 
   # encryption requested, rewrite the device name
   my $enc_dev_name = $device;

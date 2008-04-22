@@ -207,11 +207,10 @@ sub generate_fstab {
         # according to http://grub.enbug.org/LVMandRAID, this should work...
         # if the mount point is / or /boot, the variables should be set, unless
         # they are already
-        if ($p_ref->{mountpoint} eq "/boot" || ($p_ref->{mountpoint} eq "/" && 
+        if ($l_ref->{mountpoint} eq "/boot" || ($l_ref->{mountpoint} eq "/" && 
               !defined ($FAI::disk_var{BOOT_PARTITION}))) {
           # set the BOOT_DEVICE and BOOT_PARTITION variables, if necessary
           $FAI::disk_var{BOOT_PARTITION} = $device_name;
-          ($c =~ /^PHY_(.+)$/) or &FAI::internal_error("unexpected mismatch");
           defined ($FAI::disk_var{BOOT_DEVICE}) or
             $FAI::disk_var{BOOT_DEVICE} = $device_name;
         }
@@ -239,11 +238,10 @@ sub generate_fstab {
         # according to http://grub.enbug.org/LVMandRAID, this should work...
         # if the mount point is / or /boot, the variables should be set, unless
         # they are already
-        if ($p_ref->{mountpoint} eq "/boot" || ($p_ref->{mountpoint} eq "/" && 
+        if ($r_ref->{mountpoint} eq "/boot" || ($r_ref->{mountpoint} eq "/" && 
               !defined ($FAI::disk_var{BOOT_PARTITION}))) {
           # set the BOOT_DEVICE and BOOT_PARTITION variables, if necessary
-          $FAI::disk_var{BOOT_PARTITION} = "$device_name"
-          ($c =~ /^PHY_(.+)$/) or &FAI::internal_error("unexpected mismatch");
+          $FAI::disk_var{BOOT_PARTITION} = "$device_name";
           defined ($FAI::disk_var{BOOT_DEVICE}) or
             $FAI::disk_var{BOOT_DEVICE} = "$device_name";
         }
