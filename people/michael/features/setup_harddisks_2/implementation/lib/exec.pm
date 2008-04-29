@@ -122,6 +122,14 @@ $FAI::error_codes = [
     program      => "parted",
     response     => "die",
   },
+  {
+    error        => "ntfsresize_1",
+    message      => "NTFS resize cannot proceed\n",
+    stderr_regex => "(Error|ERROR)",
+    stdout_regex => "",
+    program      => "ntfsresize",
+    response     => "die",
+  },
 ];
 
 ################################################################################
