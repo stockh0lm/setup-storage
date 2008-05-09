@@ -540,11 +540,7 @@ $FAI::Parser = Parse::RecDescent->new(
             # might be created later on
             unless ($dev =~ m{^/}) {
               if ($dev =~ m/^disk(\d+)\.(\d+)/) {
-                my $short_dev = $FAI::disks[ $1 - 1 ];
-                my $part_no = $2;
-                $dev = "/dev/$short_dev";
-                $dev = "${dev}p" if ($dev =~ m{^/dev/(cciss/c\dd\d|ida/c\dd\d|rd/c\dd\d|ataraid/d\d)$});
-                $dev = "$dev$part_no";
+                $dev = &FAI::make_device_name("/dev/" . $FAI::disks[ $1 - 1 ], $2);
               } else {
                 $dev = "/dev/$dev";
               }

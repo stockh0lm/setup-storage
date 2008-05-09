@@ -51,6 +51,12 @@ sub get_current_disks {
 
     # make sure, $disk is a proper block device
     (-b $disk) or die "$disk is not a block special device!\n";
+    $FAI::commands{$FAI::n_c_i} = {
+      cmd => "true",
+      pre => "",
+      post => "exist_$disk"
+    };
+    $FAI::n_c_i++;
 
     # initialise the hash
     $FAI::current_config{$disk}{partitions} = {};
@@ -295,6 +301,12 @@ sub get_current_lvm {
   foreach my $vg (get_volume_group_list()) {
     # initialise the hash entry
     $FAI::current_lvm_config{$vg}{physical_volumes} = ();
+    $FAI::commands{$FAI::n_c_i} = {
+      cmd => "true",
+      pre => "",
+      post => "vg_created_$vg"
+    };
+    $FAI::n_c_i++;
     
     # store the vg size in MB
     my %vg_info = get_volume_group_information($vg);
@@ -310,6 +322,12 @@ sub get_current_lvm {
       $FAI::current_lvm_config{$vg}{volumes}{$short_name}{size} =
         &FAI::convert_unit($lv_info{$lv_name}->{lv_size} .
           $lv_info{$lv_name}->{lv_size_unit});
+      $FAI::commands{$FAI::n_c_i} = {
+        cmd => "true",
+        pre => "",
+        post => "exist_/dev/$vg/$short_name"
+      };
+      $FAI::n_c_i++;
     }
     
     # store the physical volumes
@@ -351,6 +369,12 @@ sub get_current_raid {
     if ($line =~ /^ARRAY \/dev\/md(\d+) level=(\S+) num-devices=\d+ UUID=/) {
       $id = $1;
       $FAI::current_raid_config{$id}{mode} = $2;
+      $FAI::commands{$FAI::n_c_i} = {
+        cmd => "true",
+        pre => "",
+        post => "exist_/dev/md$id"
+      };
+      $FAI::n_c_i++;
     } elsif ($line =~ /^\s*devices=(\S+)$/) {
       @{ $FAI::current_raid_config{$id}{devices} } = split (",", $1);
     }

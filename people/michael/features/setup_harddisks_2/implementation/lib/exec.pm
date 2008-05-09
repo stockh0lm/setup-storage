@@ -123,6 +123,14 @@ $FAI::error_codes = [
     response     => "die",
   },
   {
+    error        => "parted_9",
+    message      => "Parted failed to resize the partition (is it too small?)\n",
+    stderr_regex => "Error: Unable to satisfy all constraints on the partition",
+    stdout_regex => "",
+    program      => "parted",
+    response     => "die",
+  },
+  {
     error        => "ntfsresize_1",
     message      => "NTFS resize cannot proceed\n",
     stderr_regex => "(Error|ERROR)",

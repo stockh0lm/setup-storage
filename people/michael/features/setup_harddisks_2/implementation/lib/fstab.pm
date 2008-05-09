@@ -92,9 +92,6 @@ sub generate_fstab {
   # the file to be returned, a list of lines
   my @fstab = ();
       
-  # wait for udev to set up all devices
-  push @FAI::commands, "udevsettle --timeout=10";
-
   # walk through all configured parts
   # the order of entries is most likely wrong, it is fixed at the end
   foreach my $c (keys %$config) {
@@ -102,7 +99,6 @@ sub generate_fstab {
     # entry is a physical device
     if ($c =~ /^PHY_(.+)$/) {
       my $device = $1;
-      $device = "${device}p" if ($device =~ m{^/dev/(cciss/c\dd\d|ida/c\dd\d|rd/c\dd\d|ataraid/d\d)$});
 
       # make sure the desired fstabkey is defined at all
       defined ($config->{$c}->{fstabkey})
@@ -117,7 +113,7 @@ sub generate_fstab {
         # skip extended partitions and entries without a mountpoint
         next if ($p_ref->{size}->{extended} || $p_ref->{mountpoint} eq "-");
   
-        my $device_name = $device . $p_ref->{number};
+        my $device_name = &FAI::make_device_name($device, $p_ref->{number});
         if ($p_ref->{encrypt}) {
           # encryption requested, rewrite the device name
           $device_name =~ "s#/#_#g";

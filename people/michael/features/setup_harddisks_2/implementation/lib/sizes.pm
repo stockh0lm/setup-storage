@@ -95,7 +95,8 @@ sub estimate_size {
   # try the entire disk first; we then use the data from the current
   # configuration; this matches in fact for than the allowable strings, but
   # this should be caught later on
-  if ($dev =~ m{^/dev/(i2o/hd[a-t]|cciss/c\dd\d|ida/c\dd\d|rd/c\dd\d|ataraid/d\d|sd[a-t]|hd[a-t])$}) {
+  my ($i_p_d, $disk, $part_no) = &FAI::phys_dev($dev);
+  if (1 == $i_p_d && -1 == $part_no) {
     defined ($FAI::current_config{$dev}{end_byte})
       or die "$dev is not a valid block device\n";
 
@@ -105,16 +106,16 @@ sub estimate_size {
   }
 
   # try a partition
-  elsif ($dev =~ m{^(/dev/(i2o/hd[a-t]|cciss/c\dd\d|ida/c\dd\d|rd/c\dd\d|ataraid/d\d|sd[a-t]|hd[a-t]))p?(\d+)$}) {
+  elsif (1 == $i_p_d && $part_no > -1) {
 
     # the size is configured, return it
-    defined ($FAI::configs{"PHY_$1"}{partitions}{$3}{size}{eff_size})
-      and return $FAI::configs{"PHY_$1"}{partitions}{$3}{size}{eff_size} /
+    defined ($FAI::configs{"PHY_$disk"}{partitions}{$part_no}{size}{eff_size})
+      and return $FAI::configs{"PHY_$disk"}{partitions}{$part_no}{size}{eff_size} /
       (1024 * 1024);
 
     # the size is known from the current configuration on disk, return it
-    defined ($FAI::current_config{$1}{partitions}{$3}{count_byte})
-      and return $FAI::current_config{$1}{partitions}{$3}{count_byte} /
+    defined ($FAI::current_config{$disk}{partitions}{$part_no}{count_byte})
+      and return $FAI::current_config{$disk}{partitions}{$part_no}{count_byte} /
       (1024 * 1024);
 
     # the size is not known (yet?)

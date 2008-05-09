@@ -108,10 +108,63 @@ defined( $ENV{fl_initial} ) and $FAI::reinstall = 0;
 
 ################################################################################
 #
-# @brief The list of commands to be executed
+# @brief The commands to be executed
 #
 ################################################################################
-@FAI::commands = ();
+%FAI::commands = ();
+
+################################################################################
+#
+# @brief Each command is associated with a unique id -- this one aids in
+# counting (next_command_index)
+#
+################################################################################
+$FAI::n_c_i = 1;
+
+################################################################################
+#
+# @brief Check, whether $dev is a physical device, and extract sub-parts
+#
+# @param $dev Device string
+#
+# @return 1, iff it the matches the regexp, and disk device string, and
+# partition number, if any, otherwise -1
+#
+################################################################################
+sub phys_dev {
+  my ($dev) = @_;
+  if ($dev =~ m{^/dev/(i2o/hd[a-t]|sd[a-t]|hd[a-t])(\d+)?$})
+  {
+    defined($2) or return (1, $1, -1);
+    return (1, $1, $2);
+  }
+  elsif ($dev =~ m{^/dev/(cciss/c\dd\d|ida/c\dd\d|rd/c\dd\d|ataraid/d\d)p(\d+)?$})
+  {
+    defined($2) or return (1, $1, -1);
+    return (1, $1, $2);
+  }
+  return (0, "", -2);
+}
+
+################################################################################
+#
+# @brief Convert a device name and a partition id to a proper device name,
+# handling cciss and the like
+#
+# @param $dev Device name of disk
+# @param $id Partition id
+#
+# @return Full device name
+#
+################################################################################
+sub make_device_name {
+  my ($dev, $p) = @_;
+  $dev .= "p" if ($dev =~
+    m{^/dev/(cciss/c\dd\d|ida/c\dd\d|rd/c\dd\d|ataraid/d\d)$});
+  $dev .= $p;
+  internal_error("Invalid device $dev") unless (&FAI::phys_dev($dev))[0];
+  return $dev;
+}
 
 ################################################################################
 #
