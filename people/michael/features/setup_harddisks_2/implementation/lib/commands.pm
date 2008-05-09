@@ -1000,6 +1000,10 @@ sub order_commands {
   my $i = 1;
   my $pushed = -1;
 
+  print "n_c_i is" . $FAI::n_c_i . "\n";
+  print "last added: " . $FAI::commands{$FAI::n_c_i - 1}{cmd} . "\n";
+  print "last added: " . $FAI::commands{$FAI::n_c_i - 1}{pre} . "\n";
+  print "last added: " . $FAI::commands{$FAI::n_c_i - 1}{post} . "\n";
   while ($i < $FAI::n_c_i) {
     my $all_matched = 1;
     foreach (split(/,/, $FAI::commands{$i}{pre})) {
