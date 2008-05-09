@@ -996,8 +996,6 @@ sub restore_partition_table {
 #
 ################################################################################
 sub order_commands {
-  die "Not implemented\n";
-
   my @pre_deps = ();
   my $i = 1;
   my $pushed = -1;
