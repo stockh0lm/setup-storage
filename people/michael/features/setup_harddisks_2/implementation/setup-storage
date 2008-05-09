@@ -155,7 +155,7 @@ $FAI::debug and print Dumper \%FAI::configs;
 
 # run all commands
 # debugging only: print the command script
-$FAI::debug and print $FAI::commands{$_}{cmd} . "\n" foreach (sort { $a <=> $b } keys %FAI::commands);
+$FAI::debug and print "$_:" . $FAI::commands{$_}{cmd} . "\n" foreach (sort { $a <=> $b } keys %FAI::commands);
 
 # run the commands (if $FAI::no_dry_run is set)
 # load the modules to support encryption
