@@ -1000,12 +1000,7 @@ sub order_commands {
   my $i = 1;
   my $pushed = -1;
 
-  print "n_c_i is" . $FAI::n_c_i . "\n";
-  print "last added: " . $FAI::commands{$FAI::n_c_i - 1}{cmd} . "\n";
-  print "last added: " . $FAI::commands{$FAI::n_c_i - 1}{pre} . "\n";
-  print "last added: " . $FAI::commands{$FAI::n_c_i - 1}{post} . "\n";
   while ($i < $FAI::n_c_i) {
-    print "I:$i N_C_I:" . $FAI::n_c_i . "\n";
     my $all_matched = 1;
     foreach (split(/,/, $FAI::commands{$i}{pre})) {
       next if scalar(grep(m{^$_$}, @pre_deps));
@@ -1013,10 +1008,9 @@ sub order_commands {
       last;
     }
     if ($all_matched) {
+      defined($FAI::commands{$i}{post}) and push @pre_deps, split(/,/, $FAI::commands{$i}{post});
       $pushed = -1;
       $i++;
-      defined($FAI::commands{$i}{post}) or print "No post for $i, " .  $FAI::commands{$i}{cmd} . "\n";
-      defined($FAI::commands{$i}{post}) and push @pre_deps, split(/,/, $FAI::commands{$i}{post});
       next;
     }
     if (-1 == $pushed) {
