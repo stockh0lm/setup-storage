@@ -1010,7 +1010,7 @@ sub order_commands {
     if ($all_matched) {
       $pushed = -1;
       $i++;
-      push @pre_deps, split(/,/, $FAI::commands{$i}{post}) if ($FAI::commands{$i}{post} ne "")
+      push @pre_deps, split(/,/, $FAI::commands{$i}{post}) if ($FAI::commands{$i}{post} ne "");
       next;
     }
     if (-1 == $pushed) {
