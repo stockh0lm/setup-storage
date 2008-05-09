@@ -107,6 +107,10 @@ sub estimate_size {
 
   # try a partition
   elsif (1 == $i_p_d && $part_no > -1) {
+    use Data::Dumper;
+    # print the current contents of $FAI::configs
+    $FAI::debug and print "Desired disk layout for estimate DISK$disk N$part_no\n";
+    $FAI::debug and print Dumper \%{ $FAI::configs{"PHY_$disk"}{partitions}{$part_no} };
 
     # the size is configured, return it
     defined ($FAI::configs{"PHY_$disk"}{partitions}{$part_no}{size}{eff_size})
