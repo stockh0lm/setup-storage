@@ -1005,6 +1005,7 @@ sub order_commands {
   print "last added: " . $FAI::commands{$FAI::n_c_i - 1}{pre} . "\n";
   print "last added: " . $FAI::commands{$FAI::n_c_i - 1}{post} . "\n";
   while ($i < $FAI::n_c_i) {
+    print "I:$i N_C_I:" . $FAI::n_c_i . "\n";
     my $all_matched = 1;
     foreach (split(/,/, $FAI::commands{$i}{pre})) {
       next if scalar(grep(m{^$_$}, @pre_deps));
