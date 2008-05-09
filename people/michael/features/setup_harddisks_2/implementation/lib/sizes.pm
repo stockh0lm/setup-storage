@@ -119,7 +119,8 @@ sub estimate_size {
       (1024 * 1024);
 
     # the size is not known (yet?)
-    die "Cannot determine size of $dev\n";
+    warn "Cannot determine size of $dev\n";
+    return 0;
   }
 
   # try RAID; estimations here are very limited and possible imprecise
