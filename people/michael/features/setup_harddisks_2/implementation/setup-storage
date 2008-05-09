@@ -52,13 +52,19 @@ use warnings FATAL => qw(uninitialized);
 
 package FAI;
 
+my $version = "0.1.4893";
+
 # command line parameter handling
 use Getopt::Std;
-our ($opt_X, $opt_f); # the variables for getopt
-&getopts('Xf:') || die <<EOF;
+our ($opt_X, $opt_f, $opt_h, $opt_d); # the variables for getopt
+&getopts('Xf:hd') || die <<EOF;
+setup-storage version $version
+
 USAGE: [-X]                     no test, your harddisks will be formated
                                 default: only test, no real formating
        [-f<config-filename>]    default: parse classes
+       [-d]                     enable debug output (equivalent to debug=1)
+       [-h]                     print this help message
 EOF
 
 # $disklist must be provided by the environment
@@ -101,6 +107,7 @@ unless ($opt_f) {
 defined ($config_file) or die "No matching disk_config found\n";
 
 # start the parsing - thereby $FAI::configs is filled
+warn "Starting setup-storage $version";
 &FAI::run_parser($config_file);
 
 # read the sizes and partition tables of all disks listed in $FAI::disks
