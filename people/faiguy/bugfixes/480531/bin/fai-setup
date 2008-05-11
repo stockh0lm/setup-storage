@@ -145,48 +145,48 @@ setup_fai_account() {
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 compute_network() {
 
-	# this dark magic calculates the network from a given ipaddress and netmask
+    # this dark magic calculates the network from a given ipaddress and netmask
 
-	inputAddr=$1
-	inputMask=$2
+    inputAddr=$1
+    inputMask=$2
 
-	fsnm="${inputMask%.*}"
-	lsnm="${inputMask##*.}"
-	foct="${inputAddr%.*}"
-	loct="${inputAddr##*.}"
-	nwz=""
-	if [ "$lsnm" = "0" ]; then
-		nwz=".0"
-		lsnm="${fsnm##*.}"
-		fsnm="${fsnm%.*}"
-		loct="${foct##*.}"
-		foct="${foct%.*}"
-		if [ "$lsnm" = "0" ]; then
-			nwz=".0$nwz"
-			lsnm="${fsnm##*.}"
-			fsnm="${fsnm%.*}"
-			loct="${foct##*.}"
-			foct="${foct%.*}"
-			if [ "$lsnm" = "0" ]; then
-				nwz=".0$nwz"
-				lsnm=$fsnm
-				loct=$foct
-				foct=""
-			fi
-		fi
-	fi
-	let snb=256-$lsnm
-	let loct=$loct/$snb*$snb
-	if [ "$foct" ]; then
-		tnw="$foct.$loct$nwz"
-	else
-		tnw="$loct$nwz"
-	fi
-	echo $tnw
+    firstMask="${inputMask%.*}"
+    lastMask="${inputMask##*.}"
+    firstAddr="${inputAddr%.*}"
+    lastAddr="${inputAddr##*.}"
+    networkZeros=""
+    # it counts down the octets of addr and mask until it gets a value different 0, so it recognize the subnet border
+    if [ "$lastMask" = "0" ]; then
+        networkZeros=".0"
+        lastMask="${firstMask##*.}"
+        firstMask="${firstMask%.*}"
+        lastAddr="${firstAddr##*.}"
+        firstAddr="${firstAddr%.*}"
+        if [ "$lastMask" = "0" ]; then
+            networkZeros=".0$networkZeros"
+            lastMask="${firstMask##*.}"
+            firstMask="${firstMask%.*}"
+            lastAddr="${firstAddr##*.}"
+            firstAddr="${firstAddr%.*}"
+            if [ "$lastMask" = "0" ]; then
+                networkZeros=".0$networkZeros"
+                lastMask=$firstMask
+                lastAddr=$firstAddr
+                firstAddr=""
+            fi
+        fi
+    fi
+    # calculate the address quantity of the given subnet
+    let addrQty=256-$lastMask
+    # let only calculate with fixed-width integers which is our advantage ;-)
+    let lastAddr=$lastAddr/$addrQty*$addrQty
+    if [ "$firstAddr" ]; then
+        networkAddr="$firstAddr.$lastAddr$networkZeros"
+    else
+        networkAddr="$lastAddr$networkZeros"
+    fi
+    echo $networkAddr
 }
-
-# compute_network $addr $mask
-
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 { # start huge block for capturing output
 
@@ -222,7 +222,7 @@ if [ -z "$expert" ]; then
 
     addr=$(LC_ALL=C ifconfig $SERVERINTERFACE | grep -v 127.0.0.1 | perl -ne '/addr:([\d.]+)/ && print"$1\n"'|head -1)
     mask=$(LC_ALL=C ifconfig $SERVERINTERFACE | grep -v 127.0.0.1 | perl -ne '/Mask:([\d.]+)/ && print"$1\n"'|head -1)
-	addr=$(compute_network $addr $mask)
+    addr=$(compute_network $addr $mask)
     add_export_line $FAI_CONFIGDIR  "$addr/$mask(async,ro,no_subtree_check)"
     add_export_line $NFSROOT  "$addr/$mask(async,ro,no_subtree_check,no_root_squash)"
     if [ -z "$nfsserver" ]; then
