@@ -1,0 +1,9 @@
+#!/bin/bash
+
+error=0 ; trap "error=$((error|1))" ERR
+
+mount -o bind /dev $target/dev || error=255
+mount -o bind /sys $target/sys || error=250
+mount -o bind /proc $target/proc || error=245
+
+exit $error

@@ -1,0 +1,16 @@
+[opensuse]
+name = GWDG OSS Yum Repository
+baseurl = http://ftp5.gwdg.de/pub/linux/suse/opensuse/distribution/10.3/repo/oss/
+
+[opensuse]
+name = GWDG NON-OSS Yum Repository
+baseurl = http://ftp5.gwdg.de/pub/linux/suse/opensuse/distribution/10.3/repo/non-oss/
+
+[opensuse]
+name = GWDG SRC-OSS Yum Repository
+baseurl = http://ftp5.gwdg.de/pub/linux/suse/opensuse/distribution/10.3/repo/non-oss/
+
+[opensuse]
+name = GWDG SRC-NON-OSS Yum Repository
+baseurl = http://ftp5.gwdg.de/pub/linux/suse/opensuse/distribution/10.3/repo/src-non-oss/
+

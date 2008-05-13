@@ -1,0 +1,19 @@
+PACKAGES aptitude DEBIAN
+postfix
+ntp ntpdate
+debian-keyring
+sudo
+vim
+man
+apt-file
+debian-keyring debian-backports-keyring debian-archive-keyring
+dnsutils telnet mtr
+lsof
+
+
+PACKAGES yumi SUSE
+postfix
+xntp 
+sudo
+vim
+man

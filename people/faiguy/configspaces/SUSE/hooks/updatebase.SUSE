@@ -1,0 +1,12 @@
+#! /bin/sh
+
+$ROOTCMD mount -t proc none /proc
+
+fcopy /etc/yum.repos.d/gwdg.de.repo
+$ROOTCMD yum makecache
+
+# dirty hack for SuSEconfig.functio
+[ "$FAI_ACTION" = "install" ] && $ROOTCMD ln -s / /dev/nfs
+
+skiptask updatebase
+#skiptask chboot

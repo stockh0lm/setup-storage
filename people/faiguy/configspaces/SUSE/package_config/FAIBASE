@@ -1,0 +1,50 @@
+PACKAGES aptitude DEBIAN
+linux-image-2.6-686 linux-image-486-
+cfengine2
+cron
+debconf-utils
+discover
+file
+hdparm
+jove
+less
+linuxlogo
+nfs-common
+nscd
+rdate
+rsync
+rsh-client
+openssh-client openssh-server
+strace
+sysutils
+tcsh
+time
+postfix exim4-
+eject
+locales
+console-common
+pciutils usbutils
+fai-client
+mailutils
+joe
+
+PACKAGES yumi SUSE
+cfengine
+cron
+file
+hdparm
+jove
+less
+nfs-client
+nscd
+rsync
+rsh
+openssh
+strace
+tcsh
+eject
+glibc-locale
+pciutils usbutils
+fai-client
+joe
+

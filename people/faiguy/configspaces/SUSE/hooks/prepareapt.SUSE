@@ -1,0 +1,7 @@
+#!/bin/bash
+
+skiptask prepareapt
+
+if [ X$FAI_ALLOW_UNSIGNED = X1 ]; then
+        perl -pi -e "s/gpgcheck=1/gpgcheck=0/g" $FAI_ROOT/etc/yum.conf
+fi
