@@ -158,7 +158,7 @@ sub generate_fstab {
           # set the BOOT_DEVICE and BOOT_PARTITION variables, if necessary
           $FAI::disk_var{BOOT_PARTITION} = $device_name;
           ($c =~ /^PHY_(.+)$/) or &FAI::internal_error("unexpected mismatch");
-          defined ($FAI::disk_var{BOOT_DEVICE}) or
+          defined ($FAI::disk_var{BOOT_DEVICE}) and ($FAI::disk_var{BOOT_DEVICE} ne "") or
             $FAI::disk_var{BOOT_DEVICE} = $1;
         }
   
@@ -207,7 +207,7 @@ sub generate_fstab {
               !defined ($FAI::disk_var{BOOT_PARTITION}))) {
           # set the BOOT_DEVICE and BOOT_PARTITION variables, if necessary
           $FAI::disk_var{BOOT_PARTITION} = $device_name;
-          defined ($FAI::disk_var{BOOT_DEVICE}) or
+          defined ($FAI::disk_var{BOOT_DEVICE}) and ($FAI::disk_var{BOOT_DEVICE} ne "") or
             $FAI::disk_var{BOOT_DEVICE} = $device_name;
         }
 
@@ -238,7 +238,7 @@ sub generate_fstab {
               !defined ($FAI::disk_var{BOOT_PARTITION}))) {
           # set the BOOT_DEVICE and BOOT_PARTITION variables, if necessary
           $FAI::disk_var{BOOT_PARTITION} = "$device_name";
-          defined ($FAI::disk_var{BOOT_DEVICE}) or
+          defined ($FAI::disk_var{BOOT_DEVICE}) and ($FAI::disk_var{BOOT_DEVICE} ne "") or
             $FAI::disk_var{BOOT_DEVICE} = "$device_name";
         }
 
@@ -252,6 +252,10 @@ sub generate_fstab {
   # cleanup the swaplist (remove leading space and add quotes)
   $FAI::disk_var{SWAPLIST} =~ s/^\s*/"/;
   $FAI::disk_var{SWAPLIST} =~ s/\s*$/"/;
+  
+  # cleanup the list of boot devices (remove leading space and add quotes)
+  $FAI::disk_var{BOOT_DEVICE} =~ s/^\s*/"/;
+  $FAI::disk_var{BOOT_DEVICE} =~ s/\s*$/"/;
 
   # sort the lines in @fstab to enable all sub mounts
   @fstab = sort { [split("\t",$a)]->[1] cmp [split("\t",$b)]->[1] } @fstab;
