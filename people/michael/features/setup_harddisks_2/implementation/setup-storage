@@ -52,7 +52,7 @@ use warnings FATAL => qw(uninitialized);
 
 package FAI;
 
-my $version = "0.1.4893";
+my $version = "0.9";
 
 # command line parameter handling
 use Getopt::Std;
@@ -110,6 +110,9 @@ defined ($config_file) or die "No matching disk_config found\n";
 warn "Starting setup-storage $version";
 &FAI::run_parser($config_file);
 
+# mark devices as preserve, where not all already done so
+&FAI::propagate_preserve;
+
 # read the sizes and partition tables of all disks listed in $FAI::disks
 &FAI::get_current_disks;
 
@@ -162,13 +165,13 @@ $FAI::debug and print Dumper \%FAI::configs;
 
 # run all commands
 # debugging only: print the command script
-$FAI::debug and print "$_:" . $FAI::commands{$_}{cmd} . "\n" foreach (sort { $a <=> $b } keys %FAI::commands);
+$FAI::debug and print "$_:" . $FAI::commands{$_}{cmd} . "\n" foreach (&numsort(keys %FAI::commands));
 
 # run the commands (if $FAI::no_dry_run is set)
 # load the modules to support encryption
 `modprobe aes`;
 `modprobe dm-crypt`;
-&FAI::execute_command($FAI::commands{$_}{cmd}) foreach (sort { $a <=> $b } keys %FAI::commands);
+&FAI::execute_command($FAI::commands{$_}{cmd}) foreach (&numsort(keys %FAI::commands));
 
 # generate the proposed fstab contents
 # wait for udev to set up all devices

@@ -147,7 +147,7 @@ sub init_part_config {
   if ($type eq "primary") {
 
     # find all previously defined primary partitions
-    foreach my $part_id (sort { $a <=> $b } keys %{ $FAI::configs{$FAI::device}{partitions} }) {
+    foreach my $part_id (&numsort(keys %{ $FAI::configs{$FAI::device}{partitions} })) {
 
       # break, if the partition has not been created by init_part_config
       defined ($FAI::configs{$FAI::device}{partitions}{$part_id}{size}{extended}) or last;
@@ -173,7 +173,7 @@ sub init_part_config {
     # this branch, it has been ensured above
 
     # find the index of the new partition, initialise it to the highest current index
-    foreach my $part_id (sort { $a <=> $b } keys %{ $FAI::configs{$FAI::device}{partitions} }) {
+    foreach my $part_id (&numsort(keys %{ $FAI::configs{$FAI::device}{partitions} })) {
 
       # skip primary partitions
       next if ($part_id < 5);
@@ -198,7 +198,7 @@ sub init_part_config {
       my $extended = 0;
 
       # find all previously defined primary partitions
-      foreach my $part_id (sort { $a <=> $b } keys %{ $FAI::configs{$FAI::device}{partitions} }) {
+      foreach my $part_id (&numsort(keys %{ $FAI::configs{$FAI::device}{partitions} })) {
 
         # break, if the partition has not been created by init_part_config
         defined ($FAI::configs{$FAI::device}{partitions}{$part_id}{size}{extended}) or last;
@@ -316,7 +316,9 @@ $FAI::Parser = Parse::RecDescent->new(
           # check, whether raid tools are available
           &FAI::in_path("mdadm") or die "mdadm not found in PATH\n";
           $FAI::device = "RAID";
+          $FAI::configs{$FAI::device}{fstabkey} = "device";
         }
+        raid_option(s?)
         | /^lvm/
         {
 
@@ -325,7 +327,9 @@ $FAI::Parser = Parse::RecDescent->new(
           # initialise $FAI::device to inform the following lines about the LVM
           # being configured
           $FAI::device = "VG_";
+          $FAI::configs{"VG_--ANY--"}{fstabkey} = "device";
         }
+        lvm_option(s?)
         | 'end'
         {
           # exit config mode
@@ -347,6 +351,59 @@ $FAI::Parser = Parse::RecDescent->new(
           &FAI::init_disk_config($item[ 1 ]);
         }
         option(s?)
+    
+    raid_option: /^preserve_always:(\d+(,\d+)*)/
+        {
+          # set the preserve flag for all ids in all cases
+          $FAI::configs{RAID}{volumes}{$_}{preserve} = 1 foreach (split (",", $1));
+        }
+        | /^preserve_reinstall:(\d+(,\d+)*)/
+        {
+          # set the preserve flag for all ids if $FAI::reinstall is set
+          if ($FAI::reinstall) {
+            $FAI::configs{RAID}{volumes}{$_}{preserve} = 1 foreach (split(",", $1));
+          }
+        }
+        | /^fstabkey:(device|label|uuid)/
+        {
+          # the information preferred for fstab device identifieres
+          $FAI::configs{$FAI::device}{fstabkey} = $1;
+        }
+
+    lvm_option: m{^preserve_always:([^/,\s\-]+-[^/,\s\-]+(,[^/,\s\-]+-[^/,\s\-]+)*)}
+        {
+          # set the preserve flag for all ids in all cases
+          foreach (split (",", $1)) {
+            (m{^([^/,\s\-]+)-([^/,\s\-]+)\s+}) or 
+              die &FAI::internal_error("VG re-parse failed");
+            $FAI::configs{"VG_$1"}{volumes}{$2}{size}{preserve} = 1 
+          }
+        }
+        | m{^preserve_reinstall:([^/,\s\-]+-[^/,\s\-]+(,[^/,\s\-]+-[^/,\s\-]+)*)}
+        {
+          # set the preserve flag for all ids if $FAI::reinstall is set
+          if ($FAI::reinstall) {
+            foreach (split (",", $1)) {
+              (m{^([^/,\s\-]+)-([^/,\s\-]+)\s+}) or 
+                die &FAI::internal_error("VG re-parse failed");
+              $FAI::configs{"VG_$1"}{volumes}{$2}{size}{preserve} = 1 
+            }
+          }
+        }
+        | m{^resize:([^/,\s\-]+-[^/,\s\-]+(,[^/,\s\-]+-[^/,\s\-]+)*)}
+        {
+          # set the resize flag for all ids
+          foreach (split (",", $1)) {
+            (m{^([^/,\s\-]+)-([^/,\s\-]+)\s+}) or 
+              die &FAI::internal_error("VG re-parse failed");
+            $FAI::configs{"VG_$1"}{volumes}{$2}{size}{resize} = 1 
+          }
+        }
+        | /^fstabkey:(device|label|uuid)/
+        {
+          # the information preferred for fstab device identifieres
+          $FAI::configs{"VG_--ANY--"}{fstabkey} = $1;
+        }
 
     option: /^preserve_always:(\d+(,\d+)*)/
         {
@@ -421,7 +478,7 @@ $FAI::Parser = Parse::RecDescent->new(
           # initialise a logical partition
           &FAI::init_part_config($item[ 1 ]);
         }
-        | m{^([^/\s\-]+)-([^/\s\-]+)\s+}
+        | m{^([^/,\s\-]+)-([^/,\s\-]+)\s+}
         {
           # set $FAI::device to VG_$1
           $FAI::device = "VG_$1";
@@ -429,13 +486,16 @@ $FAI::Parser = Parse::RecDescent->new(
           defined ($FAI::configs{$FAI::device}) or 
             die "Volume group $1 has not been declared yet.\n";
           # make sure, $2 has not been defined already
-          defined ($FAI::configs{$FAI::device}{volumes}{$2}) and 
+          defined ($FAI::configs{$FAI::device}{volumes}{$2}{size}{range}) and 
             die "Logical volume $2 has been defined already.\n";
           # initialise the new hash
-          $FAI::configs{$FAI::device}{volumes}{$2} = {};
+          defined($FAI::configs{$FAI::device}{volumes}{$2}) or
+            $FAI::configs{$FAI::device}{volumes}{$2} = {};
           # initialise the preserve and resize flags
-          $FAI::configs{$FAI::device}{volumes}{$2}{size}{preserve} = 0;
-          $FAI::configs{$FAI::device}{volumes}{$2}{size}{resize} = 0;
+          defined($FAI::configs{$FAI::device}{volumes}{$2}{size}{preserve}) or
+            $FAI::configs{$FAI::device}{volumes}{$2}{size}{preserve} = 0;
+          defined($FAI::configs{$FAI::device}{volumes}{$2}{size}{resize}) or
+            $FAI::configs{$FAI::device}{volumes}{$2}{size}{resize} = 0;
           # set the reference to the current volume
           # the reference is used by all further processing of this config line
           $FAI::partition_pointer = (\%FAI::configs)->{$FAI::device}->{volumes}->{$2};
@@ -466,7 +526,7 @@ $FAI::Parser = Parse::RecDescent->new(
           }
         }
 
-    name: m{^([^/\s\-]+)}
+    name: m{^([^/,\s\-]+)}
         {
           # set the device name to VG_ and the name of the volume group
           $FAI::device = "VG_$1";

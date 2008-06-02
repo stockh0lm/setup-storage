@@ -124,6 +124,35 @@ $FAI::n_c_i = 1;
 
 ################################################################################
 #
+# @brief Add command to hash
+#
+# @param cmd Command
+# @param pre Preconditions
+# @param post Postconditions
+#
+################################################################################
+sub push_command { 
+  my ($cmd, $pre, $post) = @_;
+    
+  $FAI::commands{$FAI::n_c_i} = {
+    cmd => $cmd,
+    pre => $pre,
+    post => $post
+  };
+  $FAI::n_c_i++;
+}
+
+
+################################################################################
+#
+# @brief Sort integer arrays
+#
+################################################################################
+sub numsort { return sort { $a <=> $b } @_; }
+
+
+################################################################################
+#
 # @brief Check, whether $dev is a physical device, and extract sub-parts
 #
 # @param $dev Device string

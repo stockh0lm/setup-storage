@@ -73,6 +73,53 @@ sub create_fstab_line {
   return join ("\t", @fstab_line);
 }
 
+
+################################################################################
+#
+# @brief Obtain UUID and filesystem label information, if any.
+#
+# @param device_name Full device name
+# @param key_type Type to be used (uuid, label, or device)
+#
+# @return fstab key to be used
+#
+################################################################################
+sub get_fstab_key {
+  my ($device_name, $key_type) = @_;
+
+  ("uuid" eq $key_type) or ("label" eq $key_type) or ("device" eq $key_type) or
+    &FAI::internal_error("Invalid key type $key_type");
+
+  # write the device name as the first entry; if the user prefers uuids
+  # or labels, use these if available
+  my @uuid = ();
+  &FAI::execute_ro_command(
+    "/lib/udev/vol_id -u $device_name", \@uuid, 0);
+
+  # every device must have a uuid, otherwise this is an error (unless we
+  # are testing only)
+  ($FAI::no_dry_run == 0 || scalar (@uuid) == 1)
+    or die "Failed to obtain UUID for $device_name\n";
+
+  # get the label -- this is likely empty
+  my @label = ();
+  &FAI::execute_ro_command(
+    "/lib/udev/vol_id -l $device_name", \@label, 0);
+
+  # using the fstabkey value the desired device entry is defined
+  if ($key_type eq "uuid") {
+    chomp ($uuid[0]);
+    return "UUID=$uuid[0]";
+  } elsif ($key_type eq "label" && scalar(@label) == 1) {
+    chomp($label[0]);
+    return "LABEL=$label[0]";
+  } else {
+    # otherwise, use the usual device path
+    return $device_name;
+  }
+}
+          
+
 ################################################################################
 #
 # @brief this function generates the fstab file from our representation of the
@@ -119,37 +166,6 @@ sub generate_fstab {
           $device_name =~ "s#/#_#g";
           $device_name = "/dev/mapper/crypt$device_name";
         }
-
-        # device key used for mounting
-        my $fstab_key = "";
-
-        # write the device name as the first entry; if the user prefers uuids
-        # or labels, use these if available
-        my @uuid = ();
-        &FAI::execute_ro_command(
-          "/lib/udev/vol_id -u $device_name", \@uuid, 0);
-
-        # every device must have a uuid, otherwise this is an error (unless we
-        # are testing only)
-        ($FAI::no_dry_run == 0 || scalar (@uuid) == 1)
-          or die "Failed to obtain UUID for $device_name\n";
-
-        # get the label -- this is likely empty
-        my @label = ();
-        &FAI::execute_ro_command(
-          "/lib/udev/vol_id -l $device_name", \@label, 0);
-
-        # using the fstabkey value the desired device entry is defined
-        if ($config->{$c}->{fstabkey} eq "uuid") {
-          chomp ($uuid[0]);
-          $fstab_key = "UUID=$uuid[0]";
-        } elsif ($config->{$c}->{fstabkey} eq "label" && scalar(@label) == 1) {
-          chomp($label[0]);
-          $fstab_key = "LABEL=$label[0]";
-        } else {
-          # otherwise, use the usual device path
-          $fstab_key = $device_name;
-        }
           
         # if the mount point is / or /boot, the variables should be set, unless
         # they are already
@@ -162,10 +178,13 @@ sub generate_fstab {
             $FAI::disk_var{BOOT_DEVICE} = $1;
         }
   
-        push @fstab, &FAI::create_fstab_line($p_ref, $fstab_key, $device_name);
+        push @fstab, &FAI::create_fstab_line($p_ref,
+          &FAI::get_fstab_key($device_name, $config->{$c}->{fstabkey}), $device_name);
 
       }
     } elsif ($c =~ /^VG_(.+)$/) {
+      next if ($1 eq "--ANY--");
+      
       my $device = $1;
 
       # create a line in the output file for each logical volume
@@ -211,7 +230,8 @@ sub generate_fstab {
             $FAI::disk_var{BOOT_DEVICE} = $device_name;
         }
 
-        push @fstab, &FAI::create_fstab_line($l_ref, $device_name, $device_name);
+        push @fstab, &FAI::create_fstab_line($l_ref,
+          &FAI::get_fstab_key($device_name, $config->{"VG_--ANY--"}->{fstabkey}), $device_name);
       }
     } elsif ($c eq "RAID") {
 
@@ -242,7 +262,8 @@ sub generate_fstab {
             $FAI::disk_var{BOOT_DEVICE} = "$device_name";
         }
 
-        push @fstab, &FAI::create_fstab_line($r_ref, $device_name, $device_name);
+        push @fstab, &FAI::create_fstab_line($r_ref,
+          &FAI::get_fstab_key($device_name, $config->{RAID}->{fstabkey}), $device_name);
       }
     } else {
       &FAI::internal_error("Unexpected key $c");

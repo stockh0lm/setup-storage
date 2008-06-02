@@ -135,14 +135,38 @@ lines ::= EOL
 .Pp
 comment ::= #.* 
 .Pp
-config ::= disk_config lvm 
-           | disk_config raid
+config ::= disk_config lvm( <lvmoption>)* 
+           | disk_config raid( <raidoption>)*
            | disk_config end 
            | disk_config disk[[:digit:]]+( <option>)*
            | disk_config [^[:space:]]+( <option>)*
            /* fully qualified device-path or short form, like hda, whereby full
             * path is assumed to be /dev/hda */
            | <volume>
+.Pp
+lvmoption ::= /* empty */
+           | preserve_always:[[:digit:]]+(,[[:digit:]]+)*
+           /* preserve partitions -- always */
+           | preserve_reinstall:[[:digit:]]+(,[[:digit:]]+)*
+           /* preserve partitions -- unless the system is installed for the 
+           first time */
+           | resize:[[:digit:]]+(,[[:digit:]]+)*
+           /* attempt to resize partitions */
+           | fstabkey:(device|label|uuid)
+           /* when creating the fstab, the key used for defining the device
+           may be the device (/dev/xxx), a label given using -L, or the uuid
+           */  
+.Pp
+raidoption ::= /* empty */
+           | preserve_always:[[:digit:]]+(,[[:digit:]]+)*
+           /* preserve partitions -- always */
+           | preserve_reinstall:[[:digit:]]+(,[[:digit:]]+)*
+           /* preserve partitions -- unless the system is installed for the 
+           first time */
+           | fstabkey:(device|label|uuid)
+           /* when creating the fstab, the key used for defining the device
+           may be the device (/dev/xxx), a label given using -L, or the uuid
+           */  
 .Pp
 option ::= /* empty */
            | preserve_always:[[:digit:]]+(,[[:digit:]]+)*

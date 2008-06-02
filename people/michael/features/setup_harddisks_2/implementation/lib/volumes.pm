@@ -51,12 +51,7 @@ sub get_current_disks {
 
     # make sure, $disk is a proper block device
     (-b $disk) or die "$disk is not a block special device!\n";
-    $FAI::commands{$FAI::n_c_i} = {
-      cmd => "true",
-      pre => "",
-      post => "exist_$disk"
-    };
-    $FAI::n_c_i++;
+    &FAI::push_command( "true", "", "exist_$disk" );
 
     # initialise the hash
     $FAI::current_config{$disk}{partitions} = {};
@@ -301,12 +296,7 @@ sub get_current_lvm {
   foreach my $vg (get_volume_group_list()) {
     # initialise the hash entry
     $FAI::current_lvm_config{$vg}{physical_volumes} = ();
-    $FAI::commands{$FAI::n_c_i} = {
-      cmd => "true",
-      pre => "",
-      post => "vg_created_$vg"
-    };
-    $FAI::n_c_i++;
+    &FAI::push_command( "true", "", "vg_created_$vg" );
     
     # store the vg size in MB
     my %vg_info = get_volume_group_information($vg);
@@ -322,12 +312,7 @@ sub get_current_lvm {
       $FAI::current_lvm_config{$vg}{volumes}{$short_name}{size} =
         &FAI::convert_unit($lv_info{$lv_name}->{lv_size} .
           $lv_info{$lv_name}->{lv_size_unit});
-      $FAI::commands{$FAI::n_c_i} = {
-        cmd => "true",
-        pre => "",
-        post => "exist_/dev/$vg/$short_name"
-      };
-      $FAI::n_c_i++;
+      &FAI::push_command( "true", "", "exist_/dev/$vg/$short_name" );
     }
     
     # store the physical volumes
@@ -369,17 +354,84 @@ sub get_current_raid {
     if ($line =~ /^ARRAY \/dev\/md(\d+) level=(\S+) num-devices=\d+ UUID=/) {
       $id = $1;
       $FAI::current_raid_config{$id}{mode} = $2;
-      $FAI::commands{$FAI::n_c_i} = {
-        cmd => "true",
-        pre => "",
-        post => "exist_/dev/md$id"
-      };
-      $FAI::n_c_i++;
+      &FAI::push_command( "true", "", "exist_/dev/md$id" );
     } elsif ($line =~ /^\s*devices=(\S+)$/) {
       @{ $FAI::current_raid_config{$id}{devices} } = split (",", $1);
     }
   }
 }
+
+
+################################################################################
+#
+# @brief Set the appropriate preserve flag for $device_name
+#
+# @param device_name Full device path
+#
+################################################################################
+sub mark_preserve {
+  my ($device_name) = @_;
+  my ($i_p_d, $disk, $part_no) = &FAI::phys_dev($device_name);
+
+  if (1 == $i_p_d && defined($FAI::configs{"PHY_$disk"}{partitions}{$part_no})) {
+    $FAI::configs{"PHY_$disk"}{partitions}{$part_no}{size}{preserve} = 1;
+  } elsif ($device_name =~ m{^/dev/md(\d+)$}) {
+    my $vol = $1;
+    if (defined($FAI::configs{RAID}{volumes}{$vol}) && 
+        $FAI::configs{RAID}{volumes}{$vol}{preserve} != 1) {
+      $FAI::configs{RAID}{volumes}{$vol}{preserve} = 1;
+      &FAI::mark_preserve($_) foreach (keys %{ $FAI::configs{RAID}{volumes}{$vol}{devices} });
+    }
+  } elsif ($device_name =~ m{^/dev/([^/\s]+)/([^/\s]+)$}) {
+    my $vg = $1;
+    my $lv = $2;
+    if (defined($FAI::configs{"VG_$vg"}{volumes}{$lv}) &&
+        $FAI::configs{"VG_$vg"}{volumes}{$lv}{size}{preserve} != 1) {
+      $FAI::configs{"VG_$vg"}{volumes}{$lv}{size}{preserve} = 1;
+      &FAI::mark_preserve($_) foreach (keys %{ $FAI::configs{"VG_$vg"}{devices} });
+    }
+  } else {
+    warn "Don't know how to mark $device_name for preserve\n";
+  }
+}
+
+
+################################################################################
+#
+# @brief Mark devices as preserve, in case an LVM volume or RAID device shall be
+# preserved
+#
+################################################################################
+sub propagate_preserve {
+
+  # loop through all configs
+  foreach my $config (keys %FAI::configs) {
+    
+    # no physical devices here
+    next if ($config =~ /^PHY_./);
+    
+    if ($config =~ /^VG_(.+)$/) {
+      next if ($1 eq "--ANY--");
+      # check for logical volumes that need to be preserved and preserve the
+      # underlying devices recursively
+      foreach my $l (keys %{ $FAI::configs{$config}{volumes} }) {
+        next unless ($FAI::configs{$config}{volumes}{$l}{size}{preserve} == 1);
+        &FAI::mark_preserve($_) foreach (keys %{ $FAI::configs{$config}{devices} });
+        last;
+      }
+    } elsif ($config eq "RAID") {
+      # check for volumes that need to be preserved and preserve the underlying
+      # devices recursively
+      foreach my $r (keys %{ $FAI::configs{$config}{volumes} }) {
+        next unless ($FAI::configs{$config}{volumes}{$r}{preserve} == 1);
+        &FAI::mark_preserve($_) foreach (keys %{ $FAI::configs{$config}{volumes}{$r}{devices} });
+      }
+    } else {
+      &FAI::internal_error("Unexpected key $config");
+    }
+  }
+}
+
 
 1;
 

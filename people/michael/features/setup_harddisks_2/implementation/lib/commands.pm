@@ -69,12 +69,8 @@ sub build_mkfs_commands {
   ($fs eq "xfs") and $create_options = "$create_options -f" unless ($create_options =~ m/-f/);
   my $pre_encrypt = "exist_$device";
   $pre_encrypt = "encrypt_$device" if ($partition->{encrypt});
-  $FAI::commands{$FAI::n_c_i} = {
-    cmd => "$create_tool $create_options $device",
-    pre => $pre_encrypt,
-    post => "has_fs_$device"
-  };
-  $FAI::n_c_i++;
+  &FAI::push_command( "$create_tool $create_options $device", $pre_encrypt,
+    "has_fs_$device" );
   
   # possibly tune the file system - this depends on whether the file system
   # supports tuning at all
@@ -85,12 +81,8 @@ sub build_mkfs_commands {
   die "Don't know how to tune $fs\n" unless $tune_tool;
 
   # add the tune command
-  $FAI::commands{$FAI::n_c_i} = {
-    cmd => "$tune_tool $tune_options $device",
-    pre => "has_fs_$device",
-    post => "has_fs_$device"
-  };
-  $FAI::n_c_i++;
+  &FAI::push_command( "$tune_tool $tune_options $device", "has_fs_$device",
+    "has_fs_$device" );
 }
 
 ################################################################################
@@ -117,26 +109,17 @@ sub encrypt_device {
   my $keyfile = "$ENV{LOGDIR}/$enc_dev_short_name";
 
   # generate a key for encryption
-  $FAI::commands{$FAI::n_c_i} = {
-    cmd => "head -c 2048 /dev/urandom | head -n 47 | tail -n 46 | od | tee $keyfile",
-    pre => "",
-    post => "keyfile_$device"
-  };
-  $FAI::n_c_i++;
+  &FAI::push_command( 
+    "head -c 2048 /dev/urandom | head -n 47 | tail -n 46 | od | tee $keyfile",
+    "", "keyfile_$device" );
 
   # prepare encryption
-  $FAI::commands{$FAI::n_c_i} = {
-    cmd => "yes YES | cryptsetup luksFormat $device $keyfile -c aes-cbc-essiv:sha256 -s 256",
-    pre => "exist_$device,keyfile_$device",
-    post => "crypt_format_$device"
-  };
-  $FAI::n_c_i++;
-  $FAI::commands{$FAI::n_c_i} = {
-    cmd => "cryptsetup luksOpen $device $enc_dev_short_name --key-file $keyfile",
-    pre => "crypt_format_$device",
-    post => "encrypted_$device"
-  };
-  $FAI::n_c_i++;
+  &FAI::push_command(
+    "yes YES | cryptsetup luksFormat $device $keyfile -c aes-cbc-essiv:sha256 -s 256",
+    "exist_$device,keyfile_$device", "crypt_format_$device" );
+  &FAI::push_command(
+    "cryptsetup luksOpen $device $enc_dev_short_name --key-file $keyfile",
+    "crypt_format_$device", "encrypted_$device" );
 
   # add entries to crypttab
   push @FAI::crypttab, "$enc_dev_short_name\t$device\t$keyfile\tluks";
@@ -162,12 +145,8 @@ sub set_partition_type_on_phys_dev {
   # as that may be created later on
   (-b $disk) or die "Specified disk $disk does not exist in this system!\n";
   # set the raid flag
-  $FAI::commands{$FAI::n_c_i} = {
-    cmd => "parted -s $disk set $part_no $t on",
-    pre => "exist_$d",
-    post => "type_${t}_$d"
-  };
-  $FAI::n_c_i++;
+  &FAI::push_command( "parted -s $disk set $part_no $t on", "exist_$d",
+    "type_${t}_$d" );
 }
 
 ################################################################################
@@ -184,12 +163,15 @@ sub build_raid_commands {
     ($config eq "RAID") or &FAI::internal_error("Invalid config $config");
 
     # create all raid devices
-    foreach my $id (sort { $a <=> $b } keys %{ $FAI::configs{$config}{volumes} }) {
+    foreach my $id (&numsort(keys %{ $FAI::configs{$config}{volumes} })) {
 
       # keep a reference to the current volume
       my $vol = (\%FAI::configs)->{$config}->{volumes}->{$id};
       # the desired RAID level
       my $level = $vol->{mode};
+      
+      warn "RAID implementation is incomplete - preserve is not supported\n" if
+        ($vol->{preserve});
 
       # prepend "raid", if the mode is numeric-only
       $level = "raid$level" if ($level =~ /^\d+$/);
@@ -219,12 +201,8 @@ sub build_raid_commands {
       my $pre_req_no_comma = $pre_req;
       $pre_req_no_comma =~ s/^,//;
       # wait for udev to set up all devices
-      $FAI::commands{$FAI::n_c_i} = {
-        cmd => "udevsettle --timeout=10",
-        pre => $pre_req_no_comma,
-        post => "settle_for_mdadm_create$id"
-      };
-      $FAI::n_c_i++;
+      &FAI::push_command( "udevsettle --timeout=10", $pre_req_no_comma,
+        "settle_for_mdadm_create$id" );
       
       # create the command
       if (0 == $id) {
@@ -232,14 +210,11 @@ sub build_raid_commands {
       } else {
         $pre_req = "settle_for_mdadm_create$id,exist_/dev/md" . ( $id - 1 ) . $pre_req;
       }
-      $FAI::commands{$FAI::n_c_i} = {
-        cmd => "yes | mdadm --create /dev/md$id --level=$level --force --run --raid-devices="
+      &FAI::push_command(
+        "yes | mdadm --create /dev/md$id --level=$level --force --run --raid-devices="
           . scalar(@eff_devs) . " --spare-devices=" . scalar(@spares) . " "
           . join(" ", @eff_devs) . " " . join(" ", @spares),
-        pre => "$pre_req",
-        post => "exist_/dev/md$id"
-      };
-      $FAI::n_c_i++;
+        "$pre_req", "exist_/dev/md$id" );
 
       # create the filesystem on the volume
       &FAI::build_mkfs_commands("/dev/md$id",
@@ -265,12 +240,7 @@ sub erase_lvm_signature {
   #   foreach ( @{$devices_aref} );
   my $device_list = join (" ", @{$devices_aref});
   $FAI::debug and print "Erased devices: $device_list\n"; 
-  $FAI::commands{$FAI::n_c_i} = {
-    cmd => "pvremove -ff -y $device_list",
-    pre => "",
-    post => "pv_sigs_removed"
-  };
-  $FAI::n_c_i++;
+  &FAI::push_command( "pvremove -ff -y $device_list", "", "pv_sigs_removed" );
 
   # reload module
   # push @FAI::commands, "modprobe dm_mod";
@@ -287,7 +257,7 @@ sub erase_lvm_signature {
 sub create_volume_group {
 
   my ($config) = @_;
-  ($config =~ /^VG_(.+)$/) or &FAI::internal_error("Invalid config $config");
+  ($config =~ /^VG_(.+)$/) and ($1 ne "--ANY--") or &FAI::internal_error("Invalid config $config");
   my $vg = $1; # the actual volume group
 
   # create the volume group, if it doesn't exist already
@@ -295,23 +265,13 @@ sub create_volume_group {
     # create all the devices
     my @devices = keys %{ $FAI::configs{$config}{devices} };
     &FAI::erase_lvm_signature(\@devices);
-    foreach (@devices) {
-      $FAI::commands{$FAI::n_c_i} = {
-        cmd => "pvcreate $_",
-        pre => "pv_sigs_removed,exist_$_",
-        post => "pv_done_$_"
-      };
-      $FAI::n_c_i++;
-    }
+    &FAI::push_command( "pvcreate $_", "pv_sigs_removed,exist_$_",
+      "pv_done_$_" ) foreach (@devices);
     # create the volume group
     my $pre_dev = join(",pv_done_", @devices);
     $pre_dev =~ s/^,//;
-    $FAI::commands{$FAI::n_c_i} = {
-      cmd => "vgcreate $vg " . join (" ", @devices),
-      pre => "$pre_dev",
-      post => "vg_created_$vg"
-    };
-    $FAI::n_c_i++;
+    &FAI::push_command( "vgcreate $vg " . join (" ", @devices), "$pre_dev",
+      "vg_created_$vg" );
     # we are done
     return;
   }
@@ -329,24 +289,13 @@ sub create_volume_group {
   # &FAI::erase_lvm_signature( \@new_devices );
 
   # create all the devices
-  foreach (@new_devices) {
-    $FAI::commands{$FAI::n_c_i} = {
-      cmd => "pvcreate $_",
-      pre => "exist_$_",
-      post => "pv_done_$_"
-    };
-    $FAI::n_c_i++;
-  }
+  &FAI::push_command( "pvcreate $_", "exist_$_", "pv_done_$_" ) foreach (@new_devices);
 
   # extend the volume group by the new devices (includes the current ones)
   my $pre_dev = join(",pv_done_", @new_devices);
   $pre_dev =~ s/^,//;
-  $FAI::commands{$FAI::n_c_i} = {
-    cmd => "vgextend $vg " . join (" ", @new_devices),
-    pre => "$pre_dev",
-    post => "vg_extended_$vg"
-  };
-  $FAI::n_c_i++;
+  &FAI::push_command( "vgextend $vg " . join (" ", @new_devices), "$pre_dev",
+    "vg_extended_$vg" );
 
   # the devices to be removed
   my %rm_devs = ();
@@ -358,19 +307,10 @@ sub create_volume_group {
   # run vgreduce to get them removed
   if (scalar (keys %rm_devs)) {
     $pre_dev = join(",pv_done_", keys %rm_devs);
-    $FAI::commands{$FAI::n_c_i} = {
-      cmd => "vgreduce $vg " . join (" ", keys %rm_devs),
-      pre => "vg_extended_$vg$pre_dev",
-      post => "vg_created_$vg"
-    };
-    $FAI::n_c_i++;
+    &FAI::push_command( "vgreduce $vg " . join (" ", keys %rm_devs),
+      "vg_extended_$vg$pre_dev", "vg_created_$vg" );
   } else {
-    $FAI::commands{$FAI::n_c_i} = {
-      cmd => "true",
-      pre => "vg_extended_$vg",
-      post => "vg_created_$vg"
-    };
-    $FAI::n_c_i++;
+    &FAI::push_command( "true", "vg_extended_$vg", "vg_created_$vg" );
   }
 }
 
@@ -385,7 +325,7 @@ sub create_volume_group {
 sub setup_logical_volumes {
 
   my ($config) = @_;
-  ($config =~ /^VG_(.+)$/) or &FAI::internal_error("Invalid config $config");
+  ($config =~ /^VG_(.+)$/) and ($1 ne "--ANY--") or &FAI::internal_error("Invalid config $config");
   my $vg = $1; # the actual volume group
 
   my $lv_rm_pre = "";
@@ -401,12 +341,7 @@ sub setup_logical_volumes {
       next;
     }
 
-    $FAI::commands{$FAI::n_c_i} = {
-      cmd => "lvremove -f $vg/$lv",
-      pre => "vg_enabled_$vg",
-      post => "lv_rm_$vg/$lv"
-    };
-    $FAI::n_c_i++;
+    &FAI::push_command( "lvremove -f $vg/$lv", "vg_enabled_$vg", "lv_rm_$vg/$lv");
     $lv_rm_pre .= ",lv_rm_$vg/$lv";
   }
   $lv_rm_pre =~ s/^,//;
@@ -431,45 +366,23 @@ sub setup_logical_volumes {
       if ($lv_size->{eff_size} <
         $FAI::current_lvm_config{$vg}{volumes}{$lv}{size})
       {
-        $FAI::commands{$FAI::n_c_i} = {
-          cmd => "parted -s /dev/$vg/$lv resize 1 0 " . $lv_size->{eff_size} .  "B",
-          pre => "vg_enabled_$vg,$lv_rm_pre",
-          post => "lv_shrink_$vg/$lv"
-        };
-        $FAI::n_c_i++;
-        
-        $FAI::commands{$FAI::n_c_i} = {
-          cmd => "lvresize -L " . $lv_size->{eff_size} . " $vg/$lv",
-          pre => "vg_enabled_$vg,$lv_rm_pre,lv_shrink_$vg/$lv",
-          post => "lv_created_$vg/$lv"
-        };
-        $FAI::n_c_i++;
+        &FAI::push_command( "parted -s /dev/$vg/$lv resize 1 0 " . $lv_size->{eff_size} .  "B",
+          "vg_enabled_$vg,$lv_rm_pre", "lv_shrink_$vg/$lv" );
+        &FAI::push_command( "lvresize -L " . $lv_size->{eff_size} . " $vg/$lv",
+          "vg_enabled_$vg,$lv_rm_pre,lv_shrink_$vg/$lv", "lv_created_$vg/$lv" );
       } else {
-        $FAI::commands{$FAI::n_c_i} = {
-          cmd => "lvresize -L " . $lv_size->{eff_size} . " $vg/$lv",
-          pre => "vg_enabled_$vg,$lv_rm_pre",
-          post => "lv_grow_$vg/$lv"
-        };
-        $FAI::n_c_i++;
-        
-        $FAI::commands{$FAI::n_c_i} = {
-          cmd => "parted -s /dev/$vg/$lv resize 1 0 " . $lv_size->{eff_size} .  "B",
-          pre => "vg_enabled_$vg,$lv_rm_pre,lv_grow_$vg/$lv",
-          post => "exist_/dev/$vg/$lv"
-        };
-        $FAI::n_c_i++;
+        &FAI::push_command( "lvresize -L " . $lv_size->{eff_size} . " $vg/$lv",
+          "vg_enabled_$vg,$lv_rm_pre", "lv_grow_$vg/$lv" );
+        &FAI::push_command( "parted -s /dev/$vg/$lv resize 1 0 " . $lv_size->{eff_size} .  "B",
+          "vg_enabled_$vg,$lv_rm_pre,lv_grow_$vg/$lv", "exist_/dev/$vg/$lv" );
       }
 
       next;
     }
 
     # create a new volume
-    $FAI::commands{$FAI::n_c_i} = {
-      cmd => "lvcreate -n $lv -L " . $lv_size->{eff_size} . " $vg",
-      pre => "vg_enabled_$vg,$lv_rm_pre",
-      post => "exist_/dev/$vg/$lv"
-    };
-    $FAI::n_c_i++;
+    &FAI::push_command( "lvcreate -n $lv -L " . $lv_size->{eff_size} . " $vg",
+      "vg_enabled_$vg,$lv_rm_pre", "exist_/dev/$vg/$lv" );
 
     # create the filesystem on the volume
     &FAI::build_mkfs_commands("/dev/$vg/$lv",
@@ -492,6 +405,7 @@ sub build_lvm_commands {
     # no physical devices or RAID here
     next if ($config =~ /^PHY_./ || $config eq "RAID");
     ($config =~ /^VG_(.+)$/) or &FAI::internal_error("Invalid config $config");
+    next if ($1 eq "--ANY--");
     my $vg = $1; # the volume group
 
     # set proper partition types for LVM
@@ -500,22 +414,14 @@ sub build_lvm_commands {
     my $type_pre = join(",type_lvm_", keys %{ $FAI::configs{$config}{devices} });
     $type_pre =~ s/^,//;
     # wait for udev to set up all devices
-    $FAI::commands{$FAI::n_c_i} = {
-      cmd => "udevsettle --timeout=10",
-      pre => "$type_pre",
-      post => "settle_for_vgchange_$vg"
-    };
-    $FAI::n_c_i++;
+    &FAI::push_command( "udevsettle --timeout=10", "$type_pre",
+      "settle_for_vgchange_$vg" );
 
     # create the volume group or add/remove devices
     &FAI::create_volume_group($config);
     # enable the volume group
-    $FAI::commands{$FAI::n_c_i} = {
-      cmd => "vgchange -a y $vg",
-      pre => "settle_for_vgchange_$vg,vg_created_$vg",
-      post => "vg_enabled_$vg"
-    };
-    $FAI::n_c_i++;
+    &FAI::push_command( "vgchange -a y $vg",
+      "settle_for_vgchange_$vg,vg_created_$vg", "vg_enabled_$vg" );
 
     # perform all necessary operations on the underlying logical volumes
     &FAI::setup_logical_volumes($config);
@@ -539,7 +445,7 @@ sub get_preserved_partitions {
   my @to_preserve = ();
 
   # find partitions that should be preserved or resized
-  foreach my $part_id ( sort { $a <=> $b } keys %{ $FAI::configs{$config}{partitions} } ) {
+  foreach my $part_id (&numsort(keys %{ $FAI::configs{$config}{partitions} })) {
     # reference to the current partition
     my $part = (\%FAI::configs)->{$config}->{partitions}->{$part_id};
     next unless ($part->{size}->{preserve} || $part->{size}->{resize});
@@ -558,7 +464,7 @@ sub get_preserved_partitions {
   }
 
   # sort the list of preserved partitions
-  @to_preserve = sort { $a <=> $b } @to_preserve;
+  @to_preserve = &numsort(@to_preserve);
 
   # add the extended partition as well, if logical partitions must be
   # preserved; and mark it as resize
@@ -594,14 +500,14 @@ sub get_preserved_partitions {
     # if the extended partition is not listed yet, find and add it now; note
     # that we need to add the existing one
     if ($has_logical && -1 == $extended) {
-      foreach my $part_id (sort { $a <=> $b } keys %{ $FAI::current_config{$disk}{partitions} }) {
+      foreach my $part_id (&numsort(keys %{ $FAI::current_config{$disk}{partitions} })) {
 
         # no extended partition
         next unless
           $FAI::current_config{$disk}{partitions}{$part_id}{is_extended};
 
         # find the configured extended partition to set the mapping
-        foreach my $p (sort { $a <=> $b } keys %{ $FAI::configs{$config}{partitions} }) {
+        foreach my $p (&numsort(keys %{ $FAI::configs{$config}{partitions} })) {
           # reference to the current partition
           my $part = (\%FAI::configs)->{$config}->{partitions}->{$p};
           next unless $part->{size}->{extended};
@@ -622,7 +528,7 @@ sub get_preserved_partitions {
         }
 
         # sort the list of preserved partitions (again)
-        @to_preserve = sort { $a <=> $b } @to_preserve;
+        @to_preserve = &numsort(@to_preserve);
 
         last;
       }
@@ -694,12 +600,8 @@ sub rebuild_preserved_partitions {
     $post = "rebuilt_" . &FAI::make_device_name($disk, $part_nr) if
       $FAI::configs{$config}{partitions}{$part_id}{size}{resize};
     # build a parted command to create the partition
-    $FAI::commands{$FAI::n_c_i} = {
-      cmd => "parted -s $disk mkpart $part_type $fs ${start}B ${end}B",
-      pre => "cleared1_$disk",
-      post => $post
-    };
-    $FAI::n_c_i++;
+    &FAI::push_command( "parted -s $disk mkpart $part_type $fs ${start}B
+      ${end}B", "cleared1_$disk", $post );
   }
 }
 
@@ -728,19 +630,15 @@ sub setup_partitions {
     or die "Can't change disklabel, partitions are to be preserved\n";
 
   # write the disklabel to drop the previous partition table
-  $FAI::commands{$FAI::n_c_i} = {
-    cmd => "parted -s $disk mklabel " . $FAI::configs{$config}{disklabel},
-    pre => "exist_$disk",
-    post => "cleared1_$disk"
-  };
-  $FAI::n_c_i++;
+  &FAI::push_command( "parted -s $disk mklabel " .
+    $FAI::configs{$config}{disklabel}, "exist_$disk", "cleared1_$disk" );
 
   &FAI::rebuild_preserved_partitions($config, \@to_preserve);
 
   my $pre_all_resize = "";
 
   # resize partitions while checking for dependencies
-  foreach my $part_id (reverse sort { $a <=> $b } (@to_preserve)) {
+  foreach my $part_id (reverse &numsort(@to_preserve)) {
     # reference to the current partition
     my $part = (\%FAI::configs)->{$config}->{partitions}->{$part_id};
     # get the existing id
@@ -755,7 +653,7 @@ sub setup_partitions {
     $pre_all_resize .= ",resized_" . &FAI::make_device_name($disk, $p);
     my $deps = "";
     # now walk all other partitions requiring a resize to check for overlaps
-    foreach my $part_other (reverse sort { $a <=> $b } (@to_preserve)) {
+    foreach my $part_other (reverse &numsort(@to_preserve)) {
       # don't compare to self
       next if ($part_id == $part_other);
       # reference to the current partition
@@ -815,47 +713,33 @@ sub setup_partitions {
       my $eff_size = $part->{size}->{eff_size};
 
       # wait for udev to set up all devices
-      $FAI::commands{$FAI::n_c_i} = {
-        cmd => "udevsettle --timeout=10",
-        pre => "rebuilt_" . &FAI::make_device_name($disk, $p) . $deps,
-        post => "settle_for_resize_" . &FAI::make_device_name($disk, $p)
-      };
-      $FAI::n_c_i++;
-      $FAI::commands{$FAI::n_c_i} = {
-        cmd => "yes | ntfsresize -s $eff_size " .  &FAI::make_device_name($disk, $p),
-        pre => "settle_for_resize_" . &FAI::make_device_name($disk, $p),
-        post => "ntfs_ready_for_rm_" . &FAI::make_device_name($disk, $p)
-      };
-      $FAI::n_c_i++;
-      $FAI::commands{$FAI::n_c_i} = {
-        cmd => "parted -s $disk rm $p",
-        pre => "ntfs_ready_for_rm_" . &FAI::make_device_name($disk, $p),
-        post => "resized_" . &FAI::make_device_name($disk, $p)
-      };
-      $FAI::n_c_i++;
+      &FAI::push_command( "udevsettle --timeout=10", "rebuilt_" .
+        &FAI::make_device_name($disk, $p) . $deps, "settle_for_resize_" .
+        &FAI::make_device_name($disk, $p) );
+      &FAI::push_command( "yes | ntfsresize -s $eff_size " .
+        &FAI::make_device_name($disk, $p), "settle_for_resize_" .
+        &FAI::make_device_name($disk, $p), "ntfs_ready_for_rm_" .
+        &FAI::make_device_name($disk, $p) );
+      &FAI::push_command( "parted -s $disk rm $p", "ntfs_ready_for_rm_" .
+        &FAI::make_device_name($disk, $p), "resized_" .
+        &FAI::make_device_name($disk, $p) );
     } else {
-      $FAI::commands{$FAI::n_c_i} = {
-        cmd => "parted -s $disk resize $p ${start}B ${end}B",
-        pre => "rebuilt_" . &FAI::make_device_name($disk, $p),
-        post => "resized_" . &FAI::make_device_name($disk, $p)
-      };
-      $FAI::n_c_i++;
+      &FAI::push_command( "parted -s $disk resize $p ${start}B ${end}B",
+        "rebuilt_" . &FAI::make_device_name($disk, $p), "resized_" .
+        &FAI::make_device_name($disk, $p) );
     }
     
   }
 
   # write the disklabel again to drop the partition table and create a new one
   # that has the proper ids
-  $FAI::commands{$FAI::n_c_i} = {
-    cmd => "parted -s $disk mklabel " . $FAI::configs{$config}{disklabel},
-    pre => "cleared1_$disk$pre_all_resize",
-    post => "cleared2_$disk"
-  };
-  $FAI::n_c_i++;
+  &FAI::push_command( "parted -s $disk mklabel " .
+    $FAI::configs{$config}{disklabel}, "cleared1_$disk$pre_all_resize",
+    "cleared2_$disk" );
 
   my $prev_id = -1;
   # generate the commands for creating all partitions
-  foreach my $part_id (sort { $a <=> $b } keys %{ $FAI::configs{$config}{partitions} }) {
+  foreach my $part_id (&numsort(keys %{ $FAI::configs{$config}{partitions} })) {
     # reference to the current partition
     my $part = (\%FAI::configs)->{$config}->{partitions}->{$part_id};
     # get the existing id
@@ -889,23 +773,18 @@ sub setup_partitions {
     my $pre = "";
     $pre = ",exist_" . &FAI::make_device_name($disk, $prev_id) if ($prev_id > -1);
     # build a parted command to create the partition
-    $FAI::commands{$FAI::n_c_i} = {
-      cmd => "parted -s $disk mkpart $part_type $fs ${start}B ${end}B",
-      pre => "cleared2_$disk$pre",
-      post => "exist_" . &FAI::make_device_name($disk, $part_id)
-    };
-    $FAI::n_c_i++;
+    &FAI::push_command( "parted -s $disk mkpart $part_type $fs ${start}B
+      ${end}B", "cleared2_$disk$pre", "exist_" . &FAI::make_device_name($disk,
+      $part_id) );
     $prev_id = $part_id;
   }
 
   # set the bootable flag, if requested at all
   if ($FAI::configs{$config}{bootable} > -1) {
-    $FAI::commands{$FAI::n_c_i} = {
-      cmd => "parted -s $disk set " . $FAI::configs{$config}{bootable} . " boot on",
-      pre => "exist_" . &FAI::make_device_name($disk, $FAI::configs{$config}{bootable}),
-      post => "boot_set_$disk"
-    };
-    $FAI::n_c_i++;
+    &FAI::push_command( "parted -s $disk set " .
+      $FAI::configs{$config}{bootable} . " boot on", "exist_" .
+      &FAI::make_device_name($disk, $FAI::configs{$config}{bootable}),
+      "boot_set_$disk" );
   }
 }
 
@@ -929,7 +808,7 @@ sub build_disk_commands {
     &FAI::setup_partitions($config) unless ($FAI::configs{$config}{virtual});
     
     # generate the commands for creating all filesystems
-    foreach my $part_id ( sort { $a <=> $b } keys %{ $FAI::configs{$config}{partitions} } ) {
+    foreach my $part_id (&numsort(keys %{ $FAI::configs{$config}{partitions} })) {
       # reference to the current partition
       my $part = (\%FAI::configs)->{$config}->{partitions}->{$part_id};
 
@@ -958,7 +837,7 @@ sub restore_partition_table {
         . $FAI::current_config{$disk}{disklabel}, 0, 0);
 
     # generate the commands for creating all partitions
-    foreach my $part_id (sort { $a <=> $b } keys %{ $FAI::current_config{$disk}{partitions} }) {
+    foreach my $part_id (&numsort(keys %{ $FAI::current_config{$disk}{partitions} })) {
       # reference to the current partition
       my $curr_part = (\%FAI::current_config)->{$disk}->{partitions}->{$part_id};
 
@@ -1020,12 +899,8 @@ sub order_commands {
       die "Cannot satisfy pre-depends for " . $FAI::commands{$i}{cmd} . ": " .
         $FAI::commands{$i}{pre} . " -- system left untouched.\n";
     }
-    $FAI::commands{$FAI::n_c_i} = {
-      cmd => $FAI::commands{$i}{cmd},
-      pre => $FAI::commands{$i}{pre},
-      post => $FAI::commands{$i}{post}
-    };
-    $FAI::n_c_i++;
+    &FAI::push_command( $FAI::commands{$i}{cmd}, $FAI::commands{$i}{pre},
+      $FAI::commands{$i}{post} );
     delete $FAI::commands{$i};
   }
 }

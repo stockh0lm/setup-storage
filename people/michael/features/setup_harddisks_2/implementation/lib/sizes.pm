@@ -186,6 +186,7 @@ sub compute_lv_sizes {
     # for RAID or physical disks there is nothing to be done here
     next if ($config eq "RAID" || $config =~ /^PHY_./);
     ($config =~ /^VG_(.+)$/) or &FAI::internal_error("invalid config entry $config");
+    next if ($1 eq "--ANY--");
     my $vg = $1; # the volume group name
 
     # compute the size of the volume group; this is not exact, but should at
@@ -370,7 +371,7 @@ sub do_partition_extended {
   $part->{size}->{eff_size} = 0;
   $part->{start_byte} = -1;
 
-  foreach my $p (sort { $a <=> $b } keys %{ $FAI::configs{$config}{partitions} }) {
+  foreach my $p (&numsort(keys %{ $FAI::configs{$config}{partitions} })) {
     next if ($p < 5);
 
     $part->{start_byte} = $FAI::configs{$config}{partitions}{$p}{start_byte} -
@@ -586,7 +587,7 @@ sub compute_partition_sizes
     my $current_extended = -1;
 
     # find the first existing extended partition
-    foreach my $part_id (sort { $a <=> $b } keys %{ $current_disk->{partitions} }) {
+    foreach my $part_id (&numsort(keys %{ $current_disk->{partitions} })) {
       if ($current_disk->{partitions}->{$part_id}->{is_extended}) {
         $current_extended = $part_id;
         last;
@@ -621,7 +622,7 @@ sub compute_partition_sizes
     }
 
     # the list of partitions that we need to find start and end bytes for
-    my @worklist = (sort { $a <=> $b } keys %{ $FAI::configs{$config}{partitions} });
+    my @worklist = (&numsort(keys %{ $FAI::configs{$config}{partitions} }));
 
     while (scalar (@worklist))
     {
@@ -683,7 +684,7 @@ sub compute_partition_sizes
     (defined ($FAI::configs{$config}{partitions}{$_}{start_byte})
         && defined ($FAI::configs{$config}{partitions}{$_}{end_byte}))
       or &FAI::internal_error("start or end of partition $_ not set")
-        foreach (sort { $a <=> $b } keys %{ $FAI::configs{$config}{partitions} });
+        foreach (&numsort(keys %{ $FAI::configs{$config}{partitions} }));
   }
 }
 
