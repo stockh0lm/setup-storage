@@ -1,0 +1,184 @@
+#! /usr/bin/perl -w
+# 
+#     fai-updater - start and supervise fai softupdates on many hosts
+#     Copyright (C) 2004-2006  Henning Glawe <glaweh@debian.org>
+# 
+#     This program is free software; you can redistribute it and/or modify
+#     it under the terms of the GNU General Public License as published by
+#     the Free Software Foundation; either version 2 of the License, or
+#     (at your option) any later version.
+# 
+#     This program is distributed in the hope that it will be useful,
+#     but WITHOUT ANY WARRANTY; without even the implied warranty of
+#     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#     GNU General Public License for more details.
+# 
+#     You should have received a copy of the GNU General Public License
+#     along with this program; if not, write to the Free Software
+#     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+# 
+# 
+use strict;
+use Getopt::Std;
+use FAI::Updater;
+use FAI::Updater::Display::Logfile;
+use FAI::Updater::Display::Curses;
+use POSIX qw(strftime);
+$Getopt::Std::STANDARD_HELP_VERSION=1;
+
+# options
+our ($opt_H,$opt_s,$opt_n,$opt_o);
+
+our $VERSION="0.1";
+
+my $netgroup='hand-defined';
+my $cui;
+my $updater;
+my $statusdisplay;
+my $updater_win;
+my $viewer_win;
+my $logdir;
+my $quit=0;
+
+sub HELP_MESSAGE {
+  my $FH = shift;
+  print $FH <<EOF
+  
+Usage: $0 [options] <netgroup|-H host1,host2,...>
+  --help            display this help message
+  --version         print version
+  -o                ordered mode: don't randomize order of hosts
+  -s <number>       number of updates running simultanously
+  -n                dryrun mode: use a dummy-script instead of really 
+                    contacting the clients
+EOF
+}
+
+sub updater_cb() {
+	if ($updater->run()) {
+	} elsif ($quit) {
+		exit(0);
+	} else {
+		$statusdisplay->text("idle");
+		$statusdisplay->draw();
+	}
+}
+
+sub quit() {
+	cancel_update();
+	$quit=1;
+}
+
+sub cancel_update() {
+	if ($updater->max_simultanous() > 0) {
+		$statusdisplay->text("cancelling...");
+		$statusdisplay->draw();
+		$updater->max_simultanous(0);
+	}
+}
+
+sub select_handler() {
+	my $listbox = shift;
+	my $sel = $listbox->get();
+	$listbox->clear_selection();
+	viewer_on($sel);
+}
+
+my $log;
+my $viewer;
+sub viewer_on() {
+	my $host=shift;
+	# a logviewer makes no sense without any log to look at
+	return unless -f "$logdir/$host";
+	
+	# shrink the updater window
+	$updater_win->{-height}=10;
+	$updater_win->layout();
+	
+	# create the textviewer
+	$viewer_win=$cui->add('ViewerWin','Window',
+		-width=>$updater_win->{-width},
+		-height=>$cui->height()-(1+$updater_win->{-height}),
+		-y=>$updater_win->{-height}
+		);
+	open $log,"$logdir/$host";
+	$viewer=$viewer_win->add('Viewer','TextViewer',
+		-vscrollbar=>1,
+		-wrapping=>1,
+		-border=>1,
+		-title=>$host,
+		-text=>join("",<$log>));
+	$viewer->focus();
+	$cui->set_timer('viewer-update',\&viewer_update);
+}
+
+sub viewer_off() {
+	$cui->delete_timer('viewer-update');
+	close $log;
+	$cui->delete("ViewerWin");
+	$updater_win->{-height}=$cui->height()-1;
+	$updater_win->layout();
+	$updater_win->focus();
+	$cui->draw();
+}
+
+sub viewer_update() {
+	my $newtext=join("",<$log>);
+	if ($newtext) {
+		$viewer->{-text}.=$newtext;
+		$viewer->draw();
+	}
+}
+
+# - - - - - - - - - - - - - - - - - - - -
+#  main routine
+# - - - - - - - - - - - - - - - - - - - -
+
+getopts('hH:s:no');
+# emit help message when no hosts/no netgroup is given on the command line
+(($#ARGV<0) and ! $opt_H) and HELP_MESSAGE(*STDERR) and exit(1);
+$netgroup=$ARGV[0] if $ARGV[0];
+
+# create logdir
+$logdir="/var/log/fai-updater/".strftime("%Y-%m-%d_%H-%M-%S",localtime);
+die "can't create logdir $logdir" unless mkdir $logdir;
+
+#initialize Curses
+$cui=new Curses::UI(-color_support=>1, -clear_on_exit=>1);
+#create window for the updater display, leave space for the statusbar
+$updater_win=$cui->add('UpdateColumns','Window',-height=>$cui->height()-1);
+#create the updater display
+my $display=FAI::Updater::Display::Curses->new(WIN=>$updater_win,SELECT=>\&select_handler);
+
+# build up the statusbar. as the updater display is now correctly layouted, 
+# use its width for proper alignment
+my $statusbar=$cui->add('Statusbar','Window', 
+	-y=>$cui->height()-1,
+	-width=>$updater_win->width());
+# hotkey descriptions
+$statusbar->add(undef,'Label',-text=>'q:Quit c:Cancel <ENTER>:Open Viewer <ESC>:Close Viewer');
+# Status
+$statusbar->add(undef,'Label',-text=>'Status: ',
+	-x=>-21);
+$statusdisplay=$statusbar->add('statusdisplay','Label',
+	-text=>'processing',
+	-x=>-1,
+	-width=>20,
+	-paddingspaces=>1,
+	-textalignment=>'middle',
+	-sbborder=>1,
+	-bg=>'red');
+	
+$updater_win->focus();
+$cui->set_binding( \&quit, "q");
+$cui->set_binding( \&cancel_update, "c");
+$cui->set_binding( \&viewer_off, "\e");
+
+$display->append(FAI::Updater::Display::Logfile->new(FILENAME=>"$logdir/FAI_UPDATER.log"));
+$updater=FAI::Updater->new(DISPLAY=>$display,PING=>0,DRYRUN=>$opt_n,ORDERED=>$opt_o,LOGDIR=>$logdir);
+$updater->max_simultanous($opt_s) if $opt_s;
+$updater->init_hostlist( $opt_H ? split(/,/,$opt_H) : split(/\s/,`libexec/get_hostlist $netgroup`));
+
+$cui->draw();
+$cui->set_timer('updater',\&updater_cb);
+$cui->mainloop;

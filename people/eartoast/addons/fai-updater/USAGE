@@ -1,0 +1,17 @@
+You get basic usage information running 'updater-curses --help'.
+
+Connecting to the clients:
+the script libexec/faiupdate is used to connect _non-interactively_ to the
+clients and start an update there, forwarding stdout to the fai-updater.
+
+A script using ssh is included, but of course you can edit it to match 
+your own needs.
+To be able to connect to the clients using the provided libexec/faiupdate, 
+you need to have some way to access them via ssh as root without entering
+a password.
+A solution for this is to install a matching file as 
+/root/.ssh/authorized_keys, start ssh-agent and load the private key 
+into it _before_ starting fai-updater.
+Another, but from a security point of view dangerous, possibility is to
+use a passphrase-less ssh private key into the account under which you run 
+fai-updater.

@@ -1,0 +1,21 @@
+First the legal stuff:
+I put this code under the GPLv2, as you can find it in the LICENSE file
+in the root directory of the distribution.
+
+Now a word to the needed packages:
+for the frontend, you need the Curses::UI perl module, in Debian you get
+it via
+
+apt-get install libcurses-ui-perl
+
+
+On the client side, fai-client is needed and of course a FAI configuration
+which is update-safe.
+
+I know the code is quite rough, as though I tried programming cleanly, a
+lot of hacks have slipped in, and I don't have the time to clean up the
+code right now due to my diploma thesis' deadline ;)
+
+If you have any questions or suggestions, feel free to write me.
+
+Henning Glawe <glaweh@debian.org>
