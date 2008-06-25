@@ -3,6 +3,7 @@ This is the Debian GNU/Linux package fai
 written by Thomas Lange <lange@informatik.uni-koeln.de>
 
 Copyright (C) 1999-2008  Thomas Lange
+Copyright (C) 2001-2006  Henning Glawe <glaweh@physik.fu-berlin.de>
 
 The newest sources can be retrieved via this command
   svn co svn://svn.debian.org/svn/fai/trunk fai
