@@ -114,6 +114,9 @@ warning: /usr/lib/X11/fonts
 can't read /etc/udev/rules.d/z25_persistent-net.rules
 /cow': No such file or directory
 Dummy start-stop-daemon called
+^fai.log:ERRORS found in log files. See
+^fai.log:Congratulations! No errors found in log files.
+^error.log:
 cdrom: open failed."
 
 # add pattern on some conditions
@@ -135,10 +138,6 @@ ignorepatterns="$globalignorepatterns
 $myignorepatterns"
 
 cd $LOGDIR || exit 3
-if [ -s $errfile ]; then
-    echo "Errorfile already exists. Aborting."
-    exit
-fi
 
 grep -i "$errorpatterns" *.log | grep -vi "$ignorepatterns" > $errfile
 if [ "$verbose" ]; then
@@ -148,6 +147,7 @@ fi
 
 if [ -s $errfile ]; then
    echo "ERRORS found in log files. See $errfile"
+   unset flag_reboot
 else
    echo "Congratulations! No errors found in log files."
    export flag_reboot=1
