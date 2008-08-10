@@ -143,6 +143,9 @@ grep -i "$errorpatterns" *.log | grep -vi "$ignorepatterns" > $errfile
 if [ "$verbose" ]; then
     egrep -v '^software.log:' $errfile > $LOGDIR/tempfile
     mv $LOGDIR/tempfile $errfile
+else
+    egrep -v "^fai.log:Couldn't find any package whose name or description matched" $errfile > $LOGDIR/tempfile
+    mv $LOGDIR/tempfile $errfile
 fi
 
 if [ -s $errfile ]; then
