@@ -117,6 +117,8 @@ Dummy start-stop-daemon called
 ^fai.log:ERRORS found in log files. See
 ^fai.log:Congratulations! No errors found in log files.
 ^error.log:
+^software.log:Warning: The home dir /var/lib/gdm you specified already exists.
+^software.log:adduser: Warning: The home directory \`/var/lib/gdm' does not belong to the user you are currently creating.
 cdrom: open failed."
 
 # add pattern on some conditions
