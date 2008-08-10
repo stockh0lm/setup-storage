@@ -121,6 +121,7 @@ Dummy start-stop-daemon called
 ^software.log:adduser: Warning: The home directory \`/var/lib/gdm' does not belong to the user you are currently creating.
 ^fai.log:df: \`/dev/.static/dev': No such file or directory
 ^software.log:cpio: ./etc/udev/rules.d/z99_hal.rules: Cannot stat: No such file or directory
+^software.log:xserver-xorg postinst warning: failed to infer keyboard layout from layout/lang
 cdrom: open failed."
 
 # add pattern on some conditions
