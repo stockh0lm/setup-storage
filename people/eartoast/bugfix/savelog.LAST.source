@@ -120,6 +120,7 @@ Dummy start-stop-daemon called
 ^software.log:Warning: The home dir /var/lib/gdm you specified already exists.
 ^software.log:adduser: Warning: The home directory \`/var/lib/gdm' does not belong to the user you are currently creating.
 ^fai.log:df: \`/dev/.static/dev': No such file or directory
+^software.log:cpio: ./etc/udev/rules.d/z99_hal.rules: Cannot stat: No such file or directory
 cdrom: open failed."
 
 # add pattern on some conditions
