@@ -1,0 +1,68 @@
+#!/bin/bash
+
+set -e -x
+
+echo "WARNING: This script is going to destroy your system! Press Ctrl-C to quit or any other key to continue" 1>&2
+read
+
+echo "dhcp3-server  dhcp3-server/interfaces string  br0" | debconf-set-selections 
+
+if ! grep -q "^deb http://192.168.2.250/cskoeln lenny koeln" /etc/apt/sources.list ; then
+  echo "deb http://192.168.2.250/cskoeln lenny koeln" >> /etc/apt/sources.list
+fi
+
+apt-get update
+apt-get install kvm fai-quickstart openbsd-inetd
+apt-get upgrade
+
+if ! grep -q "^deb http://192.168.2.250/cskoeln lenny koeln" /etc/fai/apt/sources.list ; then
+  echo "deb http://192.168.2.250/cskoeln lenny koeln" >> /etc/fai/apt/sources.list
+fi
+
+if ! grep -q "^FAI_CONFIG_SRC" /etc/fai/fai.conf ; then
+  echo "FAI_CONFIG_SRC=nfs://192.168.2.5/srv/fai/config" >> /etc/fai/fai.conf
+fi
+
+if ! grep -q "^host faitest1" /etc/dhcp3/dhcpd.conf ; then
+  mv /etc/dhcp3/dhcpd.conf /etc/dhcp3/dhcpd.conf.before-fai
+
+  cat >> /etc/dhcp3/dhcpd.conf <<EOF
+ddns-update-style none;
+default-lease-time 600;
+max-lease-time 7200;
+next-server 192.168.2.5;
+
+subnet 192.168.2.0 netmask 255.255.255.0 {
+  option routers 192.168.2.1;
+  option domain-name-servers 192.168.1.4, 192.168.1.6;
+}
+  
+host faitest1 {
+  hardware ethernet aa:00:00:00:00:01;
+  fixed-address 192.168.2.101;
+  filename "pxelinux.0";
+}
+EOF
+
+  /etc/init.d/dhcp3-server restart
+fi
+
+if [ ! -d /srv/fai/nfsroot ] ; then
+  fai-setup -v
+  touch /srv/fai/nfsroot/live/filesystem.dir/.nocolorlogo
+fi
+
+if grep -q /var/lib/tftpboot /etc/inetd.conf ; then
+  sed -i 's#/var/lib/tftpboot#-vvv /srv/tftp/fai#' /etc/inetd.conf
+  /etc/init.d/openbsd-inetd restart
+fi
+
+fai-chboot -IFv default
+
+echo "export debug=1" > /srv/fai/config/class/00-debug.source
+chmod a+x /srv/fai/config/class/00-debug.source
+
+# dd of=$LARGE_FILE_DIR/disk.img seek=10000000000 bs=1 count=0
+kvm-img create -f qcow2 /mnt/disk.img 10G
+kvm -m 256 -net nic,macaddr=aa:00:00:00:00:01 -net tap,ifname=tap0 -boot n -hda /mnt/disk.img
+
