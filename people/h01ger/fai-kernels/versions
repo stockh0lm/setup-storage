@@ -1,3 +1,0 @@
-# set kernel versions; used in debian/rules
-
-kversion=2.6.20
