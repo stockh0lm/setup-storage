@@ -1,0 +1,23 @@
+#! /bin/sh
+tmp=`mktemp -d`
+
+#yum -c yum.conf --installroot=$tmp -y groupinstall Core
+yum -c yum.conf --installroot=$tmp -y install yum dhclient
+cp rhel5.repo  $tmp/etc/yum.repos.d/
+mount -o bind /proc $tmp/proc
+chroot $tmp yum groupinstall -y Core
+chroot $tmp yum clean packages
+
+#rm $tmp/var/cache/yum/base/packages/*.rpm
+
+echo "chroot created in tmp=$tmp"
+oldpwd=$PWD
+cd $tmp
+umount ./proc
+
+tar cvfz $oldpwd/DIST-RHEL_5.tar.gz . 
+
+cd -
+
+
+echo "chroot created in tmp=$tmp"

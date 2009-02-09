@@ -1,8 +1,12 @@
 #!/bin/sh
 
+# this script is avilable under the terms of the GNU GPL.
+# author: Henning Sprang - henning@sprang.de
+
+# TODO: put this info in a --help / -h function!
 # this script should help to create base system images for use in FAI
 # installations.
-# even if debsoostrap seems to have scripts for multiple different
+# even if debboostrap seems to have scripts for multiple different
 # debian-based distributions, it most often does not succeed, for example to
 # create etch base system from sarge, create debian base system from ubuntu,
 # etc.
@@ -21,6 +25,8 @@
 #   - a debootstrap downloaded from a given location
 #
 # TODO: add the possibility to just download a readily created base image?
+# TODO: add a script for centOS/redhat and other systems minimal image
+# creation!
 
 
 PATH=/usr/local/bin:/usr/local/sbin:/bin:/sbin:/usr/bin:/usr/sbin
@@ -31,7 +37,6 @@ if [ `id -u` -ne 0 ]; then
     exit 9
 fi
 
-# option e currently does nothing
 while getopts vc:f:d: opt ; do
     case "$opt" in
         d) DISTRIBUTION=$OPTARG ;;
@@ -51,10 +56,7 @@ if [ ! -d "$cfdir" ]; then
     exit 6
 fi
 
-if [ ! -d $NFSROOT ]; then
-	echo "need a working nfsroot - run fai-setup or make-fai-nfsroot"
-	exit 1
-fi
+
 
 [ "$verbose" ] && echo "Using configuration files from directory $cfdir"
 if [ -n "$cfg" ]; then
@@ -70,9 +72,14 @@ fi
 
 . /etc/fai-distributions/${DISTRIBUTION}.conf
 
-if [ -z "$NFSROOT" ]; then
-    echo "\$NFSROOT is not set. Please check your settings in $cfdir/fai.conf."
+if [ -z "$FAI_CONFIGDIR" ]; then
+    echo "\$FAI_CONFIGDIR is not set. Please check your settings in $cfdir/fai.conf."
     exit 4
+fi
+
+if [ ! -d $FAI_CONFIGDIR ]; then
+	echo "need a working nfsroot - run fai-setup or make-fai-nfsroot"
+	exit 1
 fi
 
 
@@ -111,30 +118,48 @@ TMP_CHROOT_DIR=`mktemp -d $FAI_TMP_BASEDIR/${DISTRIBUTION}_debootstrap.XXXXXX`
 
 echo "TMPDIR is $TMP_CHROOT_DIR"
 
+
+# from here, it's debian/dpkg specific! - for additional distributions, we
+# need a decision here and call something else!
+
 # call debootstrap as neccessary
 # TODO: put into config file (for each distribution)!
-DEBOOTSTRAP_OPTIONS="--arch $DEBOOTSTRAP_ARCH \
-    --exclude=$DEBOOTSTRAP_EXCLUDE \
-    --include=$DEBOOTSTRAP_INCLUDE \
+
+[ -z $DEBOOTSTRAP_EXCLUDE ] || {
+    DEBOOTSTRAP_OPTIONS="--exclude=$DEBOOTSTRAP_EXCLUDE"
+}
+
+[ -z $DEBOOTSTRAP_INCLUDE ] || {
+    DEBOOTSTRAP_OPTIONS="$DEBOOTSTRAP_OPTIONS --include=$DEBOOTSTRAP_INCLUDE"
+}
+
+DEBOOTSTRAP_OPTIONS="$DEBOOTSTRAP_OPTIONS --arch $DEBOOTSTRAP_ARCH \
     $DEBOOTSTRAP_DIST_NAME \
     $TMP_CHROOT_DIR \
     $MIRROR_LOCATION"
 
 cd `dirname $0`
 
-export DEBOOTSTRAP_DIR=$BOOTSTRAP_DIR/usr/lib/debootstrap/
+#export DEBOOTSTRAP_DIR=$BOOTSTRAP_DIR/usr/lib/debootstrap/
+export DEBOOTSTRAP_DIR=$BOOTSTRAP_DIR/usr/share/debootstrap/
 
 echo run $BOOTSTRAP_DIR/usr/sbin/debootstrap $DEBOOTSTRAP_OPTIONS
 $BOOTSTRAP_DIR/usr/sbin/debootstrap $DEBOOTSTRAP_OPTIONS
 
 chroot $TMP_CHROOT_DIR apt-get clean
        
-echo "Creating base-$DISTRIBUTION.tgz"
+
+# Debian specific stuff ends here
+
+echo "Creating $DISTRIBUTION.tar.gz"
 
 cd $TMP_CHROOT_DIR
 
+[ -d $FAI_CONFIGDIR/basefiles ] || {
+    mkdir $FAI_CONFIGDIR/basefiles
+}
 
-tar cfz $NFSROOT/var/tmp/base-$DISTRIBUTION.tgz *
+tar cfz $FAI_CONFIGDIR/basefiles/$DISTRIBUTION.tar.gz
 
 chroot $TMP_CHROOT_DIR umount /dev
 chroot $TMP_CHROOT_DIR umount /.dev
@@ -142,5 +167,3 @@ chroot $TMP_CHROOT_DIR umount /.dev
 # cleanup
 echo "cleaning up TMP_CHROOT_DIR $TMP_CHROOT_DIR"
 rm -rf $TMP_CHROOT_DIR
-
-
