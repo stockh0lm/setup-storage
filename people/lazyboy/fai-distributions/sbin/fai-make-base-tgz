@@ -31,19 +31,40 @@
 
 PATH=/usr/local/bin:/usr/local/sbin:/bin:/sbin:/usr/bin:/usr/sbin
 
+# TODO: base bootstrapper dir should be defined in (not yet existing)
+# generic config file)
+BOOTSTRAP_DIR=/var/lib/fai-distributions/bootstrappers/$DISTRIBUTION
+
+
 
 if [ `id -u` -ne 0 ]; then
     echo "Run this program as root."
     exit 9
 fi
 
-while getopts vc:f:d: opt ; do
+while getopts vc:f:d:n opt ; do
     case "$opt" in
-        d) DISTRIBUTION=$OPTARG ;;
-        c) cfdir=$OPTARG ;;
-        v) verbose=1 ; v=-v ;;
-        f) cfg=$OPTARG ;;
-        ?) exit 5 ;; # error in option parsing
+        d) 
+            DISTRIBUTION=$OPTARG 
+        ;;
+        c) 
+            cfdir=$OPTARG 
+        ;;
+        v) 
+            verbose=1 ;
+            v=-v 
+            set -x
+        ;;
+        f) 
+            cfg=$OPTARG 
+        ;;
+        n) 
+            NATIVE_DEBOOTSTRAP=true
+        ;;
+        ?) 
+            echo error in option parsing
+            exit 5 
+        ;; # error in option parsing
     esac
 done
 
@@ -83,25 +104,23 @@ if [ ! -d $FAI_CONFIGDIR ]; then
 fi
 
 
-# TODO: base bootstrapper dir should be defined in (not yet existing)
-# generic config file)
-BOOTSTRAP_DIR=/var/lib/fai-distributions/bootstrappers/$DISTRIBUTION
-
 # cleanup dir if it already exists!
 if [ -d $BOOTSTRAP_DIR ]; then
 	rm -r $BOOTSTRAP_DIR
 fi
 
 mkdir -p $BOOTSTRAP_DIR
-cd $BOOTSTRAP_DIR
 
-wget $BOOTSTRAP_ARCHIVE/$BOOTSTRAP_PACKAGE
+if [ -z $NATIVE_DEBOOTSTRAP ]; then
+    cd $BOOTSTRAP_DIR
 
+    wget $BOOTSTRAP_ARCHIVE/$BOOTSTRAP_PACKAGE
 
-# extact debootstrap archive
-dpkg-deb -x $BOOTSTRAP_PACKAGE .
+    # extact debootstrap archive
+    dpkg-deb -x $BOOTSTRAP_PACKAGE .
 
-cd -
+    cd -
+fi
 
 # TODO: put into generic config file
 FAI_TMP_BASEDIR=/tmp/fai/distributions
@@ -140,11 +159,15 @@ DEBOOTSTRAP_OPTIONS="$DEBOOTSTRAP_OPTIONS --arch $DEBOOTSTRAP_ARCH \
 
 cd `dirname $0`
 
-#export DEBOOTSTRAP_DIR=$BOOTSTRAP_DIR/usr/lib/debootstrap/
-export DEBOOTSTRAP_DIR=$BOOTSTRAP_DIR/usr/share/debootstrap/
 
-echo run $BOOTSTRAP_DIR/usr/sbin/debootstrap $DEBOOTSTRAP_OPTIONS
-$BOOTSTRAP_DIR/usr/sbin/debootstrap $DEBOOTSTRAP_OPTIONS
+if [ -z $NATIVE_DEBOOTSTRAP ]; then
+    #export DEBOOTSTRAP_DIR=$BOOTSTRAP_DIR/usr/lib/debootstrap/
+    export DEBOOTSTRAP_DIR=$BOOTSTRAP_DIR/usr/share/debootstrap/
+    DEBOOTSTRAP_BASE=$BOOTSTRAP_DIR
+fi
+
+echo run $DEBOOTSTRAP_BASE/usr/sbin/debootstrap $DEBOOTSTRAP_OPTIONS
+$DEBOOTSTRAP_BASE/usr/sbin/debootstrap $DEBOOTSTRAP_OPTIONS
 
 chroot $TMP_CHROOT_DIR apt-get clean
        
@@ -159,7 +182,8 @@ cd $TMP_CHROOT_DIR
     mkdir $FAI_CONFIGDIR/basefiles
 }
 
-tar cfz $FAI_CONFIGDIR/basefiles/$DISTRIBUTION.tar.gz
+echo "packing bae image from pwd: `pwd`"
+tar cfz $FAI_CONFIGDIR/basefiles/$DISTRIBUTION.tar.gz .
 
 chroot $TMP_CHROOT_DIR umount /dev
 chroot $TMP_CHROOT_DIR umount /.dev
