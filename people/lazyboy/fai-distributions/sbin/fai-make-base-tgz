@@ -87,7 +87,7 @@ else
 fi
 
 if [ -z $DISTRIBUTION ]; then
-    echo "error: must give distribution for which base tgz should be built - exiting"
+    echo "error: must give distribution for which base tgz should be built with option -d - exiting"
     exit 1    
 fi
 
