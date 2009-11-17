@@ -11,6 +11,8 @@ fai (3.3.1ubuntu1) karmic; urgency=low
     + examples/simple/package_config/{DEFAULT, FAIBASE}: adjusted packages (Thx Waldemar)
     + examples/simple/package_config/faiclient: Added 
     + examples/simple/scripts/GRUB_PC/10-setup: added source in dist_var.sh for softupdate (Thx Waldemar)
+
+ -- Stephan Hermann <sh@sourcecode.de> Tue, 17 Nov 2009 12:16:00 +0100
     
 fai (3.3.1) unstable; urgency=low
 
