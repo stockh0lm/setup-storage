@@ -1,0 +1,11 @@
+PACKAGES aptitude DHCPC
+dhcp3-client
+
+PACKAGES aptitude GRUB
+grub lilo- grub-pc-
+
+PACKAGES aptitude GRUB_PC
+grub-pc grub- lilo-
+
+PACKAGES aptitude LILO
+lilo grub- grub-pc-
