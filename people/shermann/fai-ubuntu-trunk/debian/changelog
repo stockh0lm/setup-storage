@@ -1,3 +1,19 @@
+fai (3.3.2ubuntu1) karmic; urgency=low
+
+  [ Stephan Hermann ]
+  * added changes from Waldemar Brodkorb to FAI 3.3.2 (LP: #338157)
+    + debian/control
+    + lib/load_keymap_consolchars: Merged from trunk rev5667
+    + conf/sources.list: adjusted deb lines to match Ubuntu mirrors
+    + conf/make-fai-nfsroot: adjusted deb mirror to match Ubuntu
+    + conf/NFSROOT: adjusted packages for Ubuntu (Thx Waldemar)
+    + examples/simple/class/50-host-class: added faiclient (Thx Waldemar)
+    + examples/simple/package_config/{DEFAULT, FAIBASE}: adjusted packages (Thx Waldemar)
+    + examples/simple/package_config/faiclient: Added 
+    + examples/simple/scripts/GRUB_PC/10-setup: added source in dist_var.sh for softupdate (Thx Waldemar)
+
+ -- Stephan Hermann <shermann@wz-pc-010.intern.netviewer.de>  Tue, 17 Nov 2009 16:15:17 +0100
+
 fai (3.3.2) unstable; urgency=low
 
   [ Thomas Lange ]
