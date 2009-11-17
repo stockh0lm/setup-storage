@@ -7,7 +7,6 @@ file
 hdparm
 jove
 less
-linuxlogo
 nfs-common
 nscd
 rdate
@@ -20,6 +19,6 @@ procinfo
 exim4
 eject
 locales
-console-common
+console-setup
 pciutils usbutils
 lvm2

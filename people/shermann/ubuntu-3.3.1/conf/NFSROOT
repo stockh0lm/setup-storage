@@ -3,10 +3,9 @@
 PACKAGES aptitude
 nfs-common fai-nfsroot module-init-tools ssh rdate lshw portmap
 rsync lftp less dump reiserfsprogs e2fsprogs usbutils
-hwinfo psmisc pciutils hdparm smartmontools parted mdadm lvm2
+psmisc pciutils hdparm smartmontools parted mdadm lvm2
 dnsutils ntpdate dosfstools jove xfsprogs xfsdump
-procinfo dialog discover
-console-tools console-common
+procinfo dialog discover console-setup
 iproute udev subversion liblinux-lvm-perl
 
 # needed for the simple examples
@@ -17,11 +16,11 @@ cfengine2 libapt-pkg-perl
 
 PACKAGES aptitude I386
 grub lilo read-edid
-linux-image-486 aufs-modules-2.6-486
+linux-image
 
 PACKAGES aptitude AMD64
 grub lilo
-linux-image-2.6-amd64 aufs-modules-2.6-amd64
+linux-image
 
 PACKAGES aptitude IA64
 elilo gnu-efi efibootmgr
@@ -33,5 +32,5 @@ PACKAGES aptitude ALPHA
 aboot
 
 PACKAGES aptitude POWERPC
-linux-image-2.6-powerpc aufs-modules-2.6-powerpc
+linux-image
 yaboot

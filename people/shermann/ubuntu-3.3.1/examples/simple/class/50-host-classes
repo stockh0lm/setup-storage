@@ -16,9 +16,11 @@ case $HOSTNAME in
 	echo "FAIBASE DHCPC LVM_XEN_SERVER XEN" ;;
     puma)
 	echo "FAIBASE DHCPC RAID_XEN_VIRTUAL" ;;
+    faiclient)
+	echo "FAIBASE DHCPC GERMAN" ;;
     *)
 	echo "FAIBASE DHCPC" ;;
 esac
 
-(ifclass I386 || ifclass AMD64) && echo GRUB 
+(ifclass I386 || ifclass AMD64) && echo GRUB_PC
 exit 0
