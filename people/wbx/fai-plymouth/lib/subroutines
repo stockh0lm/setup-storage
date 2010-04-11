@@ -443,14 +443,21 @@ task_faiend() {
     [ $do_init_tasks -eq 0 ] && exit 0
     wait_for_jobs
     echo "Press <RETURN> to reboot."
-    if [ "$faisplash" ];then
-      plymouth message --text "Press <RETURN> to reboot."
-    fi
     : ${flag_reboot:=0}
     [ -s $LOGDIR/error.log -a "$flag_reboot" -gt "0" ] && sleep 10
     # reboot without prompting if FAI_FLAG reboot is set
     sendmon "TASKEND faiend 0"
-    [ "$flag_reboot" -lt "1" ] && read
+    itime=$((($(cut -d . -f 1 /proc/uptime)-$start_seconds)/60))
+    if [ "$faisplash" ];then
+      if [ "$flag_reboot" -lt "1" ];then
+        plymouth message --text "Installation took $itime minutes. Press <RETURN> to reboot."
+        plymouth ask-question --prompt="Press <RETURN> to reboot." --command=/dev/null
+      else
+        plymouth message --text "Installation took $itime minutes. Rebooting now."
+      fi
+    else 
+      [ "$flag_reboot" -lt "1" ] && read
+    fi
     echo "Rebooting $HOSTNAME now"
     sendmon "TASKEND reboot 0"
     cd /
