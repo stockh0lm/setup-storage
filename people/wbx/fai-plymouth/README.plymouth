@@ -1,3 +1,13 @@
 this branch is for plymouth integration in fai install process.
+
+If you like to try with a very simple plymouth theme, checkout
+following from subversion:
+$ svn co svn://svn.debian.org/svn/fai/people/wbx/plymouth-theme-fai
+
+And build:
+$ cd plymouth-theme-fai
+$ debuild
+Add the resulting package to your repository.
+
 add following to your kernel append line to activate plymouth:
 quiet faisplash=1 

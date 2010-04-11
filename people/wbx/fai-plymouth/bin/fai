@@ -107,10 +107,10 @@ fai_init() {
 
     if [ "$faisplash" ];then
    	 if [ -x /sbin/plymouthd ]; then
-	   /sbin/plymouthd --mode=boot --attach-to-session --pid-file=/tmp/plymouth.pid
+	   plymouthd --mode=boot --attach-to-session --pid-file=/tmp/plymouth.pid
 	 fi
          if [ -x /bin/plymouth ];then
-	   /bin/plymouth show-splash &
+	   plymouth show-splash &
 	 fi
     else
     	prcopyleft
@@ -316,7 +316,7 @@ fstart > >( tee -a $LOGDIR/fai.log )  2>&1
 [ "$action" ] && export FAI_ACTION=$action
 unset action
 if [ "$faisplash" ];then
-	/bin/plymouth message --text "start installation" &
+  plymouth message --text "start installation" &
 fi
 task action 2>&1 | tee -a $LOGDIR/fai.log
 
