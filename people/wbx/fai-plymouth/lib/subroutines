@@ -150,6 +150,9 @@ task() {
 	sendmon "TASKSKIP $taskname"
     else
 	echo "Calling task_$taskname"
+        if [ "$faisplash" ];then
+          /bin/plymouth message --text "Calling task: $taskname"
+        fi
 	sendmon "TASKBEGIN $taskname"
 	task_error=0   # task can set this variable to indicate an error
 	task_error_func=''
@@ -440,6 +443,9 @@ task_faiend() {
     [ $do_init_tasks -eq 0 ] && exit 0
     wait_for_jobs
     echo "Press <RETURN> to reboot."
+    if [ "$faisplash" ];then
+      /bin/plymouth message --text "Press <RETURN> to reboot."
+    fi
     : ${flag_reboot:=0}
     [ -s $LOGDIR/error.log -a "$flag_reboot" -gt "0" ] && sleep 10
     # reboot without prompting if FAI_FLAG reboot is set

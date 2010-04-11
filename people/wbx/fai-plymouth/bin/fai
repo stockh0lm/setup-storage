@@ -98,14 +98,23 @@ fai_init() {
 	mkdir -p /var/run/network /dev/shm/network # when using initrd kernels
 	ifup lo
 	[ -x /sbin/portmap ] && /sbin/portmap
-	mount -t devpts devpts /dev/pts
+	[ -d /dev/pts ] || mount -t devpts devpts /dev/pts
 	cat /proc/kmsg >/dev/tty4 &
     fi
 
     # since HOSTNAME may change define classes now, so we can call hooks before fai-class is called
     [ -z "$classes" ] && classes="DEFAULT $(uname -s | tr a-z A-Z) $HOSTNAME LAST"
 
-    prcopyleft
+    if [ "$faisplash" ];then
+   	 if [ -x /sbin/plymouthd ]; then
+	   /sbin/plymouthd --mode=boot --attach-to-session --pid-file=/tmp/plymouth.pid
+	 fi
+         if [ -x /bin/plymouth ];then
+	   /bin/plymouth show-splash &
+	 fi
+    else
+    	prcopyleft
+    fi
 
     [ $do_init_tasks -eq 1 ] && save_dmesg
 }
@@ -306,6 +315,9 @@ fstart > >( tee -a $LOGDIR/fai.log )  2>&1
 
 [ "$action" ] && export FAI_ACTION=$action
 unset action
+if [ "$faisplash" ];then
+	/bin/plymouth message --text "start installation" &
+fi
 task action 2>&1 | tee -a $LOGDIR/fai.log
 
 [ -L "/var/run/fai/current_config" ] && rm -f "/var/run/fai/current_config"

@@ -1,1 +1,3 @@
-this branch is for plymouth integration in fai install process
+this branch is for plymouth integration in fai install process.
+add following to your kernel append line to activate plymouth:
+quiet faisplash=1 
