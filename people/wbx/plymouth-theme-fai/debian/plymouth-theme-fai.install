@@ -1,0 +1,3 @@
+*.png lib/plymouth/themes/fai/
+*.plymouth lib/plymouth/themes/fai/
+*.script lib/plymouth/themes/fai/

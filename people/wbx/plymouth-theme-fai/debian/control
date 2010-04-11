@@ -1,0 +1,14 @@
+Source: plymouth-theme-fai
+Section: x11
+Priority: optional
+Maintainer: Waldemar Brodkorb <fai@waldemar-brodkorb.de>
+Build-Depends: debhelper (>= 7)
+Standards-Version: 3.8.4
+Homepage: http://www.informatik.uni-koeln.de/fai/
+
+Package: plymouth-theme-fai
+Architecture: all
+Depends: plymouth, plymouth-label, ${misc:Depends}
+Provides: plymouth-theme
+Description: plymouth theme for FAI
+ This package contains a specific FAI theme for plymouth.
