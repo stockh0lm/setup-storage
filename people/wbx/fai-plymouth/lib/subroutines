@@ -151,7 +151,7 @@ task() {
     else
 	echo "Calling task_$taskname"
         if [ "$faisplash" ];then
-          plymouth message --text "Calling task: $taskname"
+          plymouth message --text "$HOSTNAME @ $taskname"
         fi
 	sendmon "TASKBEGIN $taskname"
 	task_error=0   # task can set this variable to indicate an error
@@ -451,7 +451,7 @@ task_faiend() {
     if [ "$faisplash" ];then
       if [ "$flag_reboot" -lt "1" ];then
         plymouth message --text "Installation took $itime minutes. Press <RETURN> to reboot."
-        plymouth ask-question --prompt="Press <RETURN> to reboot." --command=/dev/null
+        plymouth ask-question --command=/dev/null
       else
         plymouth message --text "Installation took $itime minutes. Rebooting now."
       fi
@@ -887,6 +887,9 @@ task_updatebase() {
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 task_instsoft() {
 
+    if [ "$faisplash" ];then
+	fai-plymouth-logger &
+    fi
     echo "Installing software may take a while"
     if [ "$debug" ]; then
 	install_packages | tee -a $LOGDIR/software.log

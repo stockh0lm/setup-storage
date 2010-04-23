@@ -1,0 +1,28 @@
+#!/bin/bash
+
+refresh=1
+logfile=/tmp/fai/software.log
+
+msg=""
+while true;do
+        msglog=$(grep '^Get\|^Setting up\|^Unpacking\|ldconfig' $logfile|grep -v "Packages\|Release"|tail -1)
+	case "$msglog" in
+		ldconfig*)
+			message="finishing.."
+			;;
+		Unpacking*)
+			message=$(echo $msglog|awk '{ print "unpacking " $2 }')
+			;;
+		Get*)
+			message=$(echo $msglog|awk '{ print "downloading " $4 " " $5 }')
+			;;
+		Setting*)
+			message=$(echo $msglog|awk '{ print "setting up " $3 " " $4 }')
+			;;
+	esac
+        if [ "$msg" != "$message" -a -n "$message" ];then
+                plymouth message --text "$HOSTNAME @ softinst: $message"
+        fi
+        msg=$message
+  	sleep $refresh
+done
