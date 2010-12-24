@@ -1,0 +1,9 @@
+#! /bin/bash
+# support for GRUB version 1 (0.97)
+
+error=0 ; trap "error=$((error|1))" ERR
+
+fcopy -v /boot/grub/menu.lst
+
+exit $error
+
