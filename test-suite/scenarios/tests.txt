@@ -1,0 +1,3 @@
+svn://svn.debian.org/svn/fai/trunk/examples/simple atom01
+svn://svn.debian.org/svn/fai/test-suite/scenarios/setup-storage-tests sst01
+svn://svn.debian.org/svn/fai/test-suite/scenarios/setup-storage-tests sst02

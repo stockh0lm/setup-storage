@@ -1,0 +1,23 @@
+disk_config disk1 bootable:1
+primary  -              522081K - -
+primary  -              0-  - -  
+
+disk_config disk2 bootable:1
+primary  -              522081K -       -    
+primary  -              0-  - -  
+
+disk_config raid preserve_lazy:0,1 always_format:0
+raid1        /boot   sda1,sdb1  ext4  rw,errors=remount-ro
+raid1        -       sda2,sdb2  - -  
+
+disk_config lvm preserve_lazy:vg0-home
+vg              vg0                 md1  
+vg0-swap      swap                    4096        swap  rw
+vg0-local   /usr/local              10240       ext4  rw   
+vg0-src       /usr/src                10240       ext4  rw   
+vg0-usr       /usr                    10240       ext4  rw
+vg0-var       /var                    10240       ext4  rw
+vg0-tmp       /tmp                    2048        ext4  rw   
+vg0-home      /home                   97280       ext4  rw
+vg0-root      /                     4096      ext4  rw,errors=remount-ro
+

@@ -1,0 +1,28 @@
+##################################
+# NOW SPECIFIC CLASS DISK_CONFIG #
+##################################
+
+#
+# NEW FAI PARTITION SYSTEM
+#
+# Include LVM/RAID, Generic disk naming
+#
+# http://faiwiki.debian.net/index.php/Setup-storage
+#
+
+disk_config disk1 bootable:1
+primary /boot   100 ext3  rw
+primary swap    1G  swap  sw
+primary /   1G  ext3  rw,errors=remount-ro
+logical /usr    1500  ext3  rw
+logical /var    1G  ext3  rw
+logical /home   512 ext3  rw
+logical /tmp    1G  ext3  rw
+logical -   4G- - -
+
+disk_config lvm
+#disk_config lvm preserve_lazy:HEBEX-KE,HEBEX-KE_LOGS
+vg HEBEX    disk1.9 
+HEBEX-KE  /ke   1G- ext3 rw
+HEBEX-KE_LOGS /ke/logs  3G  ext3 rw,noatime
+

@@ -1,0 +1,12 @@
+disk_config sda virtual
+primary -       0-      -       -   
+#primary        -       4096    -       -   
+
+disk_config sdb virtual
+primary -       0-      -       -   
+#primary        -       4096    -       -   
+
+disk_config raid
+raid1   /       sda1,sdb1       ext4    rw,noatime      createopts="-m 1"
+#raid1  swap    sda2,sdb2       swap    sw  
+

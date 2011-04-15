@@ -1,0 +1,12 @@
+# example of new config file for setup-storage
+#
+# <type> <mountpoint> <size>   <fs type> <mount options> <misc options>
+
+disk_config disk1 disklabel:msdos bootable:1 fstabkey:uuid
+
+primary    /             100%       ext3   rw,errors=remount-ro
+
+disk_config disk2 disklabel:gpt fstabkey:uuid
+
+primary    /data         100%       ext3   rw
+

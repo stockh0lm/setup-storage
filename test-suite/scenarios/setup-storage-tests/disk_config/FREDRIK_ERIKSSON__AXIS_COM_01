@@ -1,0 +1,13 @@
+disk_config disk1 bootable:1
+primary  /boot          512     ext3    rw,errors=remount-ro
+primary  -              0-      -       -   
+
+disk_config lvm 
+vg              vg0                     cciss/c0d0p2
+vg0-swap                swap                    2048    swap    rw  
+vg0-usr                 /usr                    4096    ext3    rw  
+vg0-var                 /var                    4096    ext3    rw  
+vg0-tmp                 /tmp                    2048    ext3    rw  
+vg0-home                /home                   2048    ext3    rw  
+vg0-root                /                       4096    ext3    rw  
+

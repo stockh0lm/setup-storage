@@ -21,6 +21,12 @@ case $HOSTNAME in
 	ifclass I386 && echo CENTOS5_32
 	ifclass AMD64 && echo CENTOS5_64
 	exit 0 ;; # CentOS does not use the GRUB class
+    sst01)
+	echo "FAIBASE DEBIAN DHCPC"
+  ifclass DSK_TEST_01 || echo DSK_TEST_01
+  ;;
+    sst02)
+	echo "FAIBASE DEBIAN DHCPC FREDRIK_ERIKSSON__AXIS_COM_01" ;;
     *)
 	echo "FAIBASE DEBIAN DHCPC" ;;
 esac
