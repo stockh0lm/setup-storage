@@ -1,5 +1,0 @@
-# These lines should work for many sites
-# A more comprehensive example can be found in /usr/share/doc/fai/examples/etc
-
-deb http://archive.ubuntu.com/ubuntu edgy main restricted universe multiverse
-
