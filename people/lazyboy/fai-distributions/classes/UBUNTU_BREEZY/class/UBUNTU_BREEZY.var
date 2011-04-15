@@ -1,2 +1,0 @@
-kernelversion=2.6.12 # for the packages  kernel-doc and kernel-source
-DISTRIBUTION=ubuntu_breezy

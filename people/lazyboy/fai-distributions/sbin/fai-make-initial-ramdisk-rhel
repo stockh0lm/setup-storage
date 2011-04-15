@@ -1,1 +1,0 @@
- mkinitrd --with=xennet --preload=xenblk -v -f /boot/initrd-2.6.18-8.el5xen-custom.img 2.6.18-8.el5xen
