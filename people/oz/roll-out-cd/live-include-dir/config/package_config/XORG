@@ -1,7 +1,0 @@
-PACKAGES aptitude
-xorg
-ttf-freefont type1inst
-xscreensaver
-cupsys-client
-usplash
-debian-edu-artwork-usplash
