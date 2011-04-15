@@ -1,5 +1,0 @@
-var/run/fai/make-fai-nfsroot
-etc/fai
-usr/bin
-usr/sbin
-boot/fai

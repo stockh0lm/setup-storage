@@ -1,8 +1,0 @@
-if [ ! -f $target/etc/resolv.conf ]
-then
-    if ! fcopy /etc/resolv.conf
-    then
-        echo "Using /etc/resolv.conf from install server"
-        cp /etc/resolv.conf-installserver $target/etc/resolv.conf
-    fi
-fi
