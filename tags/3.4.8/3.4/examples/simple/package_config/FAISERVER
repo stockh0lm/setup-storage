@@ -1,9 +1,0 @@
-PACKAGES aptitude
-fai-quickstart
-
-dhcp3-client
-debmirror tcpdump
-apache2
-genisoimage grub
-approx lftp
-syslinux-common
