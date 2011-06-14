@@ -1,6 +1,0 @@
-#! /bin/bash
-# set hostname in network config file
-
-fcopy /etc/syconfig/network
-$ROOTCMD perl -pi -e "s/_HOSTNAME_/$HOSTNAME/g" /etc/sysconfig/network
-

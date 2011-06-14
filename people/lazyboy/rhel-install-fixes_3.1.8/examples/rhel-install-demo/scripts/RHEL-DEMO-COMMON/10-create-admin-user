@@ -1,6 +1,0 @@
-#! /bin/bash
-
-$ROOTCMD useradd -m admin
-
-echo "admin:secretpass" | $ROOTCMD chpasswd --encrypted
-

@@ -1,5 +1,0 @@
-PACKAGES yumi
-httpd
-php
-php-mysql
-# zu gross: tomcat5

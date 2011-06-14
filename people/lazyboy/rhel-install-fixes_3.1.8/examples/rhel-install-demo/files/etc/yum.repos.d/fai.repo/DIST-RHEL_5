@@ -1,7 +1,0 @@
-[fai]
-protect=0
-name=fai
-baseurl=http://debmirror/mirrors/henning-fai-test
-enabled=1
-gpgcheck=0
-

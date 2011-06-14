@@ -1,5 +1,0 @@
-#! /bin/bash
-
-export JAVA_HOME=/usr/java/latest
-cd ~/Jetspeed-2.1/bin/
-./startup.sh

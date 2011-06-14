@@ -1,6 +1,0 @@
-PACKAGES aptitude-r DIST-DEBIAN
-german
-
-PACKAGES aptitude GNOME
-mozilla-firefox-locale-de-de
-thunderbird-locale-de

@@ -1,7 +1,0 @@
-#! /bin/bash
-
-umount $target/proc/sys/fs/binfmt_misc/
-umount  $target/proc
-
-umount $target/sys
-

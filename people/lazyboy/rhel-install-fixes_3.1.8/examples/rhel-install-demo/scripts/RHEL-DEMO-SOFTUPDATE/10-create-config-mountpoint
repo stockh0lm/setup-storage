@@ -1,4 +1,0 @@
-#! /bin/bash
-
-# when using the alienated rpm, this dir is missing
-[ -d $target/var/lib/fai/config ]  || $ROOTCMD  mkdir -p /var/lib/fai/config
