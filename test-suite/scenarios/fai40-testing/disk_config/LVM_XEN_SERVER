@@ -1,4 +1,4 @@
-disk_config disk1  fstabkey:uuid
+disk_config disk1
 primary /boot       100       ext4    rw
 primary swap        256       swap    sw
 primary /           2000      ext4    rw
