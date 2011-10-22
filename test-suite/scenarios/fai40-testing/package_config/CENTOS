@@ -1,0 +1,23 @@
+PACKAGES yumgroup
+core
+
+PACKAGES yumgroup XORG
+#gnome-desktop base-x # slc5/CentOS 5
+basic-desktop x11 fonts #slc6/CentOS 6
+
+PACKAGES yumi
+authconfig
+kernel
+grub
+less
+openssh
+openssh-clients
+openssh-server
+vim-enhanced
+man
+wget
+screen
+unzip
+which
+nfs-utils
+sendmail
