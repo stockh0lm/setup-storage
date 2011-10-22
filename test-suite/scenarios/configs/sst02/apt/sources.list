@@ -1,0 +1,8 @@
+# These lines should work for many sites
+# A more comprehensive example is at /usr/share/doc/fai-doc/examples/etc
+
+deb http://faiserver/debian squeeze main contrib non-free
+deb http://faiserver/debian-security squeeze/updates main contrib non-free
+
+# repository that may contain newer fai packages for squeeze
+deb http://faiserver/download squeeze koeln
