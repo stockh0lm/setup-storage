@@ -1,0 +1,41 @@
+#! /usr/bin/perl
+
+use strict;
+use warnings;
+use Faitest;
+package FAITEST;
+
+setup_test();
+#  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+# now comes the test itself
+
+&packageStatus("htop", "ii");
+
+exit printresult();
+#  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+__END__
+
+=head1 NAME
+
+fai40_TEST - regression test for FAI 4.0
+
+=head1 SYNOPSIS
+
+fai40_TEST checks parts of the roadmap for FAI 4.0. Presently here we check
+
+ - whether the package htop was installed (using cupt, as defined by
+   package_config/fai40)
+
+ Options:
+ -help          simple help
+ -verbose=n     increase verbosity of test script
+
+=head1 OPTIONS
+
+=over 8
+
+=item B<-help>
+simple help
+
+=item B<-verbose>
+increase verbosity of test script

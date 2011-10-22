@@ -92,4 +92,21 @@ sub checkE2fsAttribute {
   }
 }
 
+sub packageStatus {
+
+  my ($pkg, $expected) = @_;
+
+  my ($value) = qx#dpkg -l $pkg |grep -w "$pkg"# =~ m/^(\S+)\s+$pkg\s+/i;
+
+  if ($value eq $expected) {
+    print LOGFILE "Package check for $pkg matches $expected -- success\n";
+    return 0;
+  } else {
+    print LOGFILE "Package check for $pkg -- FAILED.\n   Expect <$expected>\n   Found  <$value>\n";
+
+    $errors++;
+    return 1;
+  }
+}
+
 1;
