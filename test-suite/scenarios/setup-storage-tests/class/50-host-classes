@@ -28,6 +28,9 @@ case $HOSTNAME in
     sst02)
 	echo "FAIBASE DEBIAN DHCPC FREDRIK_ERIKSSON__AXIS_COM_01" ;;
     *)
+    sst03)
+	echo "FAIBASE DEBIAN DHCPC GPT_BIOS" ;;
+    *)
 	echo "FAIBASE DEBIAN DHCPC" ;;
 esac
 
