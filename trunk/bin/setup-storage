@@ -1,5 +1,4 @@
-#!/usr/bin/perl -w
-
+#!/usr/bin/perl 
 # $Id$
 #*********************************************************************
 # This program is free software; you can redistribute it and/or modify
@@ -75,13 +74,7 @@ EOF
 
 # include all subparts, which are part of the FAI perl package
 use lib "/usr/share/fai/setup-storage/";
-use Init;
-use Volumes;
-use Parser;
-use Sizes;
-use Commands;
-use Fstab;
-use Exec;
+use SetupStorage;
 
 # enable debug mode, if requested using -d
 $opt_d and $FAI::debug = 1;
