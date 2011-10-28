@@ -58,7 +58,7 @@ use Getopt::Std;
 sub HELP_MESSAGE {
 
     print <<EOF;
-$0 version $FAI::VERSION
+$0 version $VERSION
 
 USAGE: [-X]                     no test, your harddisks will be formated
                                 default: only test, no real formating
@@ -80,23 +80,23 @@ getopts('Xf:hdsD:L:') or HELP_MESSAGE;
 HELP_MESSAGE if $opt_h;
 
 # enable debug mode, if requested using -d
-$opt_d and $FAI::debug = 1;
+$opt_d and $debug = 1;
 
 # Really write any changes to disk
-$opt_X and $FAI::no_dry_run = 1;
-warn "setup-storage is running in test-only mode\n" unless ($FAI::no_dry_run);
+$opt_X and $no_dry_run = 1;
+warn "setup-storage is running in test-only mode\n" unless ($no_dry_run);
 
 # syntactic checks only
-$opt_s and $FAI::check_only = 1;
+$opt_s and $check_only = 1;
 
 # Find out whether $LOGDIR is usable or default to /tmp/fai
-$opt_L and $FAI::DATADIR = $opt_L;
-if (! -d $FAI::DATADIR) {
+$opt_L and $DATADIR = $opt_L;
+if (! -d $DATADIR) {
   !defined($opt_L) and defined ($ENV{LOGDIR}) and die
-    "Environment variable LOGDIR is set, but $FAI::DATADIR is not a directory\n";
-  mkdir $FAI::DATADIR or die
-    "Failed to create directory $FAI::DATADIR\n";
-  warn "Created data directory $FAI::DATADIR\n";
+    "Environment variable LOGDIR is set, but $DATADIR is not a directory\n";
+  mkdir $DATADIR or die
+    "Failed to create directory $DATADIR\n";
+  warn "Created data directory $DATADIR\n";
 }
 
 # $disklist may be provided by the environment
@@ -107,10 +107,10 @@ if (! defined($disklist)) {
   $disklist = `/usr/lib/fai/disk-info | sort`;
 }
 
-@FAI::disks = split( /[\n ]/, $disklist);
-if ($FAI::debug) {
+@disks = split( /[\n ]/, $disklist);
+if ($debug) {
   print "disklist: ";
-  print "$_\n" foreach(@FAI::disks);
+  print "$_\n" foreach(@disks);
 }
 
 # the config source file
@@ -133,30 +133,30 @@ unless ($opt_f) {
 # if we could not find any matching class file, bail out
 defined ($config_file) or die "No matching disk_config found\n";
 
-# start the parsing - thereby $FAI::configs is filled
-warn "Starting setup-storage $FAI::VERSION\n";
+# start the parsing - thereby $configs is filled
+warn "Starting setup-storage $VERSION\n";
 print "Using config file: $opt_f\n";
 run_parser($config_file);
 
 # make sure there are no empty disk_config stanzas
 check_config;
 
-if ($FAI::check_only)
+if ($check_only)
 {
   print "Syntax ok\n";
   exit 0;
 }
 
 # first find the proper way to tell udev to settle
-$FAI::udev_settle = "udevadm settle --timeout=10" if (in_path("udevadm"));
-$FAI::udev_settle = "udevsettle --timeout=10" if (in_path("udevsettle"));
-defined($FAI::udev_settle) or die "Failed to find determine a proper way to tell udev to settle; is udev installed?";
+$udev_settle = "udevadm settle --timeout=10" if (in_path("udevadm"));
+$udev_settle = "udevsettle --timeout=10" if (in_path("udevsettle"));
+defined($udev_settle) or die "Failed to find determine a proper way to tell udev to settle; is udev installed?";
 
 # start all RAID arrays in case some of the aren't running yet
 in_path("mdadm-startall") and `mdadm-startall`;
-`$FAI::udev_settle`;
+`$udev_settle`;
 
-# read the sizes and partition tables of all disks listed in $FAI::disks
+# read the sizes and partition tables of all disks listed in $disks
 get_current_disks;
 
 # see whether there are any existing LVMs
@@ -170,29 +170,25 @@ get_current_raid;
 propagate_and_check_preserve;
 
 # debugging only: print the current configuration
-if ($FAI::debug) {
+if ($debug) {
   # for debugging purposes to print the hash structures
   use Data::Dumper;
 
   print "Current disk layout\n";
 
   # make sure perl doesn't warn about it being used only once, same below
-  our %current_config;
   print Dumper \%current_config;
 
   print "Current LVM layout\n";
 
-  our %current_lvm_config;
   print Dumper \%current_lvm_config;
 
   print "Current RAID layout\n";
 
-  our %current_raid_config;
   print Dumper \%current_raid_config;
 
   print "Current device tree\n";
 
-  our %current_dev_children;
   print Dumper \%current_dev_children;
 }
 
@@ -201,11 +197,11 @@ if ($FAI::debug) {
 compute_partition_sizes;
 compute_lv_sizes;
 
-# print the current contents of $FAI::configs
-$FAI::debug and print "Desired disk layout\n";
-$FAI::debug and print Dumper \%FAI::configs;
-$FAI::debug and print "Desired device tree\n";
-$FAI::debug and print Dumper \%FAI::dev_children;
+# print the current contents of $configs
+$debug and print "Desired disk layout\n";
+$debug and print Dumper \%configs;
+$debug and print "Desired device tree\n";
+$debug and print Dumper \%dev_children;
 
 # generate the command script
 build_disk_commands;
@@ -216,59 +212,59 @@ order_commands;
 
 # run all commands
 # debugging only: print the command script
-if ($FAI::debug) {
-  foreach (&numsort(keys %FAI::commands)) {
-    defined($FAI::commands{$_}{cmd}) or internal_error("Missing command entry for $_");
-    print "$_:" . $FAI::commands{$_}{cmd} . "\n";
-    defined($FAI::commands{$_}{pre}) and print "\tpre: " . $FAI::commands{$_}{pre} . "\n";
-    defined($FAI::commands{$_}{post}) and print "\tpost: " . $FAI::commands{$_}{post} . "\n";
+if ($debug) {
+  foreach (&numsort(keys %commands)) {
+    defined($commands{$_}{cmd}) or internal_error("Missing command entry for $_");
+    print "$_:" . $commands{$_}{cmd} . "\n";
+    defined($commands{$_}{pre}) and print "\tpre: " . $commands{$_}{pre} . "\n";
+    defined($commands{$_}{post}) and print "\tpost: " . $commands{$_}{post} . "\n";
   }
 }
 
-# run the commands (if $FAI::no_dry_run is set)
-foreach (&numsort(keys %FAI::commands)) {
-  `$FAI::udev_settle`;
-  next if ($FAI::commands{$_}{cmd} eq "true");
-  execute_command($FAI::commands{$_}{cmd});
+# run the commands (if $no_dry_run is set)
+foreach (&numsort(keys %commands)) {
+  `$udev_settle`;
+  next if ($commands{$_}{cmd} eq "true");
+  execute_command($commands{$_}{cmd});
 }
 
 # generate the proposed fstab contents
 # wait for udev to set up all devices
-`$FAI::udev_settle`;
-my @fstab = generate_fstab(\%FAI::configs);
+`$udev_settle`;
+my @fstab = generate_fstab(\%configs);
 
 # print fstab
-$FAI::debug and print "$_\n" foreach (@fstab);
+$debug and print "$_\n" foreach (@fstab);
 
-# write the proposed contents of fstab to $FAI::DATADIR/fstab
-if ($FAI::no_dry_run) {
-  open(FSTAB, ">$FAI::DATADIR/fstab")
-    or die "Failed to open $FAI::DATADIR/fstab for writing\n";
+# write the proposed contents of fstab to $DATADIR/fstab
+if ($no_dry_run) {
+  open(FSTAB, ">$DATADIR/fstab")
+    or die "Failed to open $DATADIR/fstab for writing\n";
   print FSTAB "$_\n" foreach (@fstab);
   close FSTAB;
 }
 
-# write variables to $FAI::DATADIR/disk_var.sh
+# write variables to $DATADIR/disk_var.sh
 # debugging
-$FAI::debug and print "$_=\${$_:-$FAI::disk_var{$_}}\n"
-  foreach (keys %FAI::disk_var);
+$debug and print "$_=\${$_:-$disk_var{$_}}\n"
+  foreach (keys %disk_var);
 
-if ($FAI::no_dry_run)
+if ($no_dry_run)
 {
-  open(DISK_VAR, ">$FAI::DATADIR/disk_var.sh")
-    or die "Unable to write to file $FAI::DATADIR/disk_var.sh\n";
-  print DISK_VAR "$_=\${$_:-$FAI::disk_var{$_}}\n" foreach (keys %FAI::disk_var);
+  open(DISK_VAR, ">$DATADIR/disk_var.sh")
+    or die "Unable to write to file $DATADIR/disk_var.sh\n";
+  print DISK_VAR "$_=\${$_:-$disk_var{$_}}\n" foreach (keys %disk_var);
   close DISK_VAR;
 }
 
 # print crypttab
-$FAI::debug and print "$_\n" foreach (@FAI::crypttab);
+$debug and print "$_\n" foreach (@crypttab);
 
-# write the proposed contents of fstab to $FAI::DATADIR/fstab
-if ($FAI::no_dry_run && scalar(@FAI::crypttab)) {
-  open(CRYPTTAB, ">$FAI::DATADIR/crypttab")
-    or die "Failed to open $FAI::DATADIR/crypttab for writing\n";
-  print CRYPTTAB "$_\n" foreach (@FAI::crypttab);
+# write the proposed contents of fstab to $DATADIR/fstab
+if ($no_dry_run && scalar(@crypttab)) {
+  open(CRYPTTAB, ">$DATADIR/crypttab")
+    or die "Failed to open $DATADIR/crypttab for writing\n";
+  print CRYPTTAB "$_\n" foreach (@crypttab);
   close CRYPTTAB;
 }
 
